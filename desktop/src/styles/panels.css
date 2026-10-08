@@ -1,0 +1,408 @@
+/* panels.css — the dock: Photoshop's panel column in the house palette.
+ *
+ * Load order: tokens.css → chrome.css → panels.css, so this file may assume the
+ * tokens and the element-level control rules. It styles classes only.
+ *
+ * Everything the shared renderer builds lives here as well as the markup in
+ * index.html, because that is what the dock actually contains:
+ *   .jump-chip                                  ← the panel tab strip
+ *   .swatch                                     ← the ink strip
+ *   .stack-empty, .stack-row, .stack-top, .stack-index, .stack-name,
+ *   .stack-tools, .stack-mode, .stack-line, .icon-btn   ← the effects stack
+ */
+
+.dock {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  border-left: 1px solid var(--edge-soft);
+  background: var(--dock);
+}
+
+/* ---------------------------------------------------------------- panel tabs */
+
+/* A group of stacked panel tabs, the way an editor groups its panels: the
+   selected one is lifted out of the strip and reads as the front panel. */
+.dock-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 5px 6px 0;
+  border-bottom: 1px solid var(--edge-soft);
+  background: var(--chrome-2);
+}
+
+.jump-chip {
+  flex: 0 0 auto;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--muted);
+  font: var(--fs-small)/20px var(--font);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: default;
+  transition: color var(--fast), background var(--fast), border-color var(--fast);
+  box-shadow: none;
+}
+
+.jump-chip:hover {
+  border-color: var(--edge-soft);
+  background: var(--dock-tab);
+  color: var(--text);
+}
+
+/* The selected tab: accent edge on top, its own ground, ink text. */
+.jump-chip[aria-current="true"] {
+  border-color: var(--edge);
+  border-top-color: var(--accent);
+  background: var(--dock);
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------------ dock body */
+
+.dock-body {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.rail-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 10px 10px;
+  scroll-behavior: smooth;
+}
+
+.dock-hint {
+  margin: 0;
+  padding: 7px 10px;
+  border-top: 1px solid var(--edge-soft);
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock-hint b { color: var(--text); font-weight: 600; }
+
+/* --------------------------------------------------------------------- panels */
+
+.group { border-bottom: 1px solid var(--edge-soft); }
+
+.group:first-child { border-top: 1px solid var(--edge-soft); }
+
+.group:last-child { border-bottom: none; }
+
+/* The panel header. Caret, uppercase name, then the note pushed right — the
+   note is the panel's state readout while it is collapsed. */
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  height: 28px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.group-head:hover .group-name { color: var(--accent); }
+
+.group-head:hover .caret { color: var(--text); }
+
+.group-name {
+  flex: 0 0 auto;
+  font-size: var(--fs-small);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color var(--fast);
+}
+
+.group-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+
+.caret {
+  flex: 0 0 auto;
+  width: 10px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--muted);
+  transition: transform var(--med), color var(--fast);
+}
+
+.group[data-open="false"] .caret { transform: rotate(-90deg); }
+
+.group-body {
+  display: grid;
+  gap: var(--gap);
+  padding: 2px 2px 11px;
+}
+
+.group[data-open="false"] .group-body { display: none; }
+
+/* ---------------------------------------------------------------------- fields */
+
+.field {
+  display: grid;
+  gap: 3px;
+}
+
+.field > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: var(--fs-label);
+}
+
+/* Slider readings are right-aligned and tabular: the row never reflows as the
+   number grows from "0" to "255". */
+.field > span > em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: var(--fs-label);
+  cursor: default;
+}
+
+.check:hover { color: var(--text); }
+
+.hint {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.hint b { color: var(--text); font-weight: 600; }
+
+/* ----------------------------------------------------------------- rows/groups */
+
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.buttons-1 { grid-template-columns: 1fr; }
+
+.btn-step {
+  height: var(--row);
+  padding: 0;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.row-stepper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px 24px;
+  gap: 4px;
+}
+
+.seed-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 6px;
+}
+
+.ink-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* ------------------------------------------------------------------- swatches */
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 2px 0 1px;
+}
+
+.swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+  /* Light inks need an edge of their own against the dock's dark ground. */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* ------------------------------------------------------------------ the stack */
+
+/* The effects stack is a well: each effect is a small card with its name on the
+   first line (chromatic aberration must not truncate) and its controls on the
+   second. Order is information, so the index chip is part of the row. */
+.stack {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.stack-empty {
+  margin: 0;
+  padding: 10px 6px;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.stack-row {
+  display: grid;
+  gap: 4px;
+  padding: 5px 6px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  transition: background var(--fast), border-color var(--fast);
+}
+
+.stack-row:hover {
+  border-color: var(--edge-soft);
+  background: var(--hover);
+}
+
+/* The row being reordered, and the one under the pointer mid-drag. */
+.stack-row.is-on,
+.stack-row.is-dragging {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--edge));
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+
+.stack-top {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stack-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stack-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+  font-size: var(--fs-label);
+}
+
+.stack-tools { display: flex; gap: 3px; }
+
+/* ↑ ↓ ✕ — a column of small square buttons that stay quiet until hovered. */
+.icon-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1;
+  box-shadow: none;
+  cursor: default;
+  transition: color var(--fast), border-color var(--fast), background var(--fast);
+}
+
+.icon-btn:hover {
+  border-color: var(--edge);
+  background: var(--raised);
+  color: var(--text);
+}
+
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.icon-btn:disabled { opacity: 0.3; }
+
+/* The tool that removes is not a destructive-looking button until you are on
+   it — then it says so in a muted red. */
+.icon-btn:last-child:hover {
+  border-color: color-mix(in srgb, #ff8080 40%, var(--edge));
+  color: #ff8080;
+}
+
+/* Second line: the amount slider, and the mode select where the effect has one. */
+.stack-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.stack-line > input[type="range"] { height: 12px; }
+
+.stack-line > input[type="range"]::-webkit-slider-thumb {
+  width: 9px;
+  height: 9px;
+  margin-top: -3px;
+}
+
+.stack-line > input[type="range"]::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+}
+
+.stack-line > select {
+  height: 20px;
+  padding: 0 4px;
+  font-size: var(--fs-small);
+}
+
+/* ============================== shell.js contract ============================
+ * The hint line at the foot of the dock carries four shortcuts. As a single
+ * clipped line it was unreadable at 336px wide; it wraps instead.
+ */
+
+.dock-hint {
+  white-space: normal;
+  line-height: 1.55;
+}

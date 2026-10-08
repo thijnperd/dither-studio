@@ -1,0 +1,63 @@
+name: pages
+
+# Publishes the frozen web demo in `demo/` — the same copy that lives in the
+# portfolio repository — to https://thijnperd.github.io/dither-studio/.
+#
+# Only `demo/` is uploaded, so the app the desktop build ships and the launcher
+# tree at the repository root can never leak onto the public site, and the demo
+# keeps working from a plain static host with no build step at all.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Check the demo is self-contained
+        # The demo must keep opening from file:// and from a static host: no
+        # relative path may escape its own folder, and there must be no build
+        # step, no package file and no server.
+        run: |
+          set -eu
+          cd demo
+          test -f index.html
+          for asset in $(grep -oE '(src|href)="[^"]+"' index.html | sed -E 's/.*="([^"]+)"/\1/' | grep -vE '^(https?:|data:|#)'); do
+            test -f "$asset" || { echo "missing asset: $asset"; exit 1; }
+          done
+          # every script it loads must parse, so a broken demo fails here
+          node --check app.js
+          node --check dither.js
+          node --check video.js
+          echo "demo is self-contained"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the demo
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

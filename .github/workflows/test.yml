@@ -24,3 +24,55 @@ jobs:
       # The app has no dependencies and no build step; the tests only need Node.
       - name: Core tests
         run: node test.js
+
+  desktop:
+    name: desktop (windows)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      # The desktop renderer is generated from the shared core. This is the check
+      # that keeps the copy honest, and it needs no dependencies to run.
+      - name: The desktop renderer is in step with the shared core
+        run: node desktop/tools/sync-renderer.js --check
+
+      - name: Install
+        working-directory: desktop
+        run: npm ci
+
+      # Boots the real window, runs the in-page checks, screenshots it and exits
+      # non-zero on any console error or failed check.
+      - name: Smoke — boot, check, screenshot
+        working-directory: desktop
+        run: npm run smoke
+
+      # The half a page cannot reach: a real key through the window's own input
+      # pipeline, and a real save dialog bypassed to a path we can inspect.
+      - name: Smoke — Ctrl+S saves a proof
+        working-directory: desktop
+        shell: bash
+        run: |
+          set -o pipefail
+          export DITHER_SMOKE_DIR="$RUNNER_TEMP"
+          export DITHER_SMOKE_SAVE="$RUNNER_TEMP/proof.png"
+          export DITHER_SMOKE_KEY=ctrl+s
+          npm run smoke | tee "$RUNNER_TEMP/smoke.log"
+          test -s "$DITHER_SMOKE_SAVE" || { echo "no proof was written"; exit 1; }
+          grep -q '"savedFile":{' "$RUNNER_TEMP/smoke.log" || { echo "the report did not see the save"; exit 1; }
+          ls -l "$DITHER_SMOKE_SAVE"
+
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-window
+          path: |
+            ${{ runner.temp }}/dither-desktop.png
+            ${{ runner.temp }}/dither-splash.png
+          if-no-files-found: ignore

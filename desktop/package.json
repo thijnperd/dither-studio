@@ -1,0 +1,60 @@
+{
+  "name": "dither-studio-desktop",
+  "productName": "Dither Studio",
+  "version": "0.1.0",
+  "description": "Dither Studio as a desktop application: the offline dithering press in its own window, with native open/save, a tool rail and a panel dock.",
+  "author": "Thijn Köhne",
+  "private": true,
+  "main": "electron/main.js",
+  "homepage": "https://github.com/thijnperd/dither-studio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thijnperd/dither-studio.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "pack": "electron-builder --win --dir",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.thijnperd.ditherstudio",
+    "productName": "Dither Studio",
+    "copyright": "Copyright © 2026 Thijn Köhne",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "build/icon.png",
+      "package.json",
+      "README.md",
+      "GUIDE.md",
+      "!**/*.map"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Dither Studio",
+      "artifactName": "Dither-Studio-Setup-${version}.exe",
+      "uninstallDisplayName": "Dither Studio ${version}"
+    },
+    "portable": {
+      "artifactName": "Dither-Studio-${version}-portable.exe"
+    }
+  }
+}

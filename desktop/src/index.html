@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>Dither Studio</title>
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/chrome.css" />
+  <link rel="stylesheet" href="styles/panels.css" />
+</head>
+<body class="ps">
+
+  <!-- ================= title bar ================= -->
+  <!-- The window is frameless (see electron/main.js), so this bar *is* the
+       caption. The window buttons talk to the main process over preload. -->
+  <header class="titlebar" id="titlebar">
+    <button class="sysmark" id="sysmark" type="button" title="Application menu" aria-label="Application menu">
+      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+        <rect x="1" y="1" width="6" height="6" fill="currentColor" opacity=".9" />
+        <rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".55" />
+        <rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".55" />
+        <rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".9" />
+      </svg>
+    </button>
+    <span class="tb-title">Dither Studio</span>
+    <span class="tb-doc" id="tb-doc">demo</span>
+    <span class="tb-spacer"></span>
+    <span class="tb-note" id="tb-note"></span>
+    <div class="tb-buttons">
+      <button class="wbtn" id="win-min" type="button" title="Minimise" aria-label="Minimise">
+        <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M0 5h10" stroke="currentColor" stroke-width="1" /></svg>
+      </button>
+      <button class="wbtn" id="win-max" type="button" title="Maximise" aria-label="Maximise">
+        <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" /></svg>
+      </button>
+      <button class="wbtn wbtn-close" id="win-close" type="button" title="Close" aria-label="Close">
+        <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1" /></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= menu bar ================= -->
+  <nav class="menubar" id="menubar" aria-label="Menu bar">
+    <button class="menu" type="button" data-menu="file">File</button>
+    <button class="menu" type="button" data-menu="edit">Edit</button>
+    <button class="menu" type="button" data-menu="image">Image</button>
+    <button class="menu" type="button" data-menu="press">Press</button>
+    <button class="menu" type="button" data-menu="effects">Effects</button>
+    <button class="menu" type="button" data-menu="view">View</button>
+    <button class="menu" type="button" data-menu="window">Window</button>
+    <button class="menu" type="button" data-menu="help">Help</button>
+  </nav>
+  <div class="menu-pop" id="menu-pop" role="menu" hidden></div>
+
+  <!-- ================= options bar ================= -->
+  <div class="optbar" id="optbar">
+    <div class="opt-group">
+      <button id="zoom-out" class="obtn obtn-icon" title="Zoom out (−)" aria-label="Zoom out">−</button>
+      <button id="zoom-fit" class="obtn" title="Fit in window (0)">Fit</button>
+      <button id="zoom-in" class="obtn obtn-icon" title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <span class="oread">Zoom <b id="stat-zoom">Fit</b></span>
+    </div>
+    <span class="opt-sep"></span>
+    <div class="opt-group">
+      <span class="oread">Update</span>
+      <div class="seg" id="quality" role="radiogroup" aria-label="Update mode">
+        <button class="seg-btn" type="button" role="radio" data-value="full" aria-checked="false">Full</button>
+        <button class="seg-btn is-on" type="button" role="radio" data-value="live" aria-checked="true">Live</button>
+        <button class="seg-btn" type="button" role="radio" data-value="still" aria-checked="false">Still</button>
+      </div>
+      <span class="oread is-dim" id="quality-note">Live — half-res while dragging</span>
+    </div>
+    <span class="opt-sep"></span>
+    <div class="opt-group">
+      <button id="compare" class="obtn" title="Hold to compare with the source (C)">Compare</button>
+      <button id="random" class="obtn" title="Roll a fresh recipe (R)">Random</button>
+    </div>
+    <span class="opt-grow"></span>
+    <div class="opt-group">
+      <button id="copy" class="obtn" title="Copy the proof to the clipboard">Copy PNG</button>
+      <label class="inline"><span>Scale</span>
+        <select id="export-scale">
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+          <option value="8">8×</option>
+        </select>
+      </label>
+      <button id="export" class="obtn obtn-primary" title="Export the proof as a PNG (Ctrl+S)">Export PNG</button>
+    </div>
+  </div>
+
+  <!-- ================= work area ================= -->
+  <div class="workarea">
+
+    <!-- the tool rail: one button per verb, Photoshop's left column -->
+    <nav class="toolrail" id="toolrail" aria-label="Tools">
+      <button class="tool" type="button" data-tool="open" title="Open image… (Ctrl+O)" aria-label="Open image">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M2 5.5h5l1.6 2H18v7.5H2z" fill="none" stroke="currentColor" stroke-width="1.2" /></svg>
+      </button>
+      <button class="tool" type="button" data-tool="demo" title="Generated demo scene" aria-label="Demo scene">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M10 2.5l1.7 5.3 5.3 1.7-5.3 1.7L10 16.5l-1.7-5.3L3 9.5l5.3-1.7z" fill="none" stroke="currentColor" stroke-width="1.2" /></svg>
+      </button>
+      <span class="tool-sep" role="separator"></span>
+      <button class="tool" type="button" data-tool="compare" title="Hold to compare with the source (C)" aria-label="Compare">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M1.5 10S4.7 5 10 5s8.5 5 8.5 5-3.2 5-8.5 5-8.5-5-8.5-5z" fill="none" stroke="currentColor" stroke-width="1.2" /><circle cx="10" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.2" /></svg>
+      </button>
+      <button class="tool" type="button" data-tool="random" title="Roll a fresh recipe (R)" aria-label="Random recipe">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" /><circle cx="7" cy="7" r="1.3" fill="currentColor" /><circle cx="13" cy="13" r="1.3" fill="currentColor" /><circle cx="10" cy="10" r="1.3" fill="currentColor" /></svg>
+      </button>
+      <span class="tool-sep" role="separator"></span>
+      <button class="tool" type="button" data-tool="webcam" title="Webcam" aria-label="Webcam">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2.5" y="5.5" width="11" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2" /><path d="M13.5 9l4-2v6l-4-2z" fill="none" stroke="currentColor" stroke-width="1.2" /></svg>
+      </button>
+      <button class="tool" type="button" data-tool="video" title="Open a clip" aria-label="Open video">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2" /><path d="M8 7.5l5 2.5-5 2.5z" fill="currentColor" /></svg>
+      </button>
+      <button class="tool" type="button" data-tool="record" title="Record the playback as WebM" aria-label="Record">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="5.5" fill="none" stroke="currentColor" stroke-width="1.2" /><circle cx="10" cy="10" r="2.4" fill="currentColor" /></svg>
+      </button>
+      <span class="tool-grow"></span>
+      <button class="tool" type="button" data-tool="preset" title="Presets" aria-label="Presets">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M3.5 4.5h13M3.5 10h13M3.5 15.5h13" stroke="currentColor" stroke-width="1.2" /><circle cx="7" cy="4.5" r="1.6" fill="currentColor" /><circle cx="13" cy="10" r="1.6" fill="currentColor" /><circle cx="9" cy="15.5" r="1.6" fill="currentColor" /></svg>
+      </button>
+    </nav>
+
+    <!-- the document column: tab strip, the proof well, the viewport bar -->
+    <section class="doccol">
+      <div class="doctabs" id="doc-tabs">
+        <div class="doctab is-active" id="doc-tab" title="The open proof">
+          <span class="doctab-mark" aria-hidden="true"></span>
+          <span class="doctab-name" id="doc-name">demo</span>
+          <span class="doctab-meta" id="doc-meta">—</span>
+        </div>
+      </div>
+
+      <div id="canvas-wrap" class="canvas-wrap">
+        <div class="canvas-frame">
+          <canvas id="canvas" role="img" aria-label="Dithered preview"></canvas>
+        </div>
+        <p class="drop-veil" id="drop-veil" hidden>Drop to load</p>
+      </div>
+
+      <footer class="viewport-bar">
+        <span class="readout">Update <b id="stat-quality">Live</b></span>
+        <span class="readout is-dim" id="quality-note-2" hidden></span>
+        <span class="opt-grow"></span>
+        <div class="transport" id="transport" hidden>
+          <button id="video-toggle" class="obtn obtn-primary" type="button" disabled>Play</button>
+          <span class="readout" id="video-readout">frame 0 · 12 fps</span>
+        </div>
+      </footer>
+    </section>
+
+    <!-- the dock: panel tabs on top, the stacked panels below -->
+    <aside class="dock" aria-label="Panels">
+      <div class="dock-tabs" id="jump" aria-label="Panels"></div>
+      <div class="dock-body">
+        <div class="rail-scroll" id="rail">
+
+          <section class="group" id="g-source" data-group="source" data-open="true">
+            <button class="group-head" type="button" aria-expanded="true">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Source</span>
+              <span class="group-note" id="note-source">demo scene</span>
+            </button>
+            <div class="group-body">
+              <div class="buttons">
+                <button id="open" class="btn btn-primary">Open image…</button>
+                <button id="demo" class="btn">Demo scene</button>
+              </div>
+              <input type="file" id="file" accept="image/*" hidden />
+              <p class="hint">Drop an image on the proof, or paste with <b>Ctrl+V</b>.</p>
+            </div>
+          </section>
+
+          <section class="group" id="g-press" data-group="press" data-open="true">
+            <button class="group-head" type="button" aria-expanded="true">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Press</span>
+              <span class="group-note" id="note-press">—</span>
+            </button>
+            <div class="group-body">
+              <div class="row-stepper">
+                <select id="algorithm" aria-label="Algorithm"></select>
+                <button class="btn btn-step" id="algorithm-prev" type="button" title="Previous algorithm">◀</button>
+                <button class="btn btn-step" id="algorithm-next" type="button" title="Next algorithm">▶</button>
+              </div>
+              <div class="row-stepper">
+                <select id="palette" aria-label="Palette"></select>
+                <button class="btn btn-step" id="palette-prev" type="button" title="Previous palette">◀</button>
+                <button class="btn btn-step" id="palette-next" type="button" title="Next palette">▶</button>
+              </div>
+              <div class="swatches" id="swatches" aria-label="Palette inks"></div>
+              <label class="field">
+                <span>Pixel size <em id="pixel-size-value">2</em></span>
+                <input type="range" id="pixel-size" min="1" max="16" step="1" value="2" />
+              </label>
+              <label class="field" id="threshold-row">
+                <span>Threshold <em id="threshold-value">128</em></span>
+                <input type="range" id="threshold" min="0" max="255" step="1" value="128" />
+              </label>
+              <label class="field">
+                <span>Strength <em id="strength-value">100</em>%</span>
+                <input type="range" id="strength" min="0" max="200" step="1" value="100" />
+              </label>
+              <label class="field" id="smooth-row" hidden>
+                <span>Smoothness <em id="smooth-value">3</em></span>
+                <input type="range" id="smooth" min="1" max="12" step="1" value="3" />
+              </label>
+              <label class="field" id="flow-row" hidden>
+                <span>Flow <em id="flow-value">60</em></span>
+                <input type="range" id="flow" min="0" max="100" step="1" value="60" />
+              </label>
+              <label class="field" id="streak-row" hidden>
+                <span>Streak <em id="streak-value">0</em></span>
+                <input type="range" id="streak" min="0" max="100" step="1" value="0" />
+              </label>
+              <label class="check"><input type="checkbox" id="serpentine" /> Serpentine sweep</label>
+              <div class="seed-row">
+                <input type="number" id="seed" min="0" max="4294967295" step="1" value="20261008" aria-label="Seed" />
+                <button id="reseed" class="btn btn-step" type="button" title="New seed">⟳</button>
+              </div>
+              <p class="hint">Strength scales the screen away from mid-grey; the seed drives
+                every random stage. Masks stay fixed.</p>
+            </div>
+          </section>
+
+          <section class="group" id="g-tone" data-group="tone" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Tone</span>
+              <span class="group-note" id="note-tone">neutral</span>
+            </button>
+            <div class="group-body">
+              <label class="field">
+                <span>Black point <em id="black-value">0</em></span>
+                <input type="range" id="black" min="0" max="128" step="1" value="0" />
+              </label>
+              <label class="field">
+                <span>White point <em id="white-value">255</em></span>
+                <input type="range" id="white" min="128" max="255" step="1" value="255" />
+              </label>
+              <label class="field">
+                <span>Gamma <em id="gamma-value">1.00</em></span>
+                <input type="range" id="gamma" min="0.3" max="3" step="0.02" value="1" />
+              </label>
+              <label class="field">
+                <span>Brightness <em id="brightness-value">1.00</em></span>
+                <input type="range" id="brightness" min="0.5" max="1.5" step="0.01" value="1" />
+              </label>
+              <label class="field">
+                <span>Contrast <em id="contrast-value">1.00</em></span>
+                <input type="range" id="contrast" min="0.5" max="1.5" step="0.01" value="1" />
+              </label>
+              <label class="field">
+                <span>Saturation <em id="saturation-value">1.00</em></span>
+                <input type="range" id="saturation" min="0" max="2" step="0.01" value="1" />
+              </label>
+              <label class="field">
+                <span>Hue <em id="hue-value">0°</em></span>
+                <input type="range" id="hue" min="-180" max="180" step="1" value="0" />
+              </label>
+            </div>
+          </section>
+
+          <section class="group" id="g-ink" data-group="ink" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Ink</span>
+              <span class="group-note" id="note-ink">none</span>
+            </button>
+            <div class="group-body">
+              <label class="field">
+                <span>Tone map</span>
+                <select id="tone-map"></select>
+              </label>
+              <div class="ink-row" id="ink-custom" hidden>
+                <label class="inline">
+                  <span>Ink</span>
+                  <input type="color" id="tone-ink" value="#000000" />
+                </label>
+                <label class="inline">
+                  <span>Paper</span>
+                  <input type="color" id="tone-paper" value="#ffffff" />
+                </label>
+              </div>
+              <label class="field">
+                <span>Alpha</span>
+                <select id="alpha-mode">
+                  <option value="matte" selected>Flatten onto paper</option>
+                  <option value="sharpen">Dither the matte</option>
+                  <option value="keep">Keep as PNG alpha</option>
+                </select>
+              </label>
+              <p class="hint">Tone maps re-ink the finished dither, so 1-bit stays exactly
+                two inks. Alpha decides what happens to transparency.</p>
+            </div>
+          </section>
+
+          <section class="group" id="g-detail" data-group="detail" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Detail</span>
+              <span class="group-note" id="note-detail">none</span>
+            </button>
+            <div class="group-body">
+              <label class="field">
+                <span>Blur <em id="blur-value">0</em></span>
+                <input type="range" id="blur" min="0" max="4" step="0.5" value="0" />
+              </label>
+              <label class="field">
+                <span>Sharpen <em id="sharpen-value">0.00</em></span>
+                <input type="range" id="sharpen" min="0" max="2" step="0.05" value="0" />
+              </label>
+              <label class="check"><input type="checkbox" id="denoise" /> Denoise (3×3 median)</label>
+            </div>
+          </section>
+
+          <section class="group" id="g-effects" data-group="effects" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Effects</span>
+              <span class="group-note" id="note-effects">none</span>
+            </button>
+            <div class="group-body">
+              <label class="field">
+                <span>Add to the stack</span>
+                <select id="effect-add"><option value="">Choose an effect…</option></select>
+              </label>
+              <div class="stack" id="effect-list"></div>
+              <p class="hint">Effects run top to bottom after the dither. Add what you need,
+                reorder with the arrows.</p>
+            </div>
+          </section>
+
+          <section class="group" id="g-glow" data-group="glow" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Glow</span>
+              <span class="group-note" id="note-glow">off</span>
+            </button>
+            <div class="group-body">
+              <label class="field">
+                <span>Radius <em id="glow-radius-value">0</em></span>
+                <input type="range" id="glow-radius" min="0" max="8" step="1" value="0" />
+              </label>
+              <label class="field">
+                <span>Intensity <em id="glow-intensity-value">0</em></span>
+                <input type="range" id="glow-intensity" min="0" max="100" step="1" value="0" />
+              </label>
+            </div>
+          </section>
+
+          <section class="group" id="g-motion" data-group="motion" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Motion</span>
+              <span class="group-note" id="note-motion">no source</span>
+            </button>
+            <div class="group-body">
+              <div class="buttons">
+                <button id="video-webcam" class="btn">Webcam</button>
+                <button id="video-open" class="btn">Open clip…</button>
+              </div>
+              <input type="file" id="video-file" accept="video/*" hidden />
+              <label class="field" id="video-fps-row" hidden>
+                <span>Frame rate <em id="video-fps-value">12</em> fps</span>
+                <input type="range" id="video-fps" min="1" max="30" step="1" value="12" />
+              </label>
+              <label class="field" id="video-temporal-row" hidden>
+                <span>Temporal dither</span>
+                <select id="video-temporal">
+                  <option value="freeze">Frozen — one stable screen</option>
+                  <option value="shimmer" selected>Shimmer — reshuffle every frame</option>
+                  <option value="crawl">Crawl — the screen scrolls</option>
+                </select>
+              </label>
+              <div class="buttons buttons-1" id="video-record-row" hidden>
+                <button id="video-record" class="btn">● Record WebM</button>
+              </div>
+              <p class="hint" id="video-note">Play a clip or the webcam through the press.
+                The transport sits under the proof.</p>
+            </div>
+          </section>
+
+          <section class="group" id="g-type" data-group="type" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Type</span>
+              <span class="group-note" id="note-type">off</span>
+            </button>
+            <div class="group-body">
+              <label class="check"><input type="checkbox" id="text-mode" /> Print with characters</label>
+              <label class="field" id="text-charset-row" hidden>
+                <span>Ramp</span>
+                <select id="text-charset"></select>
+              </label>
+              <label class="field" id="text-size-row" hidden>
+                <span>Cell <em id="text-size-value">10</em> px</span>
+                <input type="range" id="text-size" min="6" max="24" step="1" value="10" />
+              </label>
+              <div class="buttons buttons-1" id="text-export-row" hidden>
+                <button id="export-txt" class="btn">Export .txt</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="group" id="g-preset" data-group="preset" data-open="false">
+            <button class="group-head" type="button" aria-expanded="false">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Presets</span>
+              <span class="group-note" id="note-preset">21 recipes</span>
+            </button>
+            <div class="group-body">
+              <label class="field">
+                <span>Recipe</span>
+                <select id="preset"></select>
+              </label>
+              <div class="buttons">
+                <button id="preset-export" class="btn">Export JSON</button>
+                <button id="preset-import" class="btn">Import JSON</button>
+              </div>
+              <input type="file" id="preset-file" accept="application/json,.json" hidden />
+            </div>
+          </section>
+
+        </div>
+        <p class="dock-hint">
+          <b>C</b> compare · <b>+</b>/<b>−</b> zoom · <b>0</b> fit · <b>R</b> recipe · <b>Ctrl+S</b> export
+        </p>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ================= status bar ================= -->
+  <footer class="statusbar">
+    <span class="readout">File <b id="stat-file">demo</b></span>
+    <span class="readout">Size <b id="stat-size">—</b></span>
+    <span class="readout">Algorithm <b id="stat-algorithm">—</b></span>
+    <span class="readout">Palette <b id="stat-palette">—</b></span>
+    <span class="readout">Colors <b id="stat-colors">—</b></span>
+    <span class="readout">Render <b id="stat-render">—</b></span>
+    <span class="opt-grow"></span>
+    <span class="readout">Status <b id="stat-status">Ready</b></span>
+  </footer>
+
+  <script src="menu-spec.js"></script>
+  <script src="renderer/dither.js"></script>
+  <script src="renderer/video.js"></script>
+  <script src="renderer/app.js"></script>
+  <script src="renderer/shell.js"></script>
+</body>
+</html>

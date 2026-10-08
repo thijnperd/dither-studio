@@ -12,6 +12,45 @@ Read [`README.md`](README.md) for the front door and [`GUIDE.md`](GUIDE.md) for
 the tour (running it as an app, the console, the three structure-aware looks,
 video, exports, keys, performance, troubleshooting).
 
+## Three builds — know which one you are touching
+
+| Build | Where | State |
+|---|---|---|
+| **Web demo** | `demo/` | **frozen** — a byte-for-byte copy of the portfolio's `dither studio web/`, published to GitHub Pages by `.github/workflows/pages.yml` |
+| **Launcher app** | the repository root (`index.html`, `app.js`, `style.css`, launchers, `manifest.webmanifest`, `icons/`) | **frozen** — the page in an app-mode browser window |
+| **Desktop app** | `desktop/` | **active** — the Electron application, released as a Windows `.exe` |
+
+Rules that follow from that:
+
+- **`dither.js` is the shared engine.** It is DOM-free and identical in all
+  three builds. A change about *dithering* goes there, once, and every build
+  gets it. Never fork it into a build.
+- **`desktop/src/renderer/` is generated.** `desktop/src/renderer/app.js` is the
+  root `app.js` plus ten documented hunks, applied by
+  `node desktop/tools/sync-renderer.js`; `--check` fails if the copy has drifted
+  and CI runs it. Change the shared `app.js` only if you also revisit those
+  hunks — the generator asserts each one still matches exactly once.
+- **Do not edit `demo/` or the two frozen shells.** They are what people link to
+  and install from. New work happens in `desktop/`.
+- **The desktop app's own rules** live in [`desktop/AGENTS.md`](desktop/AGENTS.md):
+  it is the only part of this repository with dependencies, and the only build
+  whose interface is a native window.
+
+### Releasing the desktop app
+
+```bash
+cd desktop
+npm install
+node tools/sync-renderer.js --check      # the renderer is in step
+npm run smoke                            # 33 in-page checks, exit 0 required
+DITHER_SMOKE_SAVE=/tmp/proof.png DITHER_SMOKE_KEY=ctrl+s npm run smoke   # the save chain
+npm run dist                             # dist/Dither-Studio-Setup-<version>.exe + portable
+gh release create v<version> dist/Dither-Studio-Setup-<version>.exe \
+  dist/Dither-Studio-<version>-portable.exe --title '…' --notes '…'
+```
+
+Bump `version` in `desktop/package.json` in the same commit as the release tag.
+
 ## Before working
 
 - Read this file, then whichever of `README.md` / `GUIDE.md` covers your change.
@@ -39,7 +78,10 @@ video, exports, keys, performance, troubleshooting).
 | `tools/` (harness) | Optional browser verification (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency of this project. |
 | `SOURCES.md` | Provenance: which published work or open-source tool each feature, table and palette came from, plus divergences that were chosen deliberately. |
 | `test.js` | Node tests for the core, not browser UI tests. |
-| `docs/` | Screenshots used by `README.md` and `GUIDE.md`. |
+| `demo/` | **Frozen** web demo — the browser copy, published to GitHub Pages. Never edited. |
+| `desktop/` | **The active build**: the Electron app (see `desktop/AGENTS.md`). |
+| `.github/workflows/` | `test.yml` runs the core tests and the renderer-sync check; `pages.yml` publishes `demo/`. |
+| `docs/` | Screenshots used by `README.md` and `GUIDE.md`, including the desktop app and its splash. |
 | `README.md` / `GUIDE.md` | Front door and tour. |
 
 ## Core invariants — do not break these

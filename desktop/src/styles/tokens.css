@@ -1,0 +1,276 @@
+/* tokens.css — the foundation both chrome.css and panels.css build on.
+ *
+ * The world is DESIGN.md's ("a dark instrument panel for a gallery at night").
+ * The desktop app adds one thing the browser never needed: *window structure*.
+ * Photoshop's shape — caption bar, menu bar, options bar, tool rail, document
+ * tabs, a dock of panels, a status bar — in the house's palette rather than
+ * Photoshop's mid-greys.
+ *
+ * This file owns: tokens, the page grid, and every element-level control
+ * (buttons, selects, sliders, number/colour fields). The component files style
+ * classes only, so load order between them can never fight over a raw element.
+ */
+
+:root {
+  /* ---- the house palette (frozen web versions use these exact values) ---- */
+  --bg: #0e0f13;
+  --panel: #15171d;
+  --panel-2: #1b1e26;
+  --line: #262a34;
+  --text: #e8eaf0;
+  --muted: #8b91a3;
+  --accent: #7aa2ff;
+  --well: #0b0c10;
+
+  /* ---- application chrome ---- */
+  --chrome: #12141a;        /* caption + menu bar                    */
+  --chrome-2: #171a21;      /* options bar, status bar               */
+  --dock: #13151b;          /* the panel dock                        */
+  --dock-tab: #1a1d24;      /* an inactive panel tab                 */
+  --sunken: #0a0b0f;        /* wells: the proof, the stack           */
+  --edge: #2c3140;          /* control borders                       */
+  --edge-soft: #222732;     /* hairlines                             */
+  --hover: #20242e;
+  --pressed: #262b37;
+  --raised: #1e222b;
+
+  /* ---- measures ---- */
+  --title-h: 34px;
+  --menu-h: 26px;
+  --opt-h: 36px;
+  --status-h: 24px;
+  --rail-w: 46px;
+  --dock-w: 336px;
+  --row: 26px;
+  --gap: 8px;
+  --pad: 11px;
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-lg: 9px;
+
+  /* ---- type ---- */
+  --font: "SF Mono", "Cascadia Code", Consolas, "JetBrains Mono", Menlo, monospace;
+  --font-ui: "Segoe UI", -apple-system, "SF Pro Text", system-ui, Roboto, sans-serif;
+  --fs-app: 12.5px;
+  --fs-label: 11.5px;
+  --fs-small: 10.5px;
+
+  /* ---- motion: quick, ease-out, never showy ---- */
+  --fast: 120ms ease;
+  --med: 160ms ease;
+
+  /* ---- a control that reads as a physical thing ---- */
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 14px 34px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--edge);
+  --focus: 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+/* An author `display` must never defeat the `hidden` attribute. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  display: grid;
+  grid-template-rows: var(--title-h) var(--menu-h) var(--opt-h) minmax(0, 1fr) var(--status-h);
+  background: var(--bg);
+  color: var(--text);
+  font: var(--fs-app)/1.45 var(--font);
+  overflow: hidden;
+  /* An application, not a page: no text selection, no rubber-banding, no
+     accidental drags leaving the window. Fields opt back in below. */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+input, textarea, select { user-select: text; -webkit-user-select: text; }
+
+/* Frameless window: the caption bar is the drag handle, its buttons are not. */
+.titlebar { -webkit-app-region: drag; }
+.wbtn, .sysmark, .menubar, .optbar, .toolrail, .statusbar, .dock-tabs { -webkit-app-region: no-drag; }
+
+/* ---------------------------------------------------------------- scrollbars */
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: color-mix(in srgb, var(--sunken) 70%, transparent); }
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--edge);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--edge) 70%, var(--muted)); background-clip: content-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* ---------------------------------------------------------------- controls */
+
+button {
+  margin: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+
+.btn, .obtn, .wbtn, .tool, .menu, .jump-chip, .seg-btn, .btn-step {
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
+}
+
+.btn:hover, .obtn:hover, .seg-btn:hover, .btn-step:hover { background: var(--hover); }
+
+.btn:active, .obtn:active, .seg-btn:active, .btn-step:active { background: var(--pressed); }
+
+.btn:focus-visible, .obtn:focus-visible, .wbtn:focus-visible, .tool:focus-visible,
+.menu:focus-visible, .seg-btn:focus-visible, .btn-step:focus-visible, .jump-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.btn:disabled, .obtn:disabled, .btn-step:disabled { opacity: 0.4; }
+
+.btn { height: var(--row); padding: 0 10px; }
+
+.btn-primary, .obtn-primary {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--edge));
+  background: color-mix(in srgb, var(--accent) 22%, var(--raised));
+  color: color-mix(in srgb, var(--accent) 30%, #ffffff);
+}
+
+.btn-primary:hover, .obtn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 32%, var(--raised));
+}
+
+select, input[type="number"], input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  height: var(--row);
+  padding: 0 6px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  color: var(--text);
+  font: var(--fs-label)/1 var(--font);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+select:focus, input[type="number"]:focus, input[type="text"]:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--edge));
+  box-shadow: var(--focus);
+}
+
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+input[type="color"] {
+  width: 34px;
+  height: var(--row);
+  padding: 2px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* The slider: a hairline track with the travelled part inked in the accent.
+   `--fill` is written by shell.js on input and after every UI sync, which is
+   what gives it the "set amount" look every editing app has. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 3px;
+  background:
+    linear-gradient(to right,
+      var(--accent) 0 var(--fill, 0%),
+      color-mix(in srgb, var(--edge) 80%, var(--sunken)) var(--fill, 0%) 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--edge));
+  border-radius: 50%;
+  background: linear-gradient(180deg, #dfe7ff, var(--accent));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+input[type="range"]:focus-visible { outline: none; }
+input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus), 0 1px 3px rgba(0, 0, 0, 0.6); }
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 3px;
+  background: var(--sunken);
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--edge));
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ---------------------------------------------------------------- utilities */
+
+.readout {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+
+.readout b { color: var(--text); font-weight: 600; }
+
+.is-dim { opacity: 0.72; }
+
+.opt-grow { flex: 1 1 auto; min-width: 0; }
+
+.inline { display: inline-flex; align-items: center; gap: 6px; }
+.inline > span { color: var(--muted); font-size: var(--fs-label); white-space: nowrap; }
+
+.hint {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.hint b { color: var(--text); font-weight: 600; }

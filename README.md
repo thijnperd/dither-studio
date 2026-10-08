@@ -11,6 +11,32 @@ its own window with its own session, drop a file on it and it prints. The same
 folder also opens as a page in any browser, and can be installed from the browser
 as an app. Everything runs on your machine; nothing is uploaded anywhere.
 
+![The app window, the desktop build](docs/desktop-app.png)
+
+## Three builds, one engine
+
+This repository ships Dither Studio three ways. They share exactly one thing —
+`dither.js`, the DOM-free engine — and differ everywhere else on purpose.
+
+| Build | Where | State | How you get it |
+|---|---|---|---|
+| **Web demo** | `demo/` | frozen | <https://thijnperd.github.io/dither-studio/> — published from `demo/` by GitHub Pages |
+| **Launcher app** | this folder | frozen | the launchers above: the page in an app-mode window with its own profile |
+| **Desktop app** | [`desktop/`](desktop/) | **active** | `Dither-Studio-Setup-<version>.exe` from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
+
+The desktop build is the one being developed: an Electron application with a
+caption bar it draws itself, menus holding the whole catalogue, the operating
+system's own open and save dialogs, a tool rail, tabbed documents and a dock of
+panels. Its [README](desktop/README.md) covers running it and building it, and
+its [guide](desktop/GUIDE.md) is the tour of the window.
+
+The two web builds are frozen: they are the versions people have links to, and
+`demo/` is a byte-for-byte copy of the folder in the portfolio repository.
+Changes that are about *dithering* belong in `dither.js`, which all three run —
+see [`desktop/tools/sync-renderer.js`](desktop/tools/sync-renderer.js) for how
+the desktop renderer is kept in step, and `node tools/sync-renderer.js --check`
+for how CI proves it.
+
 ![The console](docs/screenshot-console.png)
 
 New here? **[GUIDE.md](GUIDE.md)** is the tour: running it as an app, the console
@@ -26,6 +52,7 @@ performance and troubleshooting.
 | **Linux** | `./dither-studio.sh` (make it executable once: `chmod +x dither-studio.sh`) |
 | **Any browser** | open **`index.html`** |
 | **Installed app** | open `index.html`, then use the browser's *Install* / *Create shortcut* command — `manifest.webmanifest` makes it installable |
+| **Desktop app** | [`desktop/`](desktop/) — or the installer from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
 The launchers use Chrome, Edge, Brave or Chromium in app mode (`--app`), with a
 profile of the app's own — under `%LOCALAPPDATA%\Dither Studio`, `~/Library/Application

@@ -1,0 +1,176 @@
+<!doctype html>
+<!-- ==========================================================================
+     splash.html — the startup animation of Dither Studio (desktop).
+
+     This is a REPLACEABLE SLOT. It is one self-contained file: inline CSS, no
+     script, no fonts or images from disk, nothing fetched. Swap the three parts
+     below and the app keeps working:
+
+       1. THE MARK      -> the inline <svg> inside .mark (four squares, a 2x2
+                           ordered-dither mask, staggered in opacity).
+       2. THE WORDMARK  -> the .wordmark element (DITHER + STUDIO, the second
+                           half in the accent colour).
+       3. THE TIMING    -> the single `--boot` custom property on .stage. Every
+                           delay and duration is a fraction of it, so retiming
+                           the whole animation is a one-line edit.
+
+     The main process (electron/main.js) shows this window, waits at least
+     `SPLASH_MIN_MS` (1200 ms) and then closes it as the app window is revealed
+     — so a LONGER animation also needs that number raised, or the tail of it
+     will be cut off. Keep the whole thing looking finished by ~1s.
+
+     Motion rules: opacity and transform only, ease-out, no bounce, no spin, no
+     blur, no filter, nothing that loops forever.
+     ========================================================================== -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Dither Studio</title>
+  <style>
+    :root {
+      /* The house palette (see src/styles/tokens.css). Hard-coded on purpose:
+         the splash renders before any stylesheet is loaded. */
+      --bg: #0e0f13;
+      --panel: #15171d;
+      --line: #262a34;
+      --muted: #8b91a3;
+      --accent: #7aa2ff;
+      --font: "SF Mono", "Cascadia Code", Consolas, "JetBrains Mono", Menlo, monospace;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: transparent;   /* the window itself is transparent */
+      overflow: hidden;
+      font-family: var(--font);
+      -webkit-user-select: none;
+      user-select: none;
+      cursor: default;
+    }
+
+    /* The stage carries the one timing knob. */
+    .stage {
+      --boot: 1.2s;            /* <<< TOTAL DURATION: change this line */
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto auto auto;
+      align-content: center;
+      justify-items: center;
+      gap: 14px;
+      padding: 26px 30px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--bg);
+      overflow: hidden;
+      -webkit-app-region: drag;
+    }
+
+    /* ---- 1. the mark: a 2x2 threshold mask assembling square by square ---- */
+    .mark {
+      display: block;
+      width: 44px;
+      height: 44px;
+      color: var(--accent);
+    }
+
+    .mark .sq {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: square-in calc(var(--boot) * 0.24) cubic-bezier(0.22, 0.8, 0.3, 1) both;
+    }
+
+    .mark .sq-1 { animation-delay: calc(var(--boot) * 0.02); }
+    .mark .sq-2 { animation-delay: calc(var(--boot) * 0.08); }
+    .mark .sq-3 { animation-delay: calc(var(--boot) * 0.14); }
+    .mark .sq-4 { animation-delay: calc(var(--boot) * 0.20); }
+
+    @keyframes square-in {
+      from { opacity: 0; transform: scale(0.55); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ---- 2. the wordmark ---- */
+    .wordmark {
+      display: flex;
+      align-items: baseline;
+      gap: 0.42em;
+      margin: 0;
+      padding-left: 0.34em;         /* balances the trailing letter-space */
+      font-size: 12.5px;
+      font-weight: 500;
+      letter-spacing: 0.34em;
+      white-space: nowrap;
+      color: var(--muted);
+      animation: word-in calc(var(--boot) * 0.34) ease-out both;
+      animation-delay: calc(var(--boot) * 0.26);
+    }
+
+    .wordmark .studio { color: var(--accent); }
+
+    @keyframes word-in {
+      from { opacity: 0; transform: translateY(3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---- 3. the hairline that inks in ---- */
+    .track {
+      width: 186px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--line);
+      overflow: hidden;
+    }
+
+    .track .fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+      transform-origin: left center;
+      animation: fill-in calc(var(--boot) * 0.72) cubic-bezier(0.3, 0.75, 0.25, 1) both;
+      animation-delay: calc(var(--boot) * 0.24);
+    }
+
+    @keyframes fill-in {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+
+    /* ---- the honest fallback: show the finished state, still ---- */
+    @media (prefers-reduced-motion: reduce) {
+      .mark .sq,
+      .wordmark,
+      .track .fill { animation: none; }
+
+      .mark .sq { opacity: 1; transform: none; }
+      .wordmark { opacity: 1; transform: none; }
+      .track .fill { transform: scaleX(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+
+    <!-- 1. the mark -->
+    <svg class="mark" viewBox="0 0 16 16" width="44" height="44" aria-hidden="true" focusable="false">
+      <rect class="sq sq-1" x="1" y="1" width="6" height="6" fill="currentColor" opacity="0.9" />
+      <rect class="sq sq-2" x="9" y="1" width="6" height="6" fill="currentColor" opacity="0.55" />
+      <rect class="sq sq-3" x="1" y="9" width="6" height="6" fill="currentColor" opacity="0.55" />
+      <rect class="sq sq-4" x="9" y="9" width="6" height="6" fill="currentColor" opacity="0.9" />
+    </svg>
+
+    <!-- 2. the wordmark -->
+    <p class="wordmark" role="img" aria-label="Dither Studio">
+      <span>DITHER</span><span class="studio">STUDIO</span>
+    </p>
+
+    <!-- 3. the hairline -->
+    <div class="track" aria-hidden="true"><span class="fill"></span></div>
+
+  </div>
+</body>
+</html>

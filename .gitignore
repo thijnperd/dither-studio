@@ -9,5 +9,11 @@ Desktop.ini
 # something ever adds one.
 node_modules/
 
+# The desktop build in desktop/ does have dependencies and a build step. Its
+# installed packages and its packaged output are machine-made, so they stay
+# out; the icon it packages from is generated and committed.
+desktop/dist/
+desktop/node_modules/
+
 # Local scratch
 *.local
