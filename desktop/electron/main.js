@@ -20,6 +20,8 @@
  *   DITHER_SMOKE_SAVE=<path>   answer every save dialog with this path
  *   DITHER_SMOKE_OPEN=<path>   answer every open dialog with this file
  *   DITHER_SPLASH_MS=<ms>      override how long the splash stays up
+ *   DITHER_SPLASH_AT=<ms>      freeze the splash animation at that moment and
+ *                              hold it there (how its stages are photographed)
  */
 'use strict';
 
@@ -29,7 +31,12 @@ const fsSync = require('fs');
 const path = require('path');
 
 const APP_ROOT = path.join(__dirname, '..');
-const SPLASH_MIN_MS = Number(process.env.DITHER_SPLASH_MS || 1200);
+// The splash plays a fixed animation — two hands reaching, then the left one
+// dithered and glowing — and this is what the window waits for before it opens.
+// It matches the animation's own total (T.settle in splash.html): raise one
+// without the other and the app either cuts the animation short or leaves a
+// finished splash sitting over an open window.
+const SPLASH_MIN_MS = Number(process.env.DITHER_SPLASH_MS || 2900);
 const SMOKE = process.argv.includes('--smoke');
 const SMOKE_SCRIPT = (function () {
   const i = process.argv.indexOf('--smoke-script');
@@ -100,8 +107,8 @@ function answerSave(options) {
 
 function createSplash() {
   splashWindow = new BrowserWindow({
-    width: 420,
-    height: 200,
+    width: 560,
+    height: 280,
     frame: false,
     transparent: true,
     resizable: false,
@@ -115,7 +122,14 @@ function createSplash() {
     hasShadow: false,
     webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
-  splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+  splashWindow.loadFile(path.join(__dirname, 'splash.html'), {
+    query: {
+      boot: String(SPLASH_MIN_MS),
+      // A smoke run can stop the animation on any frame and photograph it; a
+      // normal boot never passes this.
+      at: process.env.DITHER_SPLASH_AT || ''
+    }
+  });
   splashWindow.once('ready-to-show', function () {
     if (!splashWindow || splashWindow.isDestroyed()) return;
     splashWindow.show();
@@ -475,6 +489,13 @@ function clickMenuItem(spec) {
 
 async function runSmoke() {
   const outDir = process.env.DITHER_SMOKE_DIR || require('os').tmpdir();
+  // Photograph the splash first. It is a 2.9 s animation and the page checks
+  // take longer than that, so a capture at the end of the run would always
+  // find it gone; DITHER_SPLASH_AT holds any single frame instead.
+  const splashShot = path.join(outDir, 'dither-splash.png');
+  try {
+    if (splashWindow && !splashWindow.isDestroyed()) smoke.shots.push(await captureTo(splashWindow, splashShot));
+  } catch (err) { smoke.errors.push('splash capture: ' + err.message); }
   await new Promise(function (resolve) { setTimeout(resolve, 250); });
   if (process.env.DITHER_SMOKE_KEY && process.env.DITHER_SMOKE_KEY_BEFORE) {
     await pressSmokeKey();
@@ -506,9 +527,13 @@ async function runSmoke() {
   // Let the async halves of the run settle: dialogs, file writes, IPC replies.
   await new Promise(function (resolve) { setTimeout(resolve, 900); });
   const shot = path.join(outDir, 'dither-desktop.png');
-  const splashShot = path.join(outDir, 'dither-splash.png');
   try { smoke.shots.push(await captureTo(mainWindow, shot)); } catch (err) { smoke.errors.push('capture: ' + err.message); }
-  try { if (splashWindow && !splashWindow.isDestroyed()) smoke.shots.push(await captureTo(splashWindow, splashShot)); } catch (err) { /* splash already gone */ }
+  try {
+    const stillUp = path.join(outDir, 'dither-splash.png');
+    if (splashWindow && !splashWindow.isDestroyed() && smoke.shots.indexOf(stillUp) === -1) {
+      smoke.shots.push(await captureTo(splashWindow, stillUp));
+    }
+  } catch (err) { /* splash already gone */ }
 
   // A smoke script is a verdict of its own: if the page ran checks and one
   // failed, the run failed, whoever started it.

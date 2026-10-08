@@ -27,12 +27,14 @@ code-signed. *More info* → *Run anyway*.
 
 ## 2. Starting it
 
-Launching shows a small splash: the press's mark assembling, the wordmark, and a
-hairline that inks itself in. It is a placeholder, and it is yours to replace —
-`electron/splash.html` is one self-contained file, and the README says exactly
-which three things to change.
+Launching shows the app's own startup screen: two hands reach toward each other
+across a dark panel, and the moment they touch, the left hand is dithered — real
+dots, spreading back from the fingertip — and starts to glow. The wordmark inks
+in underneath and the window opens. It is one self-contained file
+(`electron/splash.html`) and it is yours to replace; the README names the three
+things to change in it.
 
-The splash stays up for 1200 ms or until the window is genuinely ready,
+The screen stays up for 2900 ms or until the window is genuinely ready,
 whichever is longer, so it never covers a half-drawn app. The main window then
 takes focus.
 

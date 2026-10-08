@@ -1,176 +1,540 @@
 <!doctype html>
-<!-- ==========================================================================
-     splash.html — the startup animation of Dither Studio (desktop).
-
-     This is a REPLACEABLE SLOT. It is one self-contained file: inline CSS, no
-     script, no fonts or images from disk, nothing fetched. Swap the three parts
-     below and the app keeps working:
-
-       1. THE MARK      -> the inline <svg> inside .mark (four squares, a 2x2
-                           ordered-dither mask, staggered in opacity).
-       2. THE WORDMARK  -> the .wordmark element (DITHER + STUDIO, the second
-                           half in the accent colour).
-       3. THE TIMING    -> the single `--boot` custom property on .stage. Every
-                           delay and duration is a fraction of it, so retiming
-                           the whole animation is a one-line edit.
-
-     The main process (electron/main.js) shows this window, waits at least
-     `SPLASH_MIN_MS` (1200 ms) and then closes it as the app window is revealed
-     — so a LONGER animation also needs that number raised, or the tail of it
-     will be cut off. Keep the whole thing looking finished by ~1s.
-
-     Motion rules: opacity and transform only, ease-out, no bounce, no spin, no
-     blur, no filter, nothing that loops forever.
-     ========================================================================== -->
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Dither Studio</title>
-  <style>
-    :root {
-      /* The house palette (see src/styles/tokens.css). Hard-coded on purpose:
-         the splash renders before any stylesheet is loaded. */
-      --bg: #0e0f13;
-      --panel: #15171d;
-      --line: #262a34;
-      --muted: #8b91a3;
-      --accent: #7aa2ff;
-      --font: "SF Mono", "Cascadia Code", Consolas, "JetBrains Mono", Menlo, monospace;
-    }
+<meta charset="utf-8" />
+<title>Dither Studio</title>
+<!--
+  The startup screen.
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: transparent;   /* the window itself is transparent */
-      overflow: hidden;
-      font-family: var(--font);
-      -webkit-user-select: none;
-      user-select: none;
-      cursor: default;
-    }
+  Two hands reach toward each other across a dark panel. When they touch, the
+  left hand is dithered — its own silhouette run through an 8x8 ordered screen,
+  dot by dot, spreading from the fingertip backwards — and starts to glow. The
+  right hand stays smooth, so the moment reads as "the press takes this hand".
+  The wordmark inks in underneath and the window opens.
 
-    /* The stage carries the one timing knob. */
-    .stage {
-      --boot: 1.2s;            /* <<< TOTAL DURATION: change this line */
-      box-sizing: border-box;
-      width: 100%;
-      height: 100%;
-      display: grid;
-      grid-template-rows: auto auto auto;
-      align-content: center;
-      justify-items: center;
-      gap: 14px;
-      padding: 26px 30px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: var(--bg);
-      overflow: hidden;
-      -webkit-app-region: drag;
-    }
+  Three parts are meant to be replaced without touching the rest:
 
-    /* ---- 1. the mark: a 2x2 threshold mask assembling square by square ---- */
-    .mark {
-      display: block;
-      width: 44px;
-      height: 44px;
-      color: var(--accent);
-    }
+    1. THE HANDS   -> `HAND` below holds one hand as a list of round-capped
+                      strokes, drawn with the fingertip at the origin pointing
+                      right; the right hand is the same list mirrored, so the two
+                      always meet. Move a point, or add a stroke, and both hands
+                      (and the dithered copy) follow.
+    2. THE TIMING  -> `T` below is the whole schedule in milliseconds, and
+                      `SPLASH_MIN_MS` in electron/main.js is how long the window
+                      waits before it opens; keep the two totals equal.
+    3. THE INK     -> `--accent` and `paint.ink` below: the colour of the dots
+                      and of the glow.
 
-    .mark .sq {
-      transform-box: fill-box;
-      transform-origin: center;
-      animation: square-in calc(var(--boot) * 0.24) cubic-bezier(0.22, 0.8, 0.3, 1) both;
-    }
+  It is one self-contained document: no script tag, no font, no image and
+  nothing fetched from disk, so it renders before any stylesheet or renderer
+  exists. It also holds still when the system asks for reduced motion.
 
-    .mark .sq-1 { animation-delay: calc(var(--boot) * 0.02); }
-    .mark .sq-2 { animation-delay: calc(var(--boot) * 0.08); }
-    .mark .sq-3 { animation-delay: calc(var(--boot) * 0.14); }
-    .mark .sq-4 { animation-delay: calc(var(--boot) * 0.20); }
+  For tests, `?at=<ms>` freezes the timeline at that moment (used by
+  DITHER_SPLASH_AT, which is how the stages are photographed).
 
-    @keyframes square-in {
-      from { opacity: 0; transform: scale(0.55); }
-      to   { opacity: 1; transform: scale(1); }
-    }
+  Main-process contract: electron/main.js waits `SPLASH_MIN_MS` (2900 ms) after
+  the splash is shown, then destroys it as the app window is revealed.
+-->
+<style>
+  :root {
+    /* The house palette (see src/styles/tokens.css), hard-coded on purpose:
+       the splash renders before any stylesheet is loaded. */
+    --ink: #07080b;
+    --panel: #0c0e13;
+    --line: #232936;
+    --paper: #e9e7e2;
+    --accent: #7aa2ff;
+  }
 
-    /* ---- 2. the wordmark ---- */
-    .wordmark {
-      display: flex;
-      align-items: baseline;
-      gap: 0.42em;
-      margin: 0;
-      padding-left: 0.34em;         /* balances the trailing letter-space */
-      font-size: 12.5px;
-      font-weight: 500;
-      letter-spacing: 0.34em;
-      white-space: nowrap;
-      color: var(--muted);
-      animation: word-in calc(var(--boot) * 0.34) ease-out both;
-      animation-delay: calc(var(--boot) * 0.26);
-    }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+    /* The window is transparent and frameless: nothing here is selectable. */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+  }
 
-    .wordmark .studio { color: var(--accent); }
+  .panel {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(120% 150% at 50% 26%, #14161e 0%, var(--panel) 58%, var(--ink) 100%);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.035);
+    opacity: 0;
+    animation: panel-in 180ms ease-out 60ms both;
+  }
 
-    @keyframes word-in {
-      from { opacity: 0; transform: translateY(3px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+  @keyframes panel-in {
+    from { opacity: 0; transform: scale(0.985); }
+    to   { opacity: 1; transform: scale(1); }
+  }
 
-    /* ---- 3. the hairline that inks in ---- */
-    .track {
-      width: 186px;
-      height: 2px;
-      border-radius: 2px;
-      background: var(--line);
-      overflow: hidden;
-    }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
 
-    .track .fill {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border-radius: 2px;
-      background: var(--accent);
-      transform-origin: left center;
-      animation: fill-in calc(var(--boot) * 0.72) cubic-bezier(0.3, 0.75, 0.25, 1) both;
-      animation-delay: calc(var(--boot) * 0.24);
-    }
+  /* The wordmark is real text, not pixels: canvas text would soften under the
+     glow, and this is the one thing that must stay crisp. Its resting state is
+     visible, and the script fades it in; if the script ever failed, the user
+     would still see the finished screen. */
+  .wordmark {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 30px;
+    margin: 0;
+    text-align: center;
+    font: 500 15px/1 "Segoe UI", system-ui, -apple-system, sans-serif;
+    letter-spacing: 0.42em;
+    text-indent: 0.42em;
+    color: var(--paper);
+    text-transform: uppercase;
+    opacity: 1;
+  }
 
-    @keyframes fill-in {
-      from { transform: scaleX(0); }
-      to   { transform: scaleX(1); }
-    }
+  .wordmark .studio { color: var(--accent); }
 
-    /* ---- the honest fallback: show the finished state, still ---- */
-    @media (prefers-reduced-motion: reduce) {
-      .mark .sq,
-      .wordmark,
-      .track .fill { animation: none; }
+  .track {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    width: 132px;
+    height: 2px;
+    margin-left: -66px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+  }
 
-      .mark .sq { opacity: 1; transform: none; }
-      .wordmark { opacity: 1; transform: none; }
-      .track .fill { transform: scaleX(1); }
-    }
-  </style>
+  .track .fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg,
+      rgba(122, 162, 255, 0.15), var(--accent));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel { animation: none; opacity: 1; }
+  }
+</style>
 </head>
 <body>
-  <div class="stage">
-
-    <!-- 1. the mark -->
-    <svg class="mark" viewBox="0 0 16 16" width="44" height="44" aria-hidden="true" focusable="false">
-      <rect class="sq sq-1" x="1" y="1" width="6" height="6" fill="currentColor" opacity="0.9" />
-      <rect class="sq sq-2" x="9" y="1" width="6" height="6" fill="currentColor" opacity="0.55" />
-      <rect class="sq sq-3" x="1" y="9" width="6" height="6" fill="currentColor" opacity="0.55" />
-      <rect class="sq sq-4" x="9" y="9" width="6" height="6" fill="currentColor" opacity="0.9" />
-    </svg>
-
-    <!-- 2. the wordmark -->
+  <div class="panel">
+    <canvas aria-hidden="true"></canvas>
     <p class="wordmark" role="img" aria-label="Dither Studio">
-      <span>DITHER</span><span class="studio">STUDIO</span>
+      <span>Dither</span> <span class="studio">Studio</span>
     </p>
-
-    <!-- 3. the hairline -->
     <div class="track" aria-hidden="true"><span class="fill"></span></div>
-
   </div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---- the schedule, in milliseconds ------------------------------- */
+
+  var T = {
+    approach: [0, 1380],     // the two hands close the gap
+    touch: 1400,             // fingertips meet
+    wipe: [1430, 2160],      // the dithering spreads back over the left hand
+    bloom: [1470, 2170],     // the glow comes up
+    pulse: [2170, 2860],     // one breath of extra glow as the window opens
+    wordmark: [1930, 2320],  // the name inks in
+    rule: [2060, 2600],      // the hairline fills
+    settle: 2900             // everything is still
+  };
+
+  var params = new URLSearchParams(location.search);
+  var HOLD = params.has('at') ? Number(params.get('at')) || 0 : null;
+  if (params.has('boot')) T.settle = Math.max(T.settle, Number(params.get('boot')) || 0);
+
+  var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- the two hands ----------------------------------------------- */
+
+  // One hand, described once, in a local space where the fingertip is the
+  // origin and the arm runs off to the left (-x) and down (+y). Every piece is
+  // a round-capped stroke, so the silhouette is a union of fat lines and the
+  // dithered copy comes out of the same list for free.
+  var ARM = [
+    // Index finger: three tapering strokes, so it reads as a finger rather than
+    // a stick. Then the palm, the curled fingers under it, the folded thumb and
+    // the arm running off frame.
+    { x1: -4,   y1: 0,    x2: -28,  y2: -1,   w: 11 },   // index, tip
+    { x1: -26,  y1: -1,   x2: -50,  y2: 1,    w: 14 },   // index, middle joint
+    { x1: -48,  y1: 1,    x2: -68,  y2: 6,    w: 17 },   // index, base
+    { x1: -56,  y1: 4,    x2: -78,  y2: 12,   w: 26 },   // knuckles
+    { x1: -70,  y1: 16,   x2: -100, y2: 26,   w: 42 },   // palm
+    { x1: -94,  y1: 24,   x2: -116, y2: 33,   w: 38 },   // heel of the hand
+    { x1: -66,  y1: 24,   x2: -58,  y2: 42,   w: 17 },   // middle finger, curled
+    { x1: -58,  y1: 42,   x2: -66,  y2: 52,   w: 16 },
+    { x1: -82,  y1: 28,   x2: -76,  y2: 46,   w: 16 },   // ring finger, curled
+    { x1: -76,  y1: 46,   x2: -84,  y2: 56,   w: 15 },
+    { x1: -97,  y1: 32,   x2: -93,  y2: 50,   w: 14 },   // little finger, curled
+    { x1: -93,  y1: 50,   x2: -100, y2: 59,   w: 13 },
+    { x1: -98,  y1: 6,    x2: -118, y2: -10,  w: 20 },   // thumb, first joint
+    { x1: -116, y1: -10,  x2: -133, y2: -23,  w: 17 },   // thumb, folded back
+    { x1: -118, y1: 30,   x2: -148, y2: 36,   w: 40 },   // wrist
+    { x1: -146, y1: 35,   x2: -232, y2: 44,   w: 38 },   // forearm
+    { x1: -228, y1: 43,   x2: -420, y2: 54,   w: 34 }    // forearm, off frame
+  ];
+
+  // Where the two hands meet, in panel fractions.
+  var MEET = { x: 0.5, y: 0.43 };
+  // How far apart they start, in pixels, and how much lower the right hand sits
+  // so the two fingers cross at an angle instead of fusing into one line.
+  var GAP = 30;
+  var LOWER = 6;
+
+  var canvas = document.querySelector('canvas');
+  var ctx = canvas.getContext('2d');
+  var box = { w: 0, h: 0, dpr: 1 };
+  var geometry = null;   // the hands, laid out for the current box
+  var dithered = null;   // the left hand, already screened to dots
+  var bloom = null;      // a blurred, tinted copy of it
+
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  /* ---- geometry ---------------------------------------------------- */
+
+  // Lay the arm out in canvas coordinates: fingertip at (mx, my), arm running
+  // left, mirrored for the second hand.
+  function pieces(mx, my, dir, scale) {
+    var out = [];
+    for (var i = 0; i < ARM.length; i++) {
+      var s = ARM[i];
+      out.push({
+        x1: mx + dir * s.x1 * scale,
+        y1: my + s.y1 * scale,
+        x2: mx + dir * s.x2 * scale,
+        y2: my + s.y2 * scale,
+        w: s.w * scale
+      });
+    }
+    return out;
+  }
+
+  function drawArm(list, style, offsetX, offsetY) {
+    ctx.save();
+    ctx.translate(offsetX || 0, offsetY || 0);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = style;
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      ctx.beginPath();
+      ctx.moveTo(p.x1, p.y1);
+      ctx.lineTo(p.x2, p.y2);
+      ctx.lineWidth = p.w;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // The flesh: lit along the top of the hand, falling away down and back.
+  function fleshGradient(mx, my, dir, scale) {
+    var g = ctx.createLinearGradient(mx, my - 46 * scale, mx + dir * -150 * scale, my + 96 * scale);
+    g.addColorStop(0, '#f8f6f2');
+    g.addColorStop(0.38, '#e2ded7');
+    g.addColorStop(0.72, '#bcc0ca');
+    g.addColorStop(1, '#8f95a4');
+    return g;
+  }
+
+  /* ---- the dither pass --------------------------------------------- */
+
+  var BAYER = (function () {
+    // The classic 8x8 ordered screen, built by recursion like the app builds
+    // its own matrices.
+    var m = [[0]];
+    while (m.length < 8) {
+      var n = m.length, next = [], y, x;
+      for (y = 0; y < n * 2; y++) next.push(new Array(n * 2));
+      for (y = 0; y < n; y++) {
+        for (x = 0; x < n; x++) {
+          var v = m[y][x] * 4;
+          next[y][x] = v;
+          next[y][x + n] = v + 2;
+          next[y + n][x] = v + 3;
+          next[y + n][x + n] = v + 1;
+        }
+      }
+      m = next;
+    }
+    return m;
+  }());
+
+  // Screen one hand to dots: the silhouette is filled with a shade field, then
+  // every pixel is kept or dropped against the ordered screen, so the dot
+  // density carries the shading. Done once, never per frame.
+  function screenHand(list, mx, my, dir, scale) {
+    var w = Math.round(box.w * box.dpr);
+    var h = Math.round(box.h * box.dpr);
+    var off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    var octx = off.getContext('2d');
+    octx.scale(box.dpr, box.dpr);
+    octx.lineCap = 'round';
+    octx.lineJoin = 'round';
+    octx.strokeStyle = shadeGradient(octx, mx, my, dir, scale);
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      octx.beginPath();
+      octx.moveTo(p.x1, p.y1);
+      octx.lineTo(p.x2, p.y2);
+      octx.lineWidth = p.w;
+      octx.stroke();
+    }
+    var img = octx.getImageData(0, 0, w, h);
+    var data = img.data;
+    var ink = [238, 243, 255];
+    // One dot per CSS pixel: finer than that and the screen reads as noise
+    // rather than as dots at the distance a splash is looked at.
+    var cell = Math.max(1, Math.round(box.dpr));
+    for (var cy = 0; cy < h; cy += cell) {
+      for (var cx = 0; cx < w; cx += cell) {
+        var sx = Math.min(w - 1, cx + (cell >> 1));
+        var sy = Math.min(h - 1, cy + (cell >> 1));
+        var at = (sy * w + sx) * 4;
+        var keep = false;
+        if (data[at + 3] !== 0) {
+          var lum = (data[at] * 0.299 + data[at + 1] * 0.587 + data[at + 2] * 0.114) / 255;
+          // Both ends of the hand stay inside the screen: the lit side keeps a
+          // third of its cells empty, the shadowed side keeps a fifth inked, so
+          // the dot field carries the form instead of closing up into white.
+          var level = 0.20 + 0.48 * lum;
+          keep = level > (BAYER[sy & 7][sx & 7] + 0.5) / 64;
+        }
+        var yEnd = Math.min(cy + cell, h);
+        var xEnd = Math.min(cx + cell, w);
+        for (var y2 = cy; y2 < yEnd; y2++) {
+          for (var x2 = cx; x2 < xEnd; x2++) {
+            var p = (y2 * w + x2) * 4;
+            if (keep) {
+              data[p] = ink[0];
+              data[p + 1] = ink[1];
+              data[p + 2] = ink[2];
+              data[p + 3] = 255;
+            } else {
+              data[p + 3] = 0;
+            }
+          }
+        }
+      }
+    }
+    octx.putImageData(img, 0, 0);
+    return off;
+  }
+
+  function shadeGradient(octx, mx, my, dir, scale) {
+    var g = octx.createLinearGradient(mx, my - 40 * scale, mx + dir * -160 * scale, my + 92 * scale);
+    // Capped at the top on purpose: no part of the hand reaches full coverage,
+    // so even the lit fingertip keeps the gaps that make it read as a screen.
+    g.addColorStop(0, 'rgb(231,231,231)');
+    g.addColorStop(0.5, 'rgb(178,178,178)');
+    g.addColorStop(1, 'rgb(86,86,86)');
+    return g;
+  }
+
+  // The glow: the same dots, blurred and tinted to the accent.
+  function bloomOf(source) {
+    var w = source.width, h = source.height;
+    var off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    var octx = off.getContext('2d');
+    octx.filter = 'blur(' + Math.round(9 * box.dpr) + 'px)';
+    octx.drawImage(source, 0, 0);
+    octx.filter = 'none';
+    octx.globalCompositeOperation = 'source-in';
+    octx.fillStyle = 'rgba(122, 162, 255, 0.92)';
+    octx.fillRect(0, 0, w, h);
+    return off;
+  }
+
+  /* ---- sizing ------------------------------------------------------ */
+
+  // Sizing, and — because it is the same job — the one-time screen pass over the
+  // hand. Cached against the box, so a frame only ever blits.
+  function layout() {
+    var w = Math.max(320, Math.round(canvas.clientWidth || 560));
+    var h = Math.max(180, Math.round(canvas.clientHeight || 280));
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (dithered && geometry && box.w === w && box.h === h && box.dpr === dpr) return geometry;
+
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    box = { w: w, h: h, dpr: dpr };
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var scale = Math.min(1, h / 280) * Math.min(1.12, Math.max(0.86, w / 560));
+    var mx = w * MEET.x;
+    var my = h * MEET.y;
+    var left = pieces(mx, my, 1, scale);
+    var right = pieces(mx, my, -1, scale);
+
+    dithered = screenHand(left, mx, my, 1, scale);
+    bloom = bloomOf(dithered);
+    geometry = { mx: mx, my: my, scale: scale, left: left, right: right };
+    return geometry;
+  }
+
+  /* ---- the frame --------------------------------------------------- */
+
+  function paint(t) {
+    var geo = layout();
+
+    var approach = ease(clamp(t / T.approach[1], 0, 1));
+    var shift = (1 - approach) * GAP;
+    var wipe = clamp((t - T.wipe[0]) / (T.wipe[1] - T.wipe[0]), 0, 1);
+
+    ctx.clearRect(0, 0, box.w, box.h);
+
+    // The right hand is the mirror image of the left one and never dithers.
+    drawArm(geo.right, fleshGradient(geo.mx, geo.my, -1, geo.scale), shift, LOWER);
+
+    if (!dithered) {
+      drawArm(geo.left, fleshGradient(geo.mx, geo.my, 1, geo.scale), -shift);
+    } else {
+      // The untouched part of the hand stays flesh; the wiped part is dots.
+      var edge = geo.mx - wipe * (geo.mx + 90);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(-80, -80, edge + 80, box.h + 160);
+      ctx.clip();
+      drawArm(geo.left, fleshGradient(geo.mx, geo.my, 1, geo.scale), -shift);
+      ctx.restore();
+
+      if (wipe > 0) {
+        // Two passes at the boundary: full ink well inside the wipe, a soft
+        // half-lit edge at the moment the screen is still closing in.
+        // The soft half-lit edge first, then the solid dots on top of it. The
+        // clip is taken in panel space, before the hand's offset is applied, so
+        // the wipe edge stays where the screen is closing rather than travelling
+        // with the hand.
+        ctx.save();
+        ctx.clip(wipePath(edge + 12, 4));
+        ctx.globalAlpha = 0.45;
+        ctx.translate(-shift, 0);
+        ctx.drawImage(dithered, 0, 0, box.w, box.h);
+        ctx.restore();
+
+        ctx.save();
+        ctx.clip(wipePath(edge - 12, 1));
+        ctx.translate(-shift, 0);
+        ctx.drawImage(dithered, 0, 0, box.w, box.h);
+        ctx.restore();
+      }
+    }
+
+    // The glow, once the screen has taken hold.
+    if (bloom) {
+      var up = clamp((t - T.bloom[0]) / (T.bloom[1] - T.bloom[0]), 0, 1);
+      var breath = clamp((t - T.pulse[0]) / (T.pulse[1] - T.pulse[0]), 0, 1);
+      var glow = up * (0.5 + 0.85 * Math.sin(Math.PI * breath));
+      if (glow > 0.001) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = clamp(glow, 0, 1) * 0.58;
+        ctx.drawImage(bloom, 0, 0, box.w, box.h);
+        ctx.restore();
+      }
+    }
+
+    // The spark at the moment they touch.
+    var sinceTouch = t - T.touch;
+    if (sinceTouch > -40 && sinceTouch < 320) {
+      var age = clamp((sinceTouch + 40) / 360, 0, 1);
+      var r = 3 + age * 16;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = (1 - age) * 0.9;
+      ctx.strokeStyle = 'rgba(196, 214, 255, 0.9)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      var sparkY = geo.my + LOWER / 2;
+      ctx.arc(geo.mx, geo.my, r, 0, Math.PI * 2);
+      ctx.stroke();
+      var halo = ctx.createRadialGradient(geo.mx, sparkY, 0, geo.mx, sparkY, 12);
+      halo.addColorStop(0, 'rgba(255,255,255,0.95)');
+      halo.addColorStop(0.4, 'rgba(160,190,255,0.35)');
+      halo.addColorStop(1, 'rgba(122,162,255,0)');
+      ctx.globalAlpha = 1 - age * 0.7;
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(geo.mx, sparkY, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    word(t);
+  }
+
+  // A wavy vertical edge: a straight clip line reads as a shutter, and a wiggle
+  // reads as a screen closing over the hand.
+  function wipePath(edge, wobble) {
+    var p = new Path2D();
+    p.moveTo(edge, -40);
+    for (var y = -40; y <= box.h + 40; y += 6) {
+      p.lineTo(edge + Math.sin(y * 0.11) * wobble + Math.sin(y * 0.037) * wobble * 1.6, y);
+    }
+    p.lineTo(edge + box.w + 200, box.h + 40);
+    p.lineTo(edge + box.w + 200, -40);
+    p.closePath();
+    return p;
+  }
+
+  /* ---- the wordmark and the hairline ------------------------------- */
+
+  var wordEl = document.querySelector('.wordmark');
+  var fillEl = document.querySelector('.fill');
+
+  function word(t) {
+    var w = t < T.wordmark[0] ? 0 : clamp((t - T.wordmark[0]) / (T.wordmark[1] - T.wordmark[0]), 0, 1);
+    var r = t < T.rule[0] ? 0 : clamp((t - T.rule[0]) / (T.rule[1] - T.rule[0]), 0, 1);
+    wordEl.style.opacity = String(w);
+    wordEl.style.transform = 'translateY(' + (6 * (1 - w)).toFixed(2) + 'px)';
+    fillEl.style.width = (r * 100).toFixed(1) + '%';
+    fillEl.style.opacity = String(r);
+  }
+
+  /* ---- run --------------------------------------------------------- */
+
+  if (REDUCED) {
+    // No motion, no sparks: the finished screen, held.
+    paint(T.settle);
+  } else if (HOLD !== null) {
+    paint(HOLD);
+  } else {
+    var start = null;
+    var tick = function (now) {
+      if (start === null) start = now;
+      var t = now - start;
+      paint(t);
+      // The loop stops on its own: a splash that keeps painting would keep a
+      // core warm behind a window that is already open.
+      if (t < T.settle) requestAnimationFrame(tick);
+      else paint(T.settle);
+    };
+    requestAnimationFrame(tick);
+  }
+}());
+</script>
 </body>
 </html>

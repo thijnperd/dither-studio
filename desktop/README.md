@@ -145,10 +145,11 @@ npm run smoke                                  # boot, check, screenshot, exit 0
 
 `npm run smoke` is `electron . --smoke --smoke-script tools/smoke-in-page.js`.
 `--smoke` loads the real app and waits for it to signal ready, `--smoke-script`
-evaluates that file in the page, then the harness captures the window (and the
-splash, if it is still up) to `$DITHER_SMOKE_DIR`, prints one JSON report and
+evaluates that file in the page, then the harness prints one JSON report and
 exits non-zero on any console error, page error, failed check or failed command
-— the page's own verdict is part of the run's, not a footnote beside it.
+— the page's own verdict is part of the run's, not a footnote beside it. It also
+photographs both windows into `$DITHER_SMOKE_DIR`: the splash first, because it
+is over in under three seconds, and the app window at the end.
 
 The current run makes 33 checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw and their submenus expand to the
@@ -167,6 +168,7 @@ Four more environment variables let it exercise the parts a page cannot reach:
 | `DITHER_SMOKE_KEY=ctrl+s` | send that key through the window's input pipeline (`DITHER_SMOKE_KEY_BEFORE=1` to press before the page script) |
 | `DITHER_SMOKE_REPORT=<path>` | also write the JSON report to a file — the only way to read the verdict of a packaged `.exe`, which has no console |
 | `DITHER_SPLASH_MS=<ms>` | keep the splash up this long, to photograph it |
+| `DITHER_SPLASH_AT=<ms>` | hold the splash animation on that one frame — how each stage was checked and how `docs/desktop-splash.png` was taken |
 | `DITHER_NO_SPLASH=1` | skip the splash entirely |
 
 ```bash
@@ -200,15 +202,35 @@ menu shortcut) and a portable single-file executable. The icon comes from
 `build/icon.png`, which is the app's own mark produced by the app's own press
 (`../tools/make-icons.js`).
 
-## Replace the startup animation
+## The startup screen
 
-`electron/splash.html` is a self-contained document — inline style, no
-scripts, no external files — shown for as long as `SPLASH_MIN_MS` (1200 ms by
-default, `DITHER_SPLASH_MS` overrides it) while the window loads. It is the
-natural place for your own animation: change the mark, the wordmark and the
-`--boot` timing property, and raise `SPLASH_MIN_MS` in `electron/main.js` if
-your animation needs longer than the window does. The main process closes the
-splash when the app has said it is ready, never before that minimum.
+Two hands reach for each other across a dark panel. When they touch, the left
+one is dithered — its own silhouette pushed through an 8x8 ordered screen, dot
+by dot, spreading back from the fingertip — and starts to glow; the right hand
+stays smooth, so the moment reads as the press taking a hand. The wordmark inks
+in underneath and the window opens.
+
+The dither is real, and it is the same idea as the app: the hand is drawn once
+into an offscreen canvas as a shade field, every pixel is kept or dropped
+against the screen, and the frames after that only blit. The whole pass happens
+once, not per frame — a splash that re-screened the hand sixty times a second
+would be the one thing in this project that pegged a core.
+
+`electron/splash.html` is one self-contained document (inline style, inline
+script, nothing fetched from disk) and it is meant to be replaced. Its header
+names the three parts to change: `ARM` and `MEET`, the list of round-capped
+strokes the hand is built from and where the two meet; `T`, the whole schedule
+in milliseconds; and the ink colour. If you change the total, change
+`SPLASH_MIN_MS` in `electron/main.js` (2900 ms) to match — the main process
+holds the splash for that long, or until the window is genuinely ready,
+whichever is longer, and closes it only then.
+
+To look at a single frame while you work on it, hold the animation and shoot it:
+
+```bash
+DITHER_SPLASH_MS=99999 DITHER_SPLASH_AT=2400 npm run smoke
+# -> $DITHER_SMOKE_DIR/dither-splash.png, frozen at 2.4 s
+```
 
 ## Performance
 

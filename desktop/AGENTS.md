@@ -33,7 +33,7 @@ hunk matches exactly once, so a stale hunk fails loudly — that is the point.
 |---|---|
 | `electron/main.js` | The window, the splash, native dialogs, the clipboard, the application menu, single-instance handling, and the smoke harness. No catalogue data: the renderer expands `src/menu-spec.js` and sends the finished tree. |
 | `electron/preload.js` | The only bridge to the OS. Context-isolated, `nodeIntegration` off, every channel named `ds:*`, every handler returning a plain object. Add a verb here before you use it in the renderer. |
-| `electron/splash.html` | The startup animation. Self-contained, inline style, no scripts. This is the file a designer replaces. |
+| `electron/splash.html` | The startup screen: two hands reach, the left one is dithered and glows, the window opens. One self-contained document (inline style and script, nothing fetched); a canvas timeline with a single ordered-dither pass, never one per frame. This is the file a designer replaces. |
 | `src/index.html` | The window's markup. Every id in `src/renderer/app.js`'s `el` map must exist here; the panels are the frozen web markup inside new chrome. |
 | `src/menu-spec.js` | The one menu definition. `catalogue:` entries are expanded by the host against the app's own tables, so a new algorithm can never be missing from a menu. |
 | `src/renderer/{dither,video,app}.js` | Generated. Do not hand-edit; see the first rule. |
