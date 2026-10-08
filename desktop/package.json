@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "electron .",
-    "smoke": "electron . --smoke",
+    "smoke": "electron . --smoke --smoke-script tools/smoke-in-page.js",
     "pack": "electron-builder --win --dir",
     "dist": "electron-builder --win"
   },

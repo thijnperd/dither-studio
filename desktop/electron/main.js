@@ -510,8 +510,12 @@ async function runSmoke() {
   try { smoke.shots.push(await captureTo(mainWindow, shot)); } catch (err) { smoke.errors.push('capture: ' + err.message); }
   try { if (splashWindow && !splashWindow.isDestroyed()) smoke.shots.push(await captureTo(splashWindow, splashShot)); } catch (err) { /* splash already gone */ }
 
+  // A smoke script is a verdict of its own: if the page ran checks and one
+  // failed, the run failed, whoever started it.
+  const inPageOk = !smoke.result || smoke.result.ok !== false;
+  if (!inPageOk) smoke.errors.push('in-page checks failed: ' + (smoke.result.failures || []).join(', '));
   const report = {
-    ok: smoke.ready && !smoke.errors.length && !smoke.timedOut,
+    ok: smoke.ready && !smoke.errors.length && !smoke.timedOut && inPageOk,
     ready: smoke.ready,
     timedOut: smoke.timedOut,
     errors: smoke.errors,

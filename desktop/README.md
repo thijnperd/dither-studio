@@ -143,14 +143,18 @@ cd desktop
 npm run smoke                                  # boot, check, screenshot, exit 0/1
 ```
 
-`--smoke` loads the real app, waits for it to signal ready, evaluates
-`tools/smoke-in-page.js` in the page, captures the window (and the splash, if it
-is still up) to `$DITHER_SMOKE_DIR`, prints one JSON report and exits non-zero
-on any console error, page error or failed check. The current run makes 33
-checks: the chrome exists, the catalogues fill their lists, every slider is
-painted, the menus draw and their submenus expand to the full catalogue, all 32
-command names are wired, the effects stack is the real markup, panels answer to
-their own verbs, and **a key press runs exactly one command**.
+`npm run smoke` is `electron . --smoke --smoke-script tools/smoke-in-page.js`.
+`--smoke` loads the real app and waits for it to signal ready, `--smoke-script`
+evaluates that file in the page, then the harness captures the window (and the
+splash, if it is still up) to `$DITHER_SMOKE_DIR`, prints one JSON report and
+exits non-zero on any console error, page error, failed check or failed command
+— the page's own verdict is part of the run's, not a footnote beside it.
+
+The current run makes 33 checks: the chrome exists, the catalogues fill their
+lists, every slider is painted, the menus draw and their submenus expand to the
+full catalogue, all 32 command names are wired, the effects stack is the real
+markup, panels answer to their own verbs, and **a key press runs exactly one
+command**.
 
 Four more environment variables let it exercise the parts a page cannot reach:
 
@@ -171,6 +175,17 @@ DITHER_SMOKE_SAVE=/tmp/proof.png DITHER_SMOKE_KEY=ctrl+s npm run smoke
 
 # the native menu drives the app
 DITHER_SMOKE_SAVE=/tmp/menu.png DITHER_SMOKE_MENU='File/Save Proof as PNG' npm run smoke
+```
+
+The same harness runs against a packaged build, which is the only way to check
+what actually shipped. Give the script an absolute path there: a portable
+executable unpacks into its own temporary folder and runs with that as its
+working directory.
+
+```bash
+DITHER_SMOKE_REPORT=/tmp/report.json DITHER_SMOKE_SAVE=/tmp/proof.png 
+  DITHER_SMOKE_KEY=ctrl+s ./dist/Dither-Studio-0.1.0-portable.exe --smoke 
+  --smoke-script "$PWD/tools/smoke-in-page.js"
 ```
 
 ## Build the installer

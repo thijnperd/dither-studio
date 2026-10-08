@@ -147,11 +147,17 @@
     DS.state().seed === ((seedBefore + 7919) >>> 0),
     seedBefore + ' -> ' + DS.state().seed);
 
-  const algorithmBefore = DS.state().algorithm;
+  // The roll is random, so no single property is promised to move (it can pick
+  // the algorithm it is already on). Compare the whole recipe instead.
+  const recipe = function () {
+    const s = DS.state();
+    return [s.algorithm, s.palette, s.toneMap, s.seed, s.effects.length].join('|');
+  };
+  const recipeBefore = recipe();
   press({ key: 'r', ctrlKey: true });
   await wait(160);
-  check('Ctrl+R rolls a fresh recipe', DS.state().algorithm !== algorithmBefore,
-    algorithmBefore + ' -> ' + DS.state().algorithm);
+  check('Ctrl+R rolls a fresh recipe', recipe() !== recipeBefore,
+    recipeBefore + ' -> ' + recipe());
 
   press({ key: '=', ctrlKey: true });
   await wait(140);
