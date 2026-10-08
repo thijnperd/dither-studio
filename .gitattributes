@@ -1,0 +1,12 @@
+# Keep the launchers and the harness runnable on every platform: the shell
+# scripts, the macOS launcher and the workflow files must stay LF, while the
+# Windows batch file stays CRLF for cmd.exe.
+* text=auto
+
+*.sh text eol=lf
+*.command text eol=lf
+*.cmd text eol=crlf
+*.yml text eol=lf
+*.svg text eol=lf
+
+*.png binary

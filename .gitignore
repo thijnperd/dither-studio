@@ -1,0 +1,13 @@
+# OS and editor cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+
+# The app has no dependencies and no build step; this is a guard in case
+# something ever adds one.
+node_modules/
+
+# Local scratch
+*.local
