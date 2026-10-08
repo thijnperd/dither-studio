@@ -52,6 +52,9 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # The first run of this workflow may be the one that creates the site.
+          enablement: true
 
       - name: Upload the demo
         uses: actions/upload-pages-artifact@v3

@@ -372,8 +372,18 @@ const PATCHES = [
 
 /* ------------------------------------------------------------------ */
 
+// A checkout may hand these files over with CRLF (Windows runners do), which is
+// a property of the checkout and not of the source. Match on normalised text and
+// always write LF, so the check means the same thing on every platform.
+const CRLF = String.fromCharCode(13) + String.fromCharCode(10);
+const LF = String.fromCharCode(10);
+
+function normalise(text) {
+  return String(text).split(CRLF).join(LF);
+}
+
 function patchApp(source) {
-  let out = source;
+  let out = normalise(source);
   PATCHES.forEach(function (patch) {
     const parts = out.split(patch.from);
     if (parts.length !== 2) {
@@ -389,7 +399,7 @@ function regenerate() {
   const copies = ['dither.js', 'video.js'];
   const produced = {};
   copies.forEach(function (name) {
-    produced[name] = fs.readFileSync(path.join(ROOT, name), 'utf8');
+    produced[name] = normalise(fs.readFileSync(path.join(ROOT, name), 'utf8'));
   });
   produced['app.js'] = patchApp(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'));
   return produced;
@@ -400,7 +410,7 @@ function main() {
   if (CHECK) {
     const stale = Object.keys(produced).filter(function (name) {
       const target = path.join(OUT, name);
-      return !fs.existsSync(target) || fs.readFileSync(target, 'utf8') !== produced[name];
+      return !fs.existsSync(target) || normalise(fs.readFileSync(target, 'utf8')) !== produced[name];
     });
     if (stale.length) {
       console.error('out of step with the shared core: ' + stale.join(', '));
@@ -414,7 +424,7 @@ function main() {
   fs.mkdirSync(OUT, { recursive: true });
   Object.keys(produced).forEach(function (name) {
     const target = path.join(OUT, name);
-    const before = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : null;
+    const before = fs.existsSync(target) ? normalise(fs.readFileSync(target, 'utf8')) : null;
     if (before === produced[name]) {
       console.log('unchanged  ' + name);
       return;
