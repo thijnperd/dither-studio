@@ -455,9 +455,22 @@ function scheduleSplashCapture() {
   setTimeout(async function () {
     if (!splashWindow || splashWindow.isDestroyed()) return;
     try {
-      smoke.splashShot = await captureTo(splashWindow, path.join(smokeOutDir(), 'dither-splash.png'));
+      await captureTo(splashWindow, path.join(smokeOutDir(), 'dither-splash.png'));
     } catch (err) { smoke.errors.push('splash capture: ' + err.message); }
   }, wait);
+}
+
+// The splash is a file the moment it is photographed, so the report can name it
+// whether the run finished before that timer, after it, or while the splash was
+// still on screen.
+async function collectSplashShot(outDir) {
+  const file = path.join(outDir, 'dither-splash.png');
+  try {
+    if (!fsSync.existsSync(file) && splashWindow && !splashWindow.isDestroyed()) {
+      await captureTo(splashWindow, file);
+    }
+  } catch (err) { /* the splash is already gone; the timer's copy stands */ }
+  if (fsSync.existsSync(file) && smoke.shots.indexOf(file) === -1) smoke.shots.push(file);
 }
 
 // One key through the window's input pipeline: the only honest way to prove an
@@ -508,9 +521,6 @@ function clickMenuItem(spec) {
 
 async function runSmoke() {
   const outDir = smokeOutDir();
-  // The splash photographed itself when it came up (scheduleSplashCapture): a
-  // 2.9 s animation is gone long before the page checks are done.
-  if (smoke.splashShot) smoke.shots.push(smoke.splashShot);
   await new Promise(function (resolve) { setTimeout(resolve, 250); });
   if (process.env.DITHER_SMOKE_KEY && process.env.DITHER_SMOKE_KEY_BEFORE) {
     await pressSmokeKey();
@@ -543,12 +553,10 @@ async function runSmoke() {
   await new Promise(function (resolve) { setTimeout(resolve, 900); });
   const shot = path.join(outDir, 'dither-desktop.png');
   try { smoke.shots.push(await captureTo(mainWindow, shot)); } catch (err) { smoke.errors.push('capture: ' + err.message); }
-  try {
-    const stillUp = path.join(outDir, 'dither-splash.png');
-    if (splashWindow && !splashWindow.isDestroyed() && smoke.shots.indexOf(stillUp) === -1) {
-      smoke.shots.push(await captureTo(splashWindow, stillUp));
-    }
-  } catch (err) { /* splash already gone */ }
+  // The splash window photographs itself as its animation reaches the wordmark;
+  // a 2.9 s animation is over long before the page checks are done, so waiting
+  // for them would usually miss it. This only fills in if that never happened.
+  await collectSplashShot(outDir);
 
   // A smoke script is a verdict of its own: if the page ran checks and one
   // failed, the run failed, whoever started it.
