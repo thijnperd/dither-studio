@@ -77,7 +77,7 @@ hunk matches exactly once, so a stale hunk fails loudly — that is the point.
 
 ```bash
 node tools/sync-renderer.js --check    # the renderer is in step
-npm run smoke                          # 33 in-page checks; exit 0 is the bar
+npm run smoke                          # 34 in-page checks; exit 0 is the bar
 ```
 
 `--smoke` boots the real app, waits for it to signal ready, runs

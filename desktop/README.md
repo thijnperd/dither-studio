@@ -154,11 +154,11 @@ itself as its animation reaches the wordmark (it is over in under three seconds,
 so waiting for the page checks to finish would miss it), and the app window is
 shot at the end.
 
-The current run makes 33 checks: the chrome exists, the catalogues fill their
-lists, every slider is painted, the menus draw and their submenus expand to the
-full catalogue, all 32 command names are wired, the effects stack is the real
-markup, panels answer to their own verbs, and **a key press runs exactly one
-command**.
+The current run makes 34 checks: the chrome exists, the catalogues fill their
+lists, every slider is painted, the menus draw, their submenus expand to the full
+catalogue and stay open while the pointer is on one of their rows, all 32
+command names are wired, the effects stack is the real markup, panels answer to
+their own verbs, and **a key press runs exactly one command**.
 
 Four more environment variables let it exercise the parts a page cannot reach:
 

@@ -42,7 +42,7 @@ Rules that follow from that:
 cd desktop
 npm install
 node tools/sync-renderer.js --check      # the renderer is in step
-npm run smoke                            # 33 in-page checks, exit 0 required
+npm run smoke                            # 34 in-page checks, exit 0 required
 DITHER_SMOKE_SAVE=/tmp/proof.png DITHER_SMOKE_KEY=ctrl+s npm run smoke   # the save chain
 npm run dist                             # dist/Dither-Studio-Setup-<version>.exe + portable
 gh release create v<version> dist/Dither-Studio-Setup-<version>.exe \
