@@ -76,6 +76,9 @@ Keep the folder together — the app is these files, and the launchers look for
   ramps and six single-ink sets (amber, sepia, cyan, blueprint, matrix green,
   ice). Colour modes snap every pixel to the palette, and every output pixel is
   exactly one of its inks.
+- **Phone and iPad** — the same console, contracted rather than redesigned: a
+  finger-sized layout, pinch-to-zoom on the proof, and a rail that collapses
+  into one console bar with a live summary of the station in view.
 - **Tone, detail, ink** — black/white point, gamma, brightness, contrast,
   saturation, hue; blur, unsharp mask, median denoise; eleven tone maps that
   re-ink the finished dither so 1-bit stays exactly two inks, including your own

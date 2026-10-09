@@ -375,6 +375,21 @@ Practical notes:
 Keys never fire while a control has focus, so typing a seed or a number never
 accidentally rerolls the recipe — click the canvas first if a key seems dead.
 
+### On a phone or a tablet
+
+Nothing to learn twice — it is the same console, contracted:
+
+| Screen | What it does |
+|---|---|
+| Any touch device | Grows every control to a finger (38px targets, an 18px slider thumb, thicker tracks), drops the keyboard hint line, and hands the proof its own gestures: **one finger pans, two pinch to zoom**. |
+| iPad, both ways up | Widens the rail to 272px so touch labels have room, and gives the bars more padding. |
+| Phone (and any short landscape window) | Collapses the rail into one **console bar** at the top: the brand, a Console button, and a live summary of the station in view (`Press · Floyd–Steinberg · B&W · 2c`). Tap it and the rail opens in place, so the proof keeps the lead and nothing is covered by a modal. The chip strip turns into one sideways-scrolling row, the status bar into one scrollable line, and the toolbar wraps to two. |
+
+A collapsed console remembers whether you left it open, and the safe-area insets
+are honoured where the app is installed to a home screen. Pinch runs its own,
+finer zoom ladder than the toolbar buttons, so the readout still reads like a
+value a button could have produced.
+
 ---
 
 ## 9. Performance, and how to stay fast
