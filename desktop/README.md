@@ -202,8 +202,8 @@ npm run pack     # dist/win-unpacked/ only, much faster while iterating
 
 electron-builder writes an NSIS installer (per-user, choose the folder, Start
 menu shortcut) and a portable single-file executable. The icon comes from
-`build/icon.png`, which is the app's own mark produced by the app's own press
-(`../tools/make-icons.js`).
+`build/icon.png`, the app's own dithered mark; keep it in step with
+`../icons/icon-512.png`, which is the same 512 px proof.
 
 ## The startup screen
 
