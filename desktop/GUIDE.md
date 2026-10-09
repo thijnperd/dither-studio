@@ -27,12 +27,12 @@ code-signed. *More info* → *Run anyway*.
 
 ## 2. Starting it
 
-Launching shows the app's own startup screen: two hands reach toward each other
-across a dark panel, and the moment they touch, the left hand is dithered — real
-dots, spreading back from the fingertip — and starts to glow. The wordmark inks
-in underneath and the window opens. It is one self-contained file
-(`electron/splash.html`) and it is yours to replace; the README names the three
-things to change in it.
+Launching shows the app's own startup screen: Adam and God reach toward each
+other across a dark panel, and the moment their fingertips touch, Adam is
+dithered — real dots, spreading back from the fingertip — and starts to glow.
+The wordmark inks in underneath and the window opens. It is one self-contained
+file (`electron/splash.html`) and it is yours to replace; the README names the
+three things to change in it.
 
 The screen stays up for 2900 ms or until the window is genuinely ready,
 whichever is longer, so it never covers a half-drawn app. The main window then

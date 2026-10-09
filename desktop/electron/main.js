@@ -122,18 +122,18 @@ function createSplash() {
     hasShadow: false,
     webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
-  splashWindow.loadFile(path.join(__dirname, 'splash.html'), {
-    query: {
-      boot: String(SPLASH_MIN_MS),
-      // A smoke run can stop the animation on any frame and photograph it; a
-      // normal boot never passes this.
-      at: process.env.DITHER_SPLASH_AT || ''
-    }
-  });
+  // Only what is set goes into the URL: `at=` with an empty value still reads
+  // as "there is an at" in the page, which would hold it on frame 0.
+  const query = { boot: String(SPLASH_MIN_MS) };
+  // A smoke run can stop the animation on any frame and photograph it; a normal
+  // boot never sets this.
+  if (process.env.DITHER_SPLASH_AT) query.at = process.env.DITHER_SPLASH_AT;
+  splashWindow.loadFile(path.join(__dirname, 'splash.html'), { query: query });
   splashWindow.once('ready-to-show', function () {
     if (!splashWindow || splashWindow.isDestroyed()) return;
     splashWindow.show();
     splashShownAt = Date.now();
+    if (SMOKE) scheduleSplashCapture();
   });
   return splashWindow;
 }
@@ -441,6 +441,25 @@ async function captureTo(win, file) {
   return file;
 }
 
+function smokeOutDir() {
+  return process.env.DITHER_SMOKE_DIR || require('os').tmpdir();
+}
+
+// A smoke run photographs the splash from the splash window itself, at a fixed
+// point in the animation. Waiting for the page checks to finish first — as this
+// did — missed the splash whenever the renderer took longer to come up than the
+// animation lasts, which is the normal case; DITHER_SPLASH_AT freezes the frame,
+// so the moment below only decides what a plain run shows.
+function scheduleSplashCapture() {
+  const wait = Math.max(300, Math.min(2400, SPLASH_MIN_MS - 400));
+  setTimeout(async function () {
+    if (!splashWindow || splashWindow.isDestroyed()) return;
+    try {
+      smoke.splashShot = await captureTo(splashWindow, path.join(smokeOutDir(), 'dither-splash.png'));
+    } catch (err) { smoke.errors.push('splash capture: ' + err.message); }
+  }, wait);
+}
+
 // One key through the window's input pipeline: the only honest way to prove an
 // accelerator reaches the app, since a synthetic DOM event would bypass exactly
 // the layer under test.
@@ -488,14 +507,10 @@ function clickMenuItem(spec) {
 }
 
 async function runSmoke() {
-  const outDir = process.env.DITHER_SMOKE_DIR || require('os').tmpdir();
-  // Photograph the splash first. It is a 2.9 s animation and the page checks
-  // take longer than that, so a capture at the end of the run would always
-  // find it gone; DITHER_SPLASH_AT holds any single frame instead.
-  const splashShot = path.join(outDir, 'dither-splash.png');
-  try {
-    if (splashWindow && !splashWindow.isDestroyed()) smoke.shots.push(await captureTo(splashWindow, splashShot));
-  } catch (err) { smoke.errors.push('splash capture: ' + err.message); }
+  const outDir = smokeOutDir();
+  // The splash photographed itself when it came up (scheduleSplashCapture): a
+  // 2.9 s animation is gone long before the page checks are done.
+  if (smoke.splashShot) smoke.shots.push(smoke.splashShot);
   await new Promise(function (resolve) { setTimeout(resolve, 250); });
   if (process.env.DITHER_SMOKE_KEY && process.env.DITHER_SMOKE_KEY_BEFORE) {
     await pressSmokeKey();

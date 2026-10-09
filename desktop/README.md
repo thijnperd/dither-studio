@@ -109,6 +109,7 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
 | `electron/main.js` | the window, the splash, the native dialogs, the clipboard, the application menu, and the smoke harness |
 | `electron/preload.js` | the only bridge to the OS — `window.ditherDesktop`, context-isolated, no Node in the renderer |
 | `electron/splash.html` | the startup animation: **this is the file to replace** (see below) |
+| `electron/Splash/` | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
 | `src/index.html` | the window's markup: caption, menus, options, rail, document tabs, dock, status |
 | `src/menu-spec.js` | the one menu definition, shared by the native menu and the drawn one |
 | `src/renderer/dither.js` | the engine — DOM-free, byte-identical to the web builds |
@@ -148,8 +149,10 @@ npm run smoke                                  # boot, check, screenshot, exit 0
 evaluates that file in the page, then the harness prints one JSON report and
 exits non-zero on any console error, page error, failed check or failed command
 — the page's own verdict is part of the run's, not a footnote beside it. It also
-photographs both windows into `$DITHER_SMOKE_DIR`: the splash first, because it
-is over in under three seconds, and the app window at the end.
+photographs both windows into `$DITHER_SMOKE_DIR`: the splash window shoots
+itself as its animation reaches the wordmark (it is over in under three seconds,
+so waiting for the page checks to finish would miss it), and the app window is
+shot at the end.
 
 The current run makes 33 checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw and their submenus expand to the
@@ -204,26 +207,30 @@ menu shortcut) and a portable single-file executable. The icon comes from
 
 ## The startup screen
 
-Two hands reach for each other across a dark panel. When they touch, the left
-one is dithered — its own silhouette pushed through an 8x8 ordered screen, dot
-by dot, spreading back from the fingertip — and starts to glow; the right hand
-stays smooth, so the moment reads as the press taking a hand. The wordmark inks
-in underneath and the window opens.
+Adam's arm reaches in from the left, God's from the right. When the two
+fingertips touch, Adam is dithered — his own pre-screened image is revealed over
+the painted one, spreading from the fingertip back along the arm — and starts to
+glow; God stays painted, so the moment reads as the press taking a hand. The
+wordmark inks in underneath and the window opens.
 
-The dither is real, and it is the same idea as the app: the hand is drawn once
-into an offscreen canvas as a shade field, every pixel is kept or dropped
-against the screen, and the frames after that only blit. The whole pass happens
-once, not per frame — a splash that re-screened the hand sixty times a second
-would be the one thing in this project that pegged a core.
+Both hands are crops of the painting on transparent backgrounds, and Adam's
+dithered twin is the same crop carried through the press, so the two line up
+pixel for pixel and the wipe reveals one over the other exactly. That is also
+what keeps the frames cheap, and it is on purpose: the three images decode once,
+the light dots of the dithered one are recoloured to the ink once, the glow is a
+single blurred copy built when the box is laid out, and every frame after that
+only draws them. A splash that re-screened the hand sixty times a second would
+be the one thing in this project that pegged a core.
 
 `electron/splash.html` is one self-contained document (inline style, inline
-script, nothing fetched from disk) and it is meant to be replaced. Its header
-names the three parts to change: `ARM` and `MEET`, the list of round-capped
-strokes the hand is built from and where the two meet; `T`, the whole schedule
-in milliseconds; and the ink colour. If you change the total, change
-`SPLASH_MIN_MS` in `electron/main.js` (2900 ms) to match — the main process
-holds the splash for that long, or until the window is genuinely ready,
-whichever is longer, and closes it only then.
+script, every image inlined as a data URI, nothing fetched from disk) and it is
+meant to be replaced. Its header names the three parts to change: `HANDS`, the
+three images and the fingertip inside each one; `T`, the whole schedule in
+milliseconds; and the ink colour. The source PNGs live in `electron/Splash/` for
+whoever re-crops them next — the app loads the inlined copies, not that folder.
+If you change the total, change `SPLASH_MIN_MS` in `electron/main.js` (2900 ms)
+to match — the main process holds the splash for that long, or until the window
+is genuinely ready, whichever is longer, and closes it only then.
 
 To look at a single frame while you work on it, hold the animation and shoot it:
 
