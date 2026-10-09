@@ -189,7 +189,7 @@ working directory.
 
 ```bash
 DITHER_SMOKE_REPORT=/tmp/report.json DITHER_SMOKE_SAVE=/tmp/proof.png 
-  DITHER_SMOKE_KEY=ctrl+s ./dist/Dither-Studio-0.1.1-portable.exe --smoke 
+  DITHER_SMOKE_KEY=ctrl+s ./dist/Dither-Studio-0.1.2-portable.exe --smoke 
   --smoke-script "$PWD/tools/smoke-in-page.js"
 ```
 
