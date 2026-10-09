@@ -129,6 +129,18 @@
     sub ? sub.querySelectorAll('.menu-item').length : 0);
   check('the ticked algorithm is marked', !!sub && !!sub.querySelector('.menu-item.is-on'));
 
+  // The row under the pointer must not be the thing that deletes its own menu:
+  // hovering a row inside a submenu used to close every submenu, including the
+  // one that row was standing in, so a submenu could never be used with a mouse.
+  let rowSurvives = null;
+  try {
+    const row = sub ? sub.querySelector('.menu-item') : null;
+    if (row) row.dispatchEvent(new MouseEvent('mouseenter'));
+    rowSurvives = !!(sub && sub.isConnected && row && row.isConnected &&
+      document.querySelectorAll('.menu-pop.is-sub').length === 1);
+  } catch (err) { rowSurvives = false; }
+  check('a row inside a submenu can be hovered without losing it', rowSurvives === true, rowSurvives);
+
   document.body.click();
   await wait(60);
   check('menus close when you click away', document.getElementById('menu-pop').hidden);

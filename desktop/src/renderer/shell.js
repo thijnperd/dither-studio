@@ -119,6 +119,7 @@
   /* ================================================================ */
 
   const pop = $('menu-pop');
+  if (pop) pop.__level = 0;   // the drop-down itself; submenus count up from it
   let subMenus = [];
   let openId = null;
 
@@ -134,9 +135,20 @@
     return out;
   }
 
+  // A submenu always opens from an item inside a box, so the open submenus form a
+  // chain: the drop-down at level 0, its submenus at 1, theirs at 2. Closing is
+  // therefore relative to where the pointer is, not all-or-nothing — hovering a
+  // leaf must close the submenus deeper than the box that leaf stands in, and
+  // never the box it is standing in, or the item under the cursor deletes itself.
+  function closeSubMenusFrom(level) {
+    subMenus = subMenus.filter(function (node) {
+      if ((node.__level || 1) > level) { node.remove(); return false; }
+      return true;
+    });
+  }
+
   function closeSubMenus() {
-    subMenus.forEach(function (node) { node.remove(); });
-    subMenus = [];
+    closeSubMenusFrom(0);
   }
 
   function closeMenus() {
@@ -184,10 +196,11 @@
         arrow.textContent = '▶';
         item.appendChild(arrow);
         item.setAttribute('aria-haspopup', 'true');
-        item.addEventListener('mouseenter', function () { openSubMenu(item, node.submenu); });
+        const level = box.__level || 0;
+        item.addEventListener('mouseenter', function () { openSubMenu(item, node.submenu, level); });
         item.addEventListener('click', function (event) {
           event.stopPropagation();
-          openSubMenu(item, node.submenu);
+          openSubMenu(item, node.submenu, level);
         });
       } else {
         if (node.accel) {
@@ -196,7 +209,7 @@
           keys.textContent = accelText(node.accel);
           item.appendChild(keys);
         }
-        item.addEventListener('mouseenter', closeSubMenus);
+        item.addEventListener('mouseenter', function () { closeSubMenusFrom(box.__level || 0); });
         item.addEventListener('click', function () {
           closeMenus();
           run(node.command, node.arg);
@@ -209,10 +222,12 @@
     place(box, anchor.getBoundingClientRect(), side || 'below');
   }
 
-  function openSubMenu(item, items) {
-    closeSubMenus();
+  function openSubMenu(item, items, level) {
+    const from = level || 0;
+    closeSubMenusFrom(from);
     const box = document.createElement('div');
     box.className = 'menu-pop is-sub';
+    box.__level = from + 1;
     document.body.appendChild(box);
     subMenus.push(box);
     drawInto(box, items, item, 'right');
@@ -246,7 +261,8 @@
   });
 
   document.addEventListener('click', function (event) {
-    if (pop && pop.contains(event.target)) return;
+    // Every popup, the drop-down and any submenu under it.
+    if (event.target.closest && event.target.closest('.menu-pop')) return;
     if (event.target.closest && event.target.closest('.menu')) return;
     closeMenus();
   });
