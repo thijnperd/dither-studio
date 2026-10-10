@@ -54,6 +54,12 @@
   const setNote = Core.setNote;
   const shortPalette = Core.shortPalette;
 
+  // The checkerboard under the proof is only honest while the alpha is kept, so
+  // one place decides it. Four call sites used to each spell out "!== 'matte'".
+  function showAlphaBehind(alphaMode) {
+    el.canvas.classList.toggle('alpha-on', alphaMode !== 'matte');
+  }
+
   const el = {
     open: $('open'), demo: $('demo'), file: $('file'),
     algorithm: $('algorithm'), palette: $('palette'),
@@ -265,7 +271,7 @@
     el.inkCustom.hidden = s.toneMap !== 'custom';
     el.alphaMode.value = s.alphaMode;
     el.thresholdRow.hidden = s.palette !== 'bw';
-    el.canvas.classList.toggle('alpha-on', s.alphaMode !== 'matte');
+    showAlphaBehind(s.alphaMode);
     syncTextUI();
     syncScreenRows();
     buildEffectList();
@@ -879,7 +885,7 @@
     const res = D.process(source, state.settings);
 
     if (full) state.result = res;
-    el.canvas.classList.toggle('alpha-on', state.settings.alphaMode !== 'matte');
+    showAlphaBehind(state.settings.alphaMode);
 
     if (!(text.on && drawTextResult(res))) {
       if (full) {
@@ -1577,7 +1583,7 @@
 
     el.alphaMode.addEventListener('change', function () {
       state.settings.alphaMode = el.alphaMode.value;
-      el.canvas.classList.toggle('alpha-on', state.settings.alphaMode !== 'matte');
+      showAlphaBehind(state.settings.alphaMode);
       render(true);
     });
 
@@ -1838,7 +1844,7 @@
       el.canvas.height = res.height;
       applyZoom();
     }
-    el.canvas.classList.toggle('alpha-on', settings.alphaMode !== 'matte');
+    showAlphaBehind(settings.alphaMode);
     if (!(text.on && drawTextResult(res))) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.putImageData(toImageData(res), 0, 0);

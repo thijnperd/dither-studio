@@ -77,13 +77,19 @@ async function readPayload(file) {
   return { name: path.basename(file), path: file, mime: mimeFor(file), bytes: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
 }
 
+// Both windows get asked the same question in six places: is this handle still
+// usable? Electron throws if you touch a destroyed window.
+function isAlive(win) {
+  return !!win && !win.isDestroyed();
+}
+
 function send(channel, payload) {
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
+  if (isAlive(mainWindow)) mainWindow.webContents.send(channel, payload);
 }
 
 function command(name, arg) {
   send('ds:command', { name, arg });
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.focus();
+  if (isAlive(mainWindow)) mainWindow.focus();
 }
 
 function answerOpen(options) {
@@ -130,7 +136,7 @@ function createSplash() {
   if (process.env.DITHER_SPLASH_AT) query.at = process.env.DITHER_SPLASH_AT;
   splashWindow.loadFile(path.join(__dirname, 'splash.html'), { query: query });
   splashWindow.once('ready-to-show', function () {
-    if (!splashWindow || splashWindow.isDestroyed()) return;
+    if (!isAlive(splashWindow)) return;
     splashWindow.show();
     splashShownAt = Date.now();
     if (SMOKE) scheduleSplashCapture();
@@ -139,13 +145,13 @@ function createSplash() {
 }
 
 function closeSplashWhenDue() {
-  if (!splashWindow || splashWindow.isDestroyed()) return;
+  if (!isAlive(splashWindow)) return;
   const waited = Date.now() - splashShownAt;
   const left = splashShownAt ? Math.max(0, SPLASH_MIN_MS - waited) : SPLASH_MIN_MS;
   setTimeout(function () {
-    if (splashWindow && !splashWindow.isDestroyed()) splashWindow.destroy();
+    if (isAlive(splashWindow)) splashWindow.destroy();
     splashWindow = null;
-    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.focus();
+    if (isAlive(mainWindow)) mainWindow.focus();
   }, left);
 }
 
@@ -254,60 +260,63 @@ function installMenu(tree) {
 /* ipc: files and the clipboard                                        */
 /* ------------------------------------------------------------------ */
 
-ipcMain.handle('ds:open-image', async function () {
-  const file = await answerOpen({ title: 'Open an image', filters: IMAGE_FILTERS, properties: ['openFile'] });
+// The three "open" routes differ only in their dialog; picking the file and the
+// failure message are the same in all of them. openRoute takes the reader too,
+// because a preset reads as text where an image reads as bytes.
+async function openRoute(options, read) {
+  const file = await answerOpen(options);
   if (!file) return null;
-  try { return await readPayload(file); }
+  try { return await read(file); }
   catch (err) { return { error: 'Could not read ' + path.basename(file) }; }
+}
+
+// The two "save" routes: ask, write, hand back the name the proof landed under.
+async function saveRoute(options, write) {
+  const target = await answerSave(options);
+  if (!target) return null;
+  try {
+    await write(target);
+    return { path: target, name: path.basename(target) };
+  } catch (err) { return { error: 'Could not write ' + path.basename(target) }; }
+}
+
+ipcMain.handle('ds:open-image', function () {
+  return openRoute({ title: 'Open an image', filters: IMAGE_FILTERS, properties: ['openFile'] }, readPayload);
 });
 
-ipcMain.handle('ds:open-video', async function () {
-  const file = await answerOpen({ title: 'Open a clip', filters: VIDEO_FILTERS, properties: ['openFile'] });
-  if (!file) return null;
-  try { return await readPayload(file); }
-  catch (err) { return { error: 'Could not read ' + path.basename(file) }; }
+ipcMain.handle('ds:open-video', function () {
+  return openRoute({ title: 'Open a clip', filters: VIDEO_FILTERS, properties: ['openFile'] }, readPayload);
 });
 
-ipcMain.handle('ds:open-json', async function () {
-  const file = await answerOpen({
+ipcMain.handle('ds:open-json', function () {
+  return openRoute({
     title: 'Import a preset',
     filters: [{ name: 'Dither Studio preset', extensions: ['json'] }],
     properties: ['openFile'],
-  });
-  if (!file) return null;
-  try {
+  }, async function (file) {
     const text = await fs.readFile(file, 'utf8');
     return { name: path.basename(file), path: file, text: text };
-  } catch (err) { return { error: 'Could not read ' + path.basename(file) }; }
+  });
 });
 
-ipcMain.handle('ds:save-blob', async function (_event, payload) {
+ipcMain.handle('ds:save-blob', function (_event, payload) {
   if (!payload || !payload.name) return null;
   const filters = payload.mime === 'image/png'
     ? [{ name: 'PNG image', extensions: ['png'] }]
     : payload.mime === 'application/json'
       ? [{ name: 'JSON', extensions: ['json'] }]
       : [{ name: 'Files', extensions: ['*'] }];
-  const target = await answerSave({ title: 'Save the proof', defaultPath: payload.name, filters: filters });
-  if (!target) return null;
-  try {
-    await fs.writeFile(target, Buffer.from(payload.data));
-    return { path: target, name: path.basename(target) };
-  } catch (err) { return { error: 'Could not write ' + path.basename(target) }; }
+  return saveRoute({ title: 'Save the proof', defaultPath: payload.name, filters: filters },
+    function (target) { return fs.writeFile(target, Buffer.from(payload.data)); });
 });
 
-ipcMain.handle('ds:save-text', async function (_event, payload) {
+ipcMain.handle('ds:save-text', function (_event, payload) {
   if (!payload || !payload.name) return null;
-  const target = await answerSave({
+  return saveRoute({
     title: 'Save the text proof',
     defaultPath: payload.name,
     filters: [{ name: 'Text', extensions: ['txt'] }],
-  });
-  if (!target) return null;
-  try {
-    await fs.writeFile(target, String(payload.text), 'utf8');
-    return { path: target, name: path.basename(target) };
-  } catch (err) { return { error: 'Could not write ' + path.basename(target) }; }
+  }, function (target) { return fs.writeFile(target, String(payload.text), 'utf8'); });
 });
 
 ipcMain.handle('ds:copy-image', async function (_event, payload) {
@@ -348,46 +357,42 @@ ipcMain.handle('ds:win', function (event, action) {
   return win.isMaximized();
 });
 
-ipcMain.handle('ds:about', async function () {
-  const out = await dialog.showMessageBox(mainWindow, {
+// Both Help dialogs are the same message box with different words.
+function infoBox(title, message, lines) {
+  return dialog.showMessageBox(mainWindow, {
     type: 'info',
-    title: 'About Dither Studio',
-    message: 'Dither Studio ' + app.getVersion(),
-    detail: [
-      'An offline dithering press. 46 algorithms, 24 ink sets, an effects stack,',
-      'text mode and video — in its own window, with no network and no account.',
-      '',
-      'Electron ' + process.versions.electron + ' · Chromium ' + process.versions.chrome + ' · Node ' + process.versions.node,
-      '',
-      'The dithering core is the same dither.js that runs the web and demo versions.',
-    ].join('\n'),
+    title: title,
+    message: message,
+    detail: lines.join('\n'),
     buttons: ['Close'],
     noLink: true,
   });
-  return out;
+}
+
+ipcMain.handle('ds:about', function () {
+  return infoBox('About Dither Studio', 'Dither Studio ' + app.getVersion(), [
+    'An offline dithering press. 46 algorithms, 24 ink sets, an effects stack,',
+    'text mode and video — in its own window, with no network and no account.',
+    '',
+    'Electron ' + process.versions.electron + ' · Chromium ' + process.versions.chrome + ' · Node ' + process.versions.node,
+    '',
+    'The dithering core is the same dither.js that runs the web and demo versions.',
+  ]);
 });
 
-ipcMain.handle('ds:shortcuts', async function () {
-  const out = await dialog.showMessageBox(mainWindow, {
-    type: 'info',
-    title: 'Keyboard Shortcuts',
-    message: 'Keyboard shortcuts',
-    detail: [
-      'Ctrl+O        open an image            Ctrl+S    save the proof as PNG',
-      'Ctrl+Shift+O  open a clip              Ctrl+Shift+C  copy the proof',
-      'Ctrl+D        demo scene               Ctrl+Shift+I  developer tools',
-      '',
-      'Ctrl+R        roll a fresh recipe      C         hold to compare',
-      'Ctrl+Shift+R  new seed                 + / −     zoom, 0 fits',
-      'Ctrl+↑ / ↓    previous / next algorithm',
-      'Ctrl+← / →    previous / next palette',
-      '',
-      'Drag a file onto the proof to load it; Ctrl+V pastes an image.',
-    ].join('\n'),
-    buttons: ['Close'],
-    noLink: true,
-  });
-  return out;
+ipcMain.handle('ds:shortcuts', function () {
+  return infoBox('Keyboard Shortcuts', 'Keyboard shortcuts', [
+    'Ctrl+O        open an image            Ctrl+S    save the proof as PNG',
+    'Ctrl+Shift+O  open a clip              Ctrl+Shift+C  copy the proof',
+    'Ctrl+D        demo scene               Ctrl+Shift+I  developer tools',
+    '',
+    'Ctrl+R        roll a fresh recipe      C         hold to compare',
+    'Ctrl+Shift+R  new seed                 + / −     zoom, 0 fits',
+    'Ctrl+↑ / ↓    previous / next algorithm',
+    'Ctrl+← / →    previous / next palette',
+    '',
+    'Drag a file onto the proof to load it; Ctrl+V pastes an image.',
+  ]);
 });
 
 ipcMain.handle('ds:open-guide', async function () {
@@ -453,7 +458,7 @@ function smokeOutDir() {
 function scheduleSplashCapture() {
   const wait = Math.max(300, Math.min(2400, SPLASH_MIN_MS - 400));
   setTimeout(async function () {
-    if (!splashWindow || splashWindow.isDestroyed()) return;
+    if (!isAlive(splashWindow)) return;
     try {
       await captureTo(splashWindow, path.join(smokeOutDir(), 'dither-splash.png'));
     } catch (err) { smoke.errors.push('splash capture: ' + err.message); }
@@ -466,7 +471,7 @@ function scheduleSplashCapture() {
 async function collectSplashShot(outDir) {
   const file = path.join(outDir, 'dither-splash.png');
   try {
-    if (!fsSync.existsSync(file) && splashWindow && !splashWindow.isDestroyed()) {
+    if (!fsSync.existsSync(file) && isAlive(splashWindow)) {
       await captureTo(splashWindow, file);
     }
   } catch (err) { /* the splash is already gone; the timer's copy stands */ }
@@ -572,7 +577,7 @@ async function runSmoke() {
     shots: smoke.shots,
     // Did a save really land on disk, at the path the smoke run nominated?
     menuClick: smoke.menuClick || null,
-    fullScreen: mainWindow && !mainWindow.isDestroyed() ? mainWindow.isFullScreen() : null,
+    fullScreen: isAlive(mainWindow) ? mainWindow.isFullScreen() : null,
     menuLabels: process.env.DITHER_SMOKE_MENU_DUMP ? (function () {
       const menu = Menu.getApplicationMenu();
       if (!menu) return null;

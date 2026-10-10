@@ -267,6 +267,16 @@
     closeMenus();
   });
 
+  // The left and right arrows walk the bar, wrapping in both directions.
+  function stepMenu(delta) {
+    const from = TREE.findIndex(function (menu) { return menu.id === openId; });
+    const next = TREE[(from + delta + TREE.length) % TREE.length];
+    const button = document.querySelector('.menu[data-menu="' + next.id + '"]');
+    if (!button) return false;
+    openMenu(button);
+    return true;
+  }
+
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') { closeMenus(); return; }
     if (!openId) {
@@ -295,15 +305,9 @@
       event.preventDefault();
       items[(index - 1 + items.length) % items.length].focus();
     } else if (event.key === 'ArrowRight') {
-      const i = TREE.findIndex(function (menu) { return menu.id === openId; });
-      const next = TREE[(i + 1) % TREE.length];
-      const button = document.querySelector('.menu[data-menu="' + next.id + '"]');
-      if (button) { event.preventDefault(); openMenu(button); }
+      if (stepMenu(1)) event.preventDefault();
     } else if (event.key === 'ArrowLeft') {
-      const i = TREE.findIndex(function (menu) { return menu.id === openId; });
-      const prev = TREE[(i - 1 + TREE.length) % TREE.length];
-      const button = document.querySelector('.menu[data-menu="' + prev.id + '"]');
-      if (button) { event.preventDefault(); openMenu(button); }
+      if (stepMenu(-1)) event.preventDefault();
     }
   });
 
@@ -384,7 +388,7 @@
     'view-dock': function () {
       const hidden = document.body.classList.toggle('dock-hidden');
       note(hidden ? 'Panels hidden' : 'Panels back');
-      paint();
+      refresh();
     },
     'help-guide': function () {
       desktop.openGuide().then(function (out) {
@@ -549,21 +553,29 @@
     if (tbNote && recording) note('Recording the playback…');
   }, 500);
 
+  // A slider draws its filled track from --fill, and the boot and every input
+  // event want the same percentage, so it is worked out in one place.
+  function fillPercent(range) {
+    const min = parseFloat(range.min || '0');
+    const max = parseFloat(range.max || '100');
+    const value = parseFloat(range.value || '0');
+    const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+    return pct.toFixed(2) + '%';
+  }
+
   // A slider shows how much of its track is travelled. Every range in the app
   // gets it, including the ones the effects stack builds later.
   function paintRanges() {
     const ranges = document.querySelectorAll('input[type="range"]');
     for (let i = 0; i < ranges.length; i++) {
-      const range = ranges[i];
-      const min = parseFloat(range.min || '0');
-      const max = parseFloat(range.max || '100');
-      const value = parseFloat(range.value || '0');
-      const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
-      range.style.setProperty('--fill', pct.toFixed(2) + '%');
+      ranges[i].style.setProperty('--fill', fillPercent(ranges[i]));
     }
   }
 
-  function paint() {
+  // What any change to the app ends with: the slider fills, the caption, and the
+  // menu ticks. The boot, the ds:ui event and the dock toggle all want exactly
+  // this, so it is written once and called three times.
+  function refresh() {
     paintRanges();
     appState = DS.state();
     syncTitle();
@@ -573,18 +585,12 @@
   document.addEventListener('input', function (event) {
     const target = event.target;
     if (!target || target.type !== 'range') return;
-    const min = parseFloat(target.min || '0');
-    const max = parseFloat(target.max || '100');
-    const value = parseFloat(target.value || '0');
-    target.style.setProperty('--fill', (max > min ? ((value - min) / (max - min)) * 100 : 0).toFixed(2) + '%');
+    target.style.setProperty('--fill', fillPercent(target));
   });
 
   // One event from app.js drives everything above.
   window.addEventListener('ds:ui', function () {
-    paintRanges();
-    appState = DS.state();
-    syncTitle();
-    pushToMain(false);
+    refresh();
   });
 
   // The effects stack is rebuilt on every sync, so re-read it just after the
@@ -602,9 +608,7 @@
   /* boot                                                             */
   /* ================================================================ */
 
-  paintRanges();
-  appState = DS.state();
-  syncTitle();
+  refresh();
   window.__shell = {
     accelerators: Object.keys(ACCELERATORS),
     tools: Object.keys(TOOLS),
@@ -619,5 +623,5 @@
   // not finished until its menu bar and its caption carry real values.
   pushToMain(true);
   if (desktop.ready) desktop.ready();
-  setTimeout(function () { paintRanges(); pushToMain(false); }, 300);
+  setTimeout(refresh, 300);
 }());

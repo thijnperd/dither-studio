@@ -174,7 +174,7 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
 | `src/styles/tokens.css` | tokens, the page grid, every element-level control |
 | `src/styles/chrome.css` | caption, menus, options bar, rail, document tabs, the well, the bars |
 | `src/styles/panels.css` | the dock: panel tabs, fields, sliders, swatches, the effects stack |
-| `tools/sync-renderer.js` | regenerates `src/renderer/app.js` from the shared core |
+| `tools/sync-renderer.js` | keeps `src/renderer/{dither,video}.js` byte-identical to the shared engine |
 | `tools/smoke-in-page.js` | the page half of the smoke run |
 
 The desktop shell is the desktop's own. It used to be the web shell with ten

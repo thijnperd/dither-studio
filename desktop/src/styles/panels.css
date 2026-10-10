@@ -78,16 +78,16 @@
   scroll-behavior: smooth;
 }
 
+/* The hint line at the foot of the dock carries four shortcuts. As a single
+ * clipped line it was unreadable at 336px wide, so it wraps instead. */
 .dock-hint {
   margin: 0;
   padding: 7px 10px;
   border-top: 1px solid var(--edge-soft);
   color: var(--muted);
   font-size: var(--fs-small);
-  line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.55;
+  white-space: normal;
 }
 
 .dock-hint b { color: var(--text); font-weight: 600; }
@@ -395,14 +395,4 @@
   height: 20px;
   padding: 0 4px;
   font-size: var(--fs-small);
-}
-
-/* ============================== shell.js contract ============================
- * The hint line at the foot of the dock carries four shortcuts. As a single
- * clipped line it was unreadable at 336px wide; it wraps instead.
- */
-
-.dock-hint {
-  white-space: normal;
-  line-height: 1.55;
 }
