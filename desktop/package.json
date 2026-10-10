@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "electron .",
+    "test": "node tools/core.test.js",
     "smoke": "electron . --smoke --smoke-script tools/smoke-in-page.js",
     "pack": "electron-builder --win --dir",
     "dist": "electron-builder --win"
@@ -35,7 +36,6 @@
       "src/**/*",
       "build/icon.png",
       "package.json",
-      "README.md",
       "GUIDE.md",
       "!**/*.map"
     ],

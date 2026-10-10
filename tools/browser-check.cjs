@@ -2,7 +2,8 @@
 /* browser-check.cjs — headless browser verification for the projects in this
  * repo, driven by Playwright.
  *
- * Playwright is installed globally (see tools/README.md). This script resolves
+ * Playwright is installed globally (see the verification section of README.md).
+ * This script resolves
  * it from the global npm root if it is not on the local NODE_PATH, so it runs
  * from anywhere without adding a dependency to any project.
  *

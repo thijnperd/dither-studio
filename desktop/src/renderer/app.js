@@ -1,5 +1,8 @@
-/* app.js — the browser shell for Dither Studio.
- * Depends on dither.js (the core) loading first.
+/* app.js — the desktop shell for Dither Studio.
+ *
+ * Loads after `core.js` (the desktop core: colour, catalogue lookups, the
+ * rail's dropdowns, the settings paths) and after `dither.js` (the engine).
+ * Anything this shell needs more than once lives in one of those two.
  *
  * The canvas backing store is one pixel per working pixel; zoom is CSS only
  * (`image-rendering: pixelated`), so a render is a single putImageData and the
@@ -34,6 +37,22 @@
   // build simply does not. Every use below is guarded, so this one constant is
   // the whole difference between the app in its own window and the web version.
   const desktop = window.ditherDesktop || null;
+
+  // The desktop core (renderer/core.js). These are the helpers this file used
+  // to carry its own copies of; naming them once here keeps every call site
+  // below unchanged.
+  const Core = window.DitherCore;
+  if (!Core) throw new Error('renderer/core.js must load before renderer/app.js');
+  const rgbToHex = Core.rgbToHex;
+  const hexToRgb = Core.hexToRgb;
+  const byId = Core.byId;
+  const stepThrough = Core.stepThrough;
+  const getPath = Core.getPath;
+  const setPath = Core.setPath;
+  const buildSelect = Core.buildSelect;
+  const summarise = Core.summarise;
+  const setNote = Core.setNote;
+  const shortPalette = Core.shortPalette;
 
   const el = {
     open: $('open'), demo: $('demo'), file: $('file'),
@@ -180,21 +199,13 @@
   /* settings plumbing                                                  */
   /* ------------------------------------------------------------------ */
 
-  function setPath(obj, path, value) {
-    const parts = path.split('.');
-    let target = obj;
-    for (let i = 0; i < parts.length - 1; i++) target = target[parts[i]];
-    target[parts[parts.length - 1]] = value;
-  }
-
-  function getPath(obj, path) {
-    return path.split('.').reduce(function (o, k) { return o[k]; }, obj);
-  }
-
+  // `getPath` / `setPath` are the core's. The two views of the stack — the ids
+  // that are on, and the entries a preset or an export wants — come from one
+  // filter rather than two.
   function deriveGlitches() {
-    return glitches.order
-      .filter(function (id) { return glitches.on[id]; })
-      .map(function (id) { return { id: id, amount: glitches.amount[id], mode: glitches.mode[id] }; });
+    return activeEffects().map(function (id) {
+      return { id: id, amount: glitches.amount[id], mode: glitches.mode[id] };
+    });
   }
 
   function readGlitchState(list) {
@@ -204,7 +215,7 @@
       glitches.mode[g.id] = g.modes ? g.modes[0].id : undefined;
     });
     (list || []).forEach(function (item) {
-      const meta = D.GLITCHES.find(function (g) { return g.id === item.id; });
+      const meta = byId(D.GLITCHES, item.id);
       if (!meta) return;
       glitches.on[meta.id] = true;
       glitches.amount[meta.id] = item.amount;
@@ -216,21 +227,6 @@
     const active = (list || []).map(function (item) { return item.id; });
     const rest = glitches.order.filter(function (id) { return active.indexOf(id) < 0; });
     glitches.order = active.concat(rest);
-  }
-
-  function rgbToHex(rgb) {
-    function part(v) {
-      const h = Math.max(0, Math.min(255, Math.round(v || 0))).toString(16);
-      return h.length === 1 ? '0' + h : h;
-    }
-    return '#' + part(rgb[0]) + part(rgb[1]) + part(rgb[2]);
-  }
-
-  function hexToRgb(hex) {
-    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex));
-    if (!m) return [0, 0, 0];
-    const n = parseInt(m[1], 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
 
   function syncTextUI() {
@@ -437,7 +433,7 @@
 
   function syncConsoleNote() {
     if (!el.consoleToggleNote) return;
-    const group = GROUPS.find(function (g) { return g.id === currentStationId; });
+    const group = byId(GROUPS, currentStationId);
     const note = STATION_NOTES[currentStationId];
     const value = note && note.textContent ? note.textContent : '';
     const name = group ? group.name : 'Console';
@@ -481,15 +477,6 @@
     syncConsoleNote();
   }
 
-  function setNote(node, value) {
-    if (node) node.textContent = value;
-  }
-
-  function shortPalette(palette) {
-    const name = palette.name.replace(/\s*\(.*?\)/, '');
-    return name + ' · ' + palette.colors.length + 'c';
-  }
-
   function toneSummary() {
     const a = state.settings.adjustments;
     const parts = [];
@@ -500,7 +487,7 @@
     if (Math.abs(a.contrast - 1) > 0.001) parts.push('ct ' + a.contrast.toFixed(2));
     if (Math.abs(a.saturation - 1) > 0.001) parts.push('sat ' + a.saturation.toFixed(2));
     if (a.hue) parts.push('hue ' + a.hue + '°');
-    return parts.length ? parts.join(' · ') : 'neutral';
+    return summarise(parts, 'neutral');
   }
 
   function detailSummary() {
@@ -509,11 +496,11 @@
     if (a.blur) parts.push('blur ' + a.blur);
     if (a.sharpen) parts.push('sharp ' + a.sharpen.toFixed(2));
     if (a.denoise) parts.push('denoise');
-    return parts.length ? parts.join(' · ') : 'none';
+    return summarise(parts, 'none');
   }
 
   function inkSummary() {
-    const map = D.TONE_MAPS.find(function (m) { return m.id === state.settings.toneMap; });
+    const map = byId(D.TONE_MAPS, state.settings.toneMap);
     const alpha = state.settings.alphaMode === 'matte' ? 'flatten'
       : state.settings.alphaMode === 'sharpen' ? 'dither matte' : 'keep alpha';
     const ink = map && map.id !== 'none' ? map.name : 'no map';
@@ -549,51 +536,28 @@
   /* panel construction                                                 */
   /* ------------------------------------------------------------------ */
 
+  // Four of the console's five dropdowns are the same list with a different
+  // label; `DitherCore.buildSelect` is that builder, so each of these is now
+  // the catalogue, its label, and nothing else.
   function buildAlgorithmSelect() {
-    const groups = [];
-    D.ALGORITHMS.forEach(function (algo) {
-      let group = groups.find(function (g) { return g.name === algo.group; });
-      if (!group) { group = { name: algo.group, items: [] }; groups.push(group); }
-      group.items.push(algo);
-    });
-    groups.forEach(function (group) {
-      const optgroup = document.createElement('optgroup');
-      optgroup.label = group.name;
-      group.items.forEach(function (algo) {
-        const option = document.createElement('option');
-        option.value = algo.id;
-        option.textContent = algo.name;
-        optgroup.appendChild(option);
-      });
-      el.algorithm.appendChild(optgroup);
+    buildSelect(el.algorithm, D.ALGORITHMS, {
+      group: function (algo) { return algo.group; },
+      label: function (algo) { return algo.name; },
     });
   }
 
   function buildPaletteSelect() {
-    D.PALETTES.forEach(function (palette) {
-      const option = document.createElement('option');
-      option.value = palette.id;
-      option.textContent = palette.name + ' · ' + palette.colors.length + ' colors';
-      el.palette.appendChild(option);
+    buildSelect(el.palette, D.PALETTES, {
+      label: function (palette) { return palette.name + ' · ' + palette.colors.length + ' colors'; },
     });
   }
 
   function buildToneMapSelect() {
-    D.TONE_MAPS.forEach(function (map) {
-      const option = document.createElement('option');
-      option.value = map.id;
-      option.textContent = map.name;
-      el.toneMap.appendChild(option);
-    });
+    buildSelect(el.toneMap, D.TONE_MAPS, { label: function (map) { return map.name; } });
   }
 
   function buildTextSelect() {
-    TEXT_RAMPS.forEach(function (ramp) {
-      const option = document.createElement('option');
-      option.value = ramp.id;
-      option.textContent = ramp.name;
-      el.textCharset.appendChild(option);
-    });
+    buildSelect(el.textCharset, TEXT_RAMPS, { label: function (ramp) { return ramp.name; } });
   }
 
   // The effects stack: only what is switched on is on screen, added through
@@ -606,7 +570,7 @@
   }
 
   function effectMeta(id) {
-    return D.GLITCHES.find(function (g) { return g.id === id; }) || { name: id, hint: '' };
+    return byId(D.GLITCHES, id) || { name: id, hint: '' };
   }
 
   function buildEffectList() {
@@ -732,7 +696,7 @@
   }
 
   function addEffect(id) {
-    const meta = D.GLITCHES.find(function (g) { return g.id === id; });
+    const meta = byId(D.GLITCHES, id);
     if (!meta || glitches.on[id]) return;
     glitches.on[id] = true;
     if (!glitches.amount[id]) glitches.amount[id] = 50;
@@ -876,15 +840,9 @@
   ];
 
   function buildPresetSelect() {
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = 'Choose a recipe…';
-    el.preset.appendChild(placeholder);
-    PRESETS.forEach(function (preset) {
-      const option = document.createElement('option');
-      option.value = preset.id;
-      option.textContent = preset.name;
-      el.preset.appendChild(option);
+    buildSelect(el.preset, PRESETS, {
+      placeholder: 'Choose a recipe…',
+      label: function (preset) { return preset.name; },
     });
   }
 
@@ -897,7 +855,7 @@
   }
 
   function applyPreset(id) {
-    const preset = PRESETS.find(function (p) { return p.id === id; });
+    const preset = byId(PRESETS, id);
     if (!preset) return;
     applySettings(preset.settings, preset.name);
   }
@@ -945,7 +903,7 @@
   /* ------------------------------------------------------------------ */
 
   function rampFor(id) {
-    const found = TEXT_RAMPS.find(function (r) { return r.id === id; });
+    const found = byId(TEXT_RAMPS, id);
     return (found || TEXT_RAMPS[0]).chars;
   }
 
@@ -1001,7 +959,7 @@
   // The ink and paper for the type: the tone map's own colours when one is on,
   // otherwise the console's.
   function inkColors() {
-    const map = D.TONE_MAPS.find(function (m) { return m.id === state.settings.toneMap; });
+    const map = byId(D.TONE_MAPS, state.settings.toneMap);
     if (map && map.id !== 'none') {
       const custom = map.id === 'custom';
       return {
@@ -1077,7 +1035,7 @@
   }
 
   function algorithmById(id) {
-    return D.ALGORITHMS.find(function (a) { return a.id === id; }) || D.ALGORITHMS[0];
+    return byId(D.ALGORITHMS, id) || D.ALGORITHMS[0];
   }
 
   // One place where the algorithm and palette change, so the select, the
@@ -1091,9 +1049,7 @@
   }
 
   function stepAlgorithm(delta) {
-    const list = D.ALGORITHMS;
-    const at = list.findIndex(function (a) { return a.id === state.settings.algorithm; });
-    const next = list[(Math.max(0, at) + delta + list.length) % list.length];
+    const next = stepThrough(D.ALGORITHMS, state.settings.algorithm, delta);
     setAlgorithm(next.id);
     return next.id;
   }
@@ -1108,14 +1064,13 @@
   }
 
   function stepPalette(delta) {
-    const at = D.PALETTES.findIndex(function (p) { return p.id === state.settings.palette; });
-    const next = D.PALETTES[(Math.max(0, at) + delta + D.PALETTES.length) % D.PALETTES.length];
+    const next = stepThrough(D.PALETTES, state.settings.palette, delta);
     setPalette(next.id);
     return next.id;
   }
 
   function paletteById(id) {
-    return D.PALETTES.find(function (p) { return p.id === id; }) || D.PALETTES[0];
+    return byId(D.PALETTES, id) || D.PALETTES[0];
   }
 
   function updateStats(res, full) {
@@ -1250,12 +1205,18 @@
   // The desktop route into the same code: the main process reads the file and
   // hands over bytes, so no file:// URL ever reaches the canvas (Chromium treats
   // a file image in a file page as an opaque origin, which would taint it).
+  // One decoder for every native route: the main process reads the file and
+  // hands over an ArrayBuffer, so each payload becomes a File the same way.
+  function payloadFile(payload, fallbackName, fallbackType) {
+    const view = payload.bytes instanceof ArrayBuffer ? new Uint8Array(payload.bytes) : payload.bytes;
+    const bytes = view instanceof Uint8Array ? view : new Uint8Array(view);
+    return new File([bytes], payload.name || fallbackName, { type: payload.mime || fallbackType });
+  }
+
   function loadPayload(payload) {
     if (!payload) { el.statStatus.textContent = 'Open cancelled'; return false; }
     if (payload.error) { el.statStatus.textContent = payload.error; return false; }
-    const view = payload.bytes instanceof ArrayBuffer ? new Uint8Array(payload.bytes) : payload.bytes;
-    const bytes = view instanceof Uint8Array ? view : new Uint8Array(view);
-    loadFile(new File([bytes], payload.name || 'image', { type: payload.mime || 'image/png' }));
+    loadFile(payloadFile(payload, 'image', 'image/png'));
     state.path = payload.path || null;
     return true;
   }
@@ -1964,9 +1925,7 @@
       desktop.openVideo().then(function (payload) {
         if (!payload) return;
         if (payload.error) { videoStatus(payload.error); return; }
-        const view = payload.bytes instanceof ArrayBuffer ? new Uint8Array(payload.bytes) : payload.bytes;
-        const bytes = view instanceof Uint8Array ? view : new Uint8Array(view);
-        startVideo('file', new File([bytes], payload.name || 'clip', { type: payload.mime || 'video/mp4' }));
+        startVideo('file', payloadFile(payload, 'clip', 'video/mp4'));
       }).catch(function () { videoStatus('The open dialog failed'); });
     });
     el.videoFile.addEventListener('change', function () {

@@ -17,3 +17,7 @@ desktop/node_modules/
 
 # Local scratch
 *.local
+
+# Notes kept on the machine the app is developed on. They are not part of the
+# published application, so they stay local.
+AGENTS.md

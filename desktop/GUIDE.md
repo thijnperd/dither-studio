@@ -224,7 +224,8 @@ it. Neither writes into Documents; proofs go only where you saved them.
 There is one dithering engine — `dither.js`, DOM-free, shared byte-for-byte by
 the web demo, the launcher app and this one. Everything around it differs on
 purpose: the web builds are a page with a rail, the desktop build is a window
-with docks and menus. `desktop/tools/sync-renderer.js` documents the whole
-difference between the desktop renderer and the shared shell as ten hunks, and
-CI fails if the copy drifts. If you want to change something that is about
+with docks and menus. The desktop has its own core (`src/renderer/core.js`) and
+its own shell (`src/renderer/app.js`); what is copied from the shared engine is
+just the engine, and `desktop/tools/sync-renderer.js --check` — which CI runs —
+fails if those copies drift. If you want to change something that is about
 *dithering*, change it once, in `dither.js`, and all three builds get it.

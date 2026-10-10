@@ -1,7 +1,7 @@
 name: pages
 
-# Publishes the frozen web demo in `demo/` — the same copy that lives in the
-# portfolio repository — to https://thijnperd.github.io/dither-studio/.
+# Publishes the frozen web demo in `demo/` to
+# https://thijnperd.github.io/dither-studio/.
 #
 # Only `demo/` is uploaded, so the app the desktop build ships and the launcher
 # tree at the repository root can never leak onto the public site, and the demo

@@ -25,6 +25,12 @@ jobs:
       - name: Core tests
         run: node test.js
 
+      # The desktop core (renderer/core.js) is DOM-free at load, so its rules run
+      # here too: the colour round trip, the catalogue lookups, the dropdown
+      # builder. The shell over it is covered by the desktop smoke run below.
+      - name: Desktop core tests
+        run: node desktop/tools/core.test.js
+
   desktop:
     name: desktop (windows)
     runs-on: windows-latest
@@ -37,9 +43,9 @@ jobs:
           cache: npm
           cache-dependency-path: desktop/package-lock.json
 
-      # The desktop renderer is generated from the shared core. This is the check
-      # that keeps the copy honest, and it needs no dependencies to run.
-      - name: The desktop renderer is in step with the shared core
+      # The desktop build runs the same dithering engine as the web builds. This
+      # is the check that keeps the copies honest, and it needs no dependencies.
+      - name: The desktop engine copies are in step with the shared engine
         run: node desktop/tools/sync-renderer.js --check
 
       - name: Install
