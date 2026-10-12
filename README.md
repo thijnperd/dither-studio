@@ -86,23 +86,7 @@ after that the app starts in a second or two.
 
 ### The window
 
-```
-┌───────────────────────────────────────────────────────────────────────────┐
-│ ▣ Dither Studio  demo scene          Saved proof.png — click to reveal  — □ ×│  caption
-│ File  Edit  Image  Press  Effects  View  Window  Help                     │  menu bar
-│ − Fit +  Zoom Fit │ Update Full Live Still │ Compare Random │ … Export PNG│  options bar
-├────┬────────────────────────────────────────────────┬─────────────────────┤
-│    │ ▣ demo scene  960 × 640 @ Fit                  │ Source Press Tone … │  panel tabs
-│ ▤  │                                                │                     │
-│ ✦  │              the proof                         │  SOURCE             │  panels
-│ ◉  │         (checkerboard well)                    │  Open image…        │
-│ ⚄  │                                                │  PRESS              │
-│    │                                                │  Floyd–Steinberg ▸  │
-├────┴────────────────────────────────────────────────┴─────────────────────┤
-│ Update Live                    ▶ Play  frame 0 · 12 fps                   │  viewport bar
-│ File demo scene │ Size 960×640 │ Algorithm … │ Colors 4 │ Render 71 ms     │  status bar
-└───────────────────────────────────────────────────────────────────────────┘
-```
+![The window](docs/screenshot-console.png)
 
 Every catalogue lives in the menus — all 46 algorithms, 24 palettes, 13
 effects, 11 tone maps and 21 recipes, expanded from the app's own tables, so a
