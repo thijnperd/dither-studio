@@ -14,9 +14,7 @@ on:
     branches: [main]
     paths:
       - 'desktop/**'
-      - 'dither.js'
-      - 'video.js'
-      - 'test.js'
+      - 'launcher/**'
       - '.github/workflows/build.yml'
     tags: ['v*']
   workflow_dispatch:
@@ -43,7 +41,7 @@ jobs:
         run: node desktop/tools/sync-renderer.js --check
 
       - name: Engine tests
-        run: node test.js
+        run: node launcher/test.js
 
       - name: Desktop core tests
         run: node desktop/tools/core.test.js

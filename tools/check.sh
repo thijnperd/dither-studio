@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # check.sh — run tools/browser-check.cjs with the global Playwright resolvable.
 #
-#   bash tools/check.sh index.html --expect canvas --screenshot /tmp/dither.png
-#   bash tools/check.sh index.html --eval "JSON.stringify(window.__dither.stats())"
+#   bash tools/check.sh launcher/index.html --expect canvas --screenshot /tmp/dither.png
+#   bash tools/check.sh launcher/index.html --eval "JSON.stringify(window.__dither.stats())"
 #
 # NODE_PATH is pointed at the global npm root so `require('playwright')` works
 # without installing anything into this project. browser-check.cjs also falls back

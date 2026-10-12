@@ -18,7 +18,7 @@ dialogs — that's the one still being developed.
 | Build | Where | State | How you get it |
 |---|---|---|---|
 | **Web demo** | `demo/` | frozen | <https://thijnperd.github.io/dither-studio/> — published to GitHub Pages from `demo/` |
-| **Launcher app** | this folder | frozen | the launchers: the page in an app-mode window with its own profile |
+| **Launcher app** | `launcher/` | frozen | the launchers: the page in an app-mode window with its own profile |
 | **Desktop app** | [`desktop/`](desktop/) | **active** | `Dither-Studio-Setup-<version>.exe` from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
 What they share is `dither.js`, the dithering engine. It has no DOM
@@ -40,11 +40,11 @@ its own tour in [desktop/GUIDE.md](desktop/GUIDE.md).
 
 | | |
 |---|---|
-| **Windows** | double-click **`Dither Studio.cmd`** |
-| **macOS** | double-click **`Dither Studio.command`** (right-click → Open the first time, if Gatekeeper asks) |
-| **Linux** | `./dither-studio.sh` (make it executable once: `chmod +x dither-studio.sh`) |
-| **Any browser** | open **`index.html`** |
-| **Installed app** | open `index.html`, then use the browser's *Install* / *Create shortcut* command (`manifest.webmanifest` makes this work) |
+| **Windows** | double-click **`launcher/Dither Studio.cmd`** |
+| **macOS** | double-click **`launcher/Dither Studio.command`** (right-click → Open the first time, if Gatekeeper asks) |
+| **Linux** | `./launcher/dither-studio.sh` (make it executable once: `chmod +x launcher/dither-studio.sh`) |
+| **Any browser** | open **`launcher/index.html`** |
+| **Installed app** | open `launcher/index.html`, then use the browser's *Install* / *Create shortcut* command (`manifest.webmanifest` makes this work) |
 | **Desktop app** | [`desktop/`](desktop/), or the installer from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
 The launchers look for Chrome, Edge, Brave or Chromium and open `index.html`
@@ -56,7 +56,7 @@ Chromium-family browser is found, the launcher falls back to opening
 `index.html` in your default browser. Set `DITHER_DRY_RUN=1` to print the
 command it would run instead of running it.
 
-Keep the folder together — the app *is* these files, and the launchers look
+Keep `launcher/` together — the app *is* those files, and the launchers look
 for `index.html` next to themselves.
 
 ## The desktop app
@@ -293,12 +293,12 @@ dependencies.
 
 | Path | What it is |
 |---|---|
-| `dither.js` | the engine: screens and masks, 46 algorithms, palettes, mixing plans, adjustments, tone maps, alpha, effects, glow, video temporal rules, `process()`. DOM-free, shared by all three builds |
-| `index.html`, `style.css`, `app.js`, `video.js` | the launcher/web shell: markup, the console stylesheet, canvas rendering and controls, and video mode |
-| `Dither Studio.cmd`, `Dither Studio.command`, `dither-studio.sh` | the app-mode launchers |
-| `manifest.webmanifest`, `icons/` | installable-app metadata and the generated mark |
-| `tools/make-icons.js` | regenerates `icons/` through the app's own core |
-| `test.js` | the engine's Node tests |
+| `launcher/` | the **launcher** build, self-contained: the page (`index.html`, `style.css`, `app.js`, `video.js`), the engine master (`dither.js`) and its tests (`test.js`), the three launchers, `manifest.webmanifest` and `icons/` |
+| `launcher/dither.js` | the engine: screens and masks, 46 algorithms, palettes, mixing plans, adjustments, tone maps, alpha, effects, glow, video temporal rules, `process()`. DOM-free, shared by all three builds |
+| `launcher/test.js` | the engine's Node tests |
+| `launcher/Dither Studio.cmd`, `launcher/Dither Studio.command`, `launcher/dither-studio.sh` | the app-mode launchers (Windows / macOS / Linux) |
+| `launcher/manifest.webmanifest`, `launcher/icons/` | installable-app metadata and the generated mark |
+| `tools/make-icons.js` | regenerates `launcher/icons/` through the app's own core |
 | `tools/` | optional browser-check harness (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency |
 | `demo/` | the **frozen** web demo published to GitHub Pages, favicon and icons included |
 | `desktop/` | the **active** Electron build, in its own folder with its own dependencies |
@@ -316,7 +316,7 @@ Three layers of checks ship with the app.
 ### The engine, in Node
 
 ```bash
-node test.js
+node launcher/test.js
 ```
 
 The tests use Node's built-in `assert`; nothing needs installing. They cover
@@ -337,7 +337,7 @@ screenshot. It prints a JSON summary and exits non-zero on any error or missing
 `--expect`.
 
 ```bash
-bash tools/check.sh index.html --expect canvas --screenshot /tmp/dither.png
+bash tools/check.sh launcher/index.html --expect canvas --screenshot /tmp/dither.png
 ```
 
 | Option | Meaning |
@@ -367,24 +367,24 @@ or step through video frames without clicking anything:
 
 ```bash
 # what the app currently reports
-bash tools/check.sh index.html --eval "JSON.stringify(window.__dither.stats())"
+bash tools/check.sh launcher/index.html --eval "JSON.stringify(window.__dither.stats())"
 
 # a preset, then the inks actually drawn on the canvas
-bash tools/check.sh index.html --eval \
+bash tools/check.sh launcher/index.html --eval \
   "window.__dither.applyPreset('matrixrain'); window.__dither.canvasColors()"
 
 # the console: station state, the effects stack, the update mode
-bash tools/check.sh index.html --eval "(function(){ var d = window.__dither; \
+bash tools/check.sh launcher/index.html --eval "(function(){ var d = window.__dither; \
   d.addEffect('scanlines'); d.addEffect('grain'); d.moveEffect(1, -1); \
   return { stack: d.activeEffects(), quality: d.setQuality('still'), \
            groups: d.groups().length, swatches: d.swatches().length }; })()"
 
 # video, with no file and no camera: the generated clip drives real frames
-bash tools/check.sh index.html --eval \
+bash tools/check.sh launcher/index.html --eval \
   "JSON.stringify(window.__dither.videoSynthetic(480, 320))"
 ```
 
-Run from the repository root so `index.html` resolves, and note that the
+Run from the repository root so `launcher/index.html` resolves, and note that the
 harness takes only the last `--eval` — chain multi-step checks inside one
 (async) expression. `ok` is `true` only when there are no console errors, no
 page errors and every `--expect` matched. [GUIDE.md](GUIDE.md) describes what

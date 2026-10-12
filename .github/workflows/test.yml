@@ -23,7 +23,7 @@ jobs:
           node-version: ${{ matrix.node }}
       # The app has no dependencies and no build step; the tests only need Node.
       - name: Core tests
-        run: node test.js
+        run: node launcher/test.js
 
       # The desktop core (renderer/core.js) is DOM-free at load, so its rules run
       # here too: the colour round trip, the catalogue lookups, the dropdown

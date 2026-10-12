@@ -1,7 +1,7 @@
 /* sync-renderer.js - how the desktop build stays in step with the engine.
  *
  * The desktop app runs the SAME dithering engine as the two web builds, so it
- * does not fork it: this tool copies `dither.js` and `video.js` across
+ * does not fork it: this tool copies launcher/`dither.js` and `video.js` across
  * verbatim, and `--check` fails if either copy has drifted.
  *
  *     node desktop/tools/sync-renderer.js           # regenerate the copies
@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DESKTOP = path.join(__dirname, '..');
-const ROOT = path.join(DESKTOP, '..');
+const ROOT = path.join(DESKTOP, '..', 'launcher');
 const OUT = path.join(DESKTOP, 'src', 'renderer');
 const CHECK = process.argv.includes('--check');
 

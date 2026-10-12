@@ -7,7 +7,7 @@ Forty-six dither algorithms, twenty-four palettes, twenty-one presets, thirteen
 effects. No install, no build step, no internet connection, no uploads.
 
 The five-minute path: **double-click the launcher for your system** (or open
-`index.html`) → drag a photo onto the stage → open the **Presets** station and
+`launcher/index.html`) → drag a photo onto the stage → open the **Presets** station and
 try *Matrix Rain*, *Ice Dot Field* and *Riso Duotone* → push **Smoothness**,
 **Flow** and **Streak** if you landed on a structure-aware screen → hit
 **Export** with `2×` or `4×` selected.
@@ -22,7 +22,7 @@ exports, keys, performance and troubleshooting.
 
 ## 1. Make it an app
 
-The app *is* the folder: `index.html` plus five files beside it. There is nothing
+The app *is* the `launcher/` folder: `index.html` plus five files beside it. There is nothing
 to compile and nothing to install, so "running it as an app" means opening that
 page in a window that has no tabs, no address bar and its own session.
 
@@ -31,14 +31,14 @@ page in a window that has no tabs, no address bar and its own session.
 | Windows | **`Dither Studio.cmd`** | Chrome, Edge or Brave in app mode |
 | macOS | **`Dither Studio.command`** | Chrome, Edge, Brave or Chromium in app mode |
 | Linux | **`dither-studio.sh`** (`chmod +x` once) | the first of `google-chrome`, `chromium`, `brave-browser`, `microsoft-edge` that is on your `PATH` |
-| Anything else | **`index.html`** | your default browser, in a tab |
+| Anything else | **`launcher/index.html`** | your default browser, in a tab |
 
 ### What the launchers actually do
 
 They look for a Chromium-family browser, then start it as
 
 ```
-chrome --app=file:///…/Dither Studio/index.html \
+chrome --app=file:///…/dither-studio/launcher/index.html \
        --user-data-dir=<a profile of the app's own> --no-first-run --no-default-browser-check
 ```
 
@@ -66,12 +66,12 @@ folder, and nothing is added to the Start menu, the dock or the registry.
   launcher prints what it would run and exits. That is also how the launchers are
   tested.
 - **Linux and snap/AppImage browsers** sometimes refuse to start without a
-  sandbox: run `DITHER_NO_SANDBOX=1 ./dither-studio.sh`. That trades a sandbox
+  sandbox: run `DITHER_NO_SANDBOX=1 ./launcher/dither-studio.sh`. That trades a sandbox
   for a window; prefer installing a normal package if you can.
 
 ### Installed from the browser instead
 
-`manifest.webmanifest` makes the page installable. Open `index.html` and use the
+`manifest.webmanifest` makes the page installable. Open `launcher/index.html` and use the
 browser's **Install** / **Create shortcut…** command (*Install Dither Studio* in
 Chrome's address bar, *Apps → Install this site as an app* in Edge). You get a
 real app window and a launcher in your applications list, without the dedicated
@@ -79,10 +79,10 @@ profile — handy if you would rather not keep a second browser profile around.
 
 ### Keeping it portable
 
-Copy the folder anywhere — a USB stick, a network share, a different drive. The
-launchers resolve `index.html` relative to themselves, so a copied folder works
-with no changes. Keep the files together: the app is all of them, and there is
-nothing outside the folder it needs. Settings (which stations are open, and the
+Copy the `launcher/` folder anywhere — a USB stick, a network share, a
+different drive. The launchers resolve `index.html` relative to themselves, so
+a copied folder works with no changes. Keep its files together: the app is all
+of them, and there is nothing outside the folder it needs. Settings (which stations are open, and the
 last recipe) are remembered per browser profile, not per folder.
 
 ---
@@ -412,7 +412,7 @@ use), and the mixing plans (per palette bin). What is not: the dither itself,
 which is the point.
 
 Measured on the development machine (Node, 1024×1024 at pixel size 1 — the worst
-case, printed by `node test.js`):
+case, printed by `node launcher/test.js`):
 
 | Recipe | Time |
 |---|---|
@@ -443,14 +443,14 @@ The default view (960×640 at pixel size 2) renders in roughly 40–90 ms.
 ## 10. Troubleshooting
 
 **The launcher says a browser was not found.** No Chrome, Edge, Brave or Chromium
-on this machine. Install one, or just open `index.html` — everything except the
+on this machine. Install one, or just open `launcher/index.html` — everything except the
 app window works the same.
 
 **A launcher window does not appear, or opens a tab in my normal browser.** Check
 that a Chromium-family browser exists and run with `DITHER_DRY_RUN=1` to see the
 command being run. On Linux, a snap or AppImage browser sometimes needs
 `DITHER_NO_SANDBOX=1`. If the app window opens but you also see a tab, you
-probably opened `index.html` directly as well.
+probably opened `launcher/index.html` directly as well.
 
 **macOS refuses the `.command` file** ("cannot be opened because it is from an
 unidentified developer"). Right-click it → **Open** → **Open** once; after that it
@@ -503,7 +503,7 @@ Two layers of checks ship with the app.
 **The core, in Node** — no dependencies:
 
 ```bash
-node test.js
+node launcher/test.js
 ```
 
 It pins the project's invariants (determinism, palette membership, endpoint-safe
@@ -514,7 +514,7 @@ timings. CI runs it on Node 20 and 22.
 global Playwright (never a dependency of the app):
 
 ```bash
-bash tools/check.sh index.html --expect canvas --wait 1200 \
+bash tools/check.sh launcher/index.html --expect canvas --wait 1200 \
   --screenshot /tmp/dither.png --eval "JSON.stringify(window.__dither.stats())"
 ```
 

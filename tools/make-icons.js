@@ -8,7 +8,8 @@
  *
  *   node tools/make-icons.js
  *
- * Writes icons/icon-192.png, icons/icon-512.png and icons/icon.svg.
+ * Writes launcher/icons/icon-192.png, launcher/icons/icon-512.png and
+ * launcher/icons/icon.svg.
  */
 'use strict';
 
@@ -16,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-const root = path.join(__dirname, '..');
+const root = path.join(__dirname, '..', 'launcher');
 const D = require(path.join(root, 'dither.js'));
 
 const INK = [11, 12, 16];        // the console's well            #0b0c10
