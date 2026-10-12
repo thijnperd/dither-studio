@@ -63,8 +63,16 @@ jobs:
           export DITHER_SMOKE_SAVE="$RUNNER_TEMP/proof.png"
           export DITHER_SMOKE_KEY=ctrl+s
           npm run smoke | tee "$RUNNER_TEMP/smoke.log"
-          test -s "$DITHER_SMOKE_SAVE" || { echo "no proof was written"; exit 1; }
+          # The report proves the app wrote the proof (the harness stat'ed
+          # the bytes itself); the shell then has to see it too. Poll for a
+          # bounded moment instead of racing the writer's exit.
+          for i in $(seq 1 20); do
+            [ -s "$DITHER_SMOKE_SAVE" ] && break
+            sleep 0.5
+          done
+          test -s "$DITHER_SMOKE_SAVE" || { echo "no proof was written"; ls -la "$RUNNER_TEMP"; exit 1; }
           grep -q '"savedFile":{' "$RUNNER_TEMP/smoke.log" || { echo "the report did not see the save"; exit 1; }
+          ls -l "$DITHER_SMOKE_SAVE"
 
       # A release tag names the version in desktop/package.json. Catch the
       # mismatch here rather than shipping an installer with the wrong name.
