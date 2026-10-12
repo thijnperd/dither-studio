@@ -31,8 +31,6 @@ The two web builds are frozen on purpose: they're what people have links to
 and install from. `demo/` is also kept self-contained so the public Pages site
 can never pick up desktop files. All new work happens in `desktop/`.
 
-![The console](docs/screenshot-console.png)
-
 Just looking around? [GUIDE.md](GUIDE.md) is the tour of the console: running
 it as an app, each station in the rail, the three structure-aware looks, video
 mode, exports, keyboard shortcuts and troubleshooting. The desktop window has
