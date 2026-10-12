@@ -82,7 +82,7 @@ jobs:
 
       - name: Build the installer and the portable exe
         working-directory: desktop
-        run: npm run dist
+        run: npm run dist -- --publish never
 
       - name: Keep the build output
         uses: actions/upload-artifact@v4

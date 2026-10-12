@@ -66,6 +66,7 @@
     },
     "portable": {
       "artifactName": "Dither-Studio-${version}-portable.exe"
-    }
+    },
+    "publish": null
   }
 }
