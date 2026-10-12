@@ -1,4 +1,4 @@
-/* core.test.js — Node tests for the desktop core (src/renderer/core.js).
+/* core.test.js: Node tests for the desktop core (src/renderer/core.js).
  *
  * The core is DOM-free at load, so its rules can be pinned here: the colour
  * round trip, the catalogue lookups the steppers and the menus share, the
@@ -33,7 +33,7 @@ function group(name) {
 }
 
 // `buildSelect` is the only part of the core that touches the DOM, and only when
-// it is called — a two-field element is enough to pin what it builds. Placed here
+// it is called: a two-field element is enough to pin what it builds. Placed here
 // because a real `document` must not exist for the tests above.
 function fakeElement(tag) {
   return {
@@ -43,9 +43,7 @@ function fakeElement(tag) {
   };
 }
 
-/* ------------------------------------------------------------------ */
-/* colour                                                             */
-/* ------------------------------------------------------------------ */
+// ---- colour ----
 
 group('colour');
 
@@ -89,9 +87,7 @@ test('the pair round-trips every byte value', function () {
   }
 });
 
-/* ------------------------------------------------------------------ */
-/* catalogues                                                         */
-/* ------------------------------------------------------------------ */
+// ---- catalogues ----
 
 group('catalogues');
 
@@ -119,9 +115,7 @@ test('stepThrough starts at the first entry when nothing is selected', function 
   assert.strictEqual(Core.stepThrough(LIST, 'zz', -1).id, 'c');
 });
 
-/* ------------------------------------------------------------------ */
-/* settings paths                                                     */
-/* ------------------------------------------------------------------ */
+// ---- settings paths ----
 
 group('settings paths');
 
@@ -138,9 +132,7 @@ test('setPath writes one nested setting and leaves its neighbours alone', functi
   assert.deepStrictEqual(settings, { adjustments: { contrast: 1.4, gamma: 1 }, palette: 'gameboy' });
 });
 
-/* ------------------------------------------------------------------ */
-/* the rail                                                           */
-/* ------------------------------------------------------------------ */
+// ---- the rail ----
 
 group('the rail');
 
@@ -164,9 +156,7 @@ test('setNote tolerates a missing node', function () {
   assert.strictEqual(node.textContent, 'Press · Bayer 8×8');
 });
 
-/* ------------------------------------------------------------------ */
-/* the dropdown builder                                               */
-/* ------------------------------------------------------------------ */
+// ---- the dropdown builder ----
 
 group('the dropdown builder');
 
@@ -217,7 +207,6 @@ test('buildSelect falls back to the entry name, then to its id', function () {
   assert.deepStrictEqual(node.children.map(function (o) { return o.textContent; }), ['A', 'b']);
 });
 
-/* ------------------------------------------------------------------ */
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 if (failed) process.exitCode = 1;

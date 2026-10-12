@@ -11,7 +11,7 @@
 </head>
 <body class="ps">
 
-  <!-- ================= title bar ================= -->
+  <!-- title bar -->
   <!-- The window is frameless (see electron/main.js), so this bar *is* the
        caption. The window buttons talk to the main process over preload. -->
   <header class="titlebar" id="titlebar">
@@ -38,7 +38,7 @@
     </div>
   </header>
 
-  <!-- ================= menu bar ================= -->
+  <!-- menu bar -->
   <nav class="menubar" id="menubar" aria-label="Menu bar">
     <button class="menu" type="button" data-menu="file">File</button>
     <button class="menu" type="button" data-menu="edit">Edit</button>
@@ -51,7 +51,7 @@
   </nav>
   <div class="menu-pop" id="menu-pop" role="menu" hidden></div>
 
-  <!-- ================= options bar ================= -->
+  <!-- options bar -->
   <div class="optbar" id="optbar">
     <div class="opt-group">
       <button id="zoom-out" class="obtn obtn-icon" title="Zoom out (−)" aria-label="Zoom out">−</button>
@@ -89,7 +89,7 @@
     </div>
   </div>
 
-  <!-- ================= work area ================= -->
+  <!-- work area -->
   <div class="workarea">
 
     <!-- the tool rail: one button per verb, Photoshop's left column -->
@@ -432,7 +432,7 @@
     </aside>
   </div>
 
-  <!-- ================= status bar ================= -->
+  <!-- status bar -->
   <footer class="statusbar">
     <span class="readout">File <b id="stat-file">demo</b></span>
     <span class="readout">Size <b id="stat-size">—</b></span>

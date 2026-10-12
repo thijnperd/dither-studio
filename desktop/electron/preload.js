@@ -1,4 +1,4 @@
-/* preload.js — the only bridge between the renderer and the operating system.
+/* preload.js - the only bridge between the renderer and the operating system.
  *
  * The renderer has no Node: `contextIsolation` is on and `nodeIntegration` is
  * off (see main.js). Everything the app needs from the desktop is named here,
@@ -8,11 +8,11 @@
  * Two deliberate choices:
  *   - Files travel as BYTES, not as paths. A file:// image loaded into a
  *     file:// page is an opaque origin to Chromium and would taint the canvas,
- *     which kills getImageData — the whole app. So the main process reads the
+ *     which kills getImageData, the whole app. So the main process reads the
  *     bytes and the renderer rebuilds a File from them; the path is carried
  *     along only for display and for the save dialog's default folder.
- *   - Every channel is prefixed `ds:` and every handler returns a plain object,
- *     so a missing field degrades to a status message rather than a crash.
+ *   - Every channel is prefixed `ds:` and every handler returns a plain
+ *     object, so a missing field degrades to a status message, not a crash.
  */
 'use strict';
 

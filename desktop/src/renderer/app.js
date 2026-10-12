@@ -1,22 +1,21 @@
-/* app.js — the desktop shell for Dither Studio.
+/* app.js - the desktop shell for Dither Studio.
  *
  * Loads after `core.js` (the desktop core: colour, catalogue lookups, the
  * rail's dropdowns, the settings paths) and after `dither.js` (the engine).
  * Anything this shell needs more than once lives in one of those two.
  *
  * The canvas backing store is one pixel per working pixel; zoom is CSS only
- * (`image-rendering: pixelated`), so a render is a single putImageData and the
- * browser does the scaling.
+ * (`image-rendering: pixelated`), so a render is a single putImageData.
  *
  * Cost control (DESIGN.md performance clause):
  *   - the working image is capped at MAX_SOURCE on its longest side;
  *   - dragging a slider renders a half-resolution preview on the next frame;
  *   - the full-quality pass only runs when the control is released.
  *
- * The shell is responsive the house way — contraction, not a redesign: the
- * stylesheet thins the rail for a coarse pointer, and under 720px the rail
- * collapses into one bar whose state is held here (`initConsole`), while the
- * canvas takes over pan and pinch itself.
+ * Responsive the house way - contraction, not a redesign: the stylesheet
+ * thins the rail for a coarse pointer, and under 720px the rail collapses
+ * into one bar whose state is held here (initConsole), while the canvas
+ * takes over pan and pinch itself.
  */
 
 (function () {
@@ -34,13 +33,12 @@
   const $ = function (id) { return document.getElementById(id); };
 
   // The desktop build has a native bridge (electron/preload.js); the browser
-  // build simply does not. Every use below is guarded, so this one constant is
-  // the whole difference between the app in its own window and the web version.
+  // build does not. Every use below is guarded, so this one constant is the
+  // whole difference between the two.
   const desktop = window.ditherDesktop || null;
 
-  // The desktop core (renderer/core.js). These are the helpers this file used
-  // to carry its own copies of; naming them once here keeps every call site
-  // below unchanged.
+  // The desktop core (renderer/core.js): the helpers this file would
+  // otherwise carry its own copies of.
   const Core = window.DitherCore;
   if (!Core) throw new Error('renderer/core.js must load before renderer/app.js');
   const rgbToHex = Core.rgbToHex;
@@ -54,8 +52,8 @@
   const setNote = Core.setNote;
   const shortPalette = Core.shortPalette;
 
-  // The checkerboard under the proof is only honest while the alpha is kept, so
-  // one place decides it. Four call sites used to each spell out "!== 'matte'".
+  // The checkerboard under the proof is only honest while the alpha is kept,
+  // so one place decides it.
   function showAlphaBehind(alphaMode) {
     el.canvas.classList.toggle('alpha-on', alphaMode !== 'matte');
   }
@@ -201,13 +199,11 @@
     { input: el.glowIntensity, label: el.glowIntensityValue, path: 'glow.intensity', fmt: plain },
   ];
 
-  /* ------------------------------------------------------------------ */
-  /* settings plumbing                                                  */
-  /* ------------------------------------------------------------------ */
+  // ---- settings plumbing ----
 
-  // `getPath` / `setPath` are the core's. The two views of the stack — the ids
-  // that are on, and the entries a preset or an export wants — come from one
-  // filter rather than two.
+  // `getPath` / `setPath` are the core's. The two views of the stack - the
+  // ids that are on, and the entries a preset or an export wants - come from
+  // one filter rather than two.
   function deriveGlitches() {
     return activeEffects().map(function (id) {
       return { id: id, amount: glitches.amount[id], mode: glitches.mode[id] };
@@ -278,14 +274,12 @@
     syncEffectChoices();
     buildSwatches();
     syncGroupNotes();
-    // The desktop chrome — the title bar, the menu ticks, the filled part of
-    // every slider — listens for this one event instead of reaching in here.
+    // The desktop chrome: the title bar, the menu ticks, the filled part of
+    // every slider: listens for this one event instead of reaching in here.
     window.dispatchEvent(new CustomEvent('ds:ui'));
   }
 
-  /* ------------------------------------------------------------------ */
-  /* rail navigation                                                    */
-  /* ------------------------------------------------------------------ */
+  // ---- rail navigation ----
 
   function groupEl(id) {
     return document.getElementById('g-' + id);
@@ -359,7 +353,7 @@
   function markJump() {
     let current = jumpPinned || (GROUPS.length ? GROUPS[0].id : null);
     // A collapsed console hides the rail, and a hidden rail measures as a pile
-    // of zero-height groups at zero — which would read as "the last station".
+    // of zero-height groups at zero: which would read as "the last station".
     // Only trust the measurements when the rail is actually on screen.
     if (!jumpPinned && el.rail.clientHeight > 0) {
       const railTop = el.rail.getBoundingClientRect().top + 30;
@@ -392,14 +386,12 @@
     });
   }
 
-  /* ------------------------------------------------------------------ */
-  /* the console bar (phones: the rail collapses into it)               */
-  /* ------------------------------------------------------------------ */
+  // ---- the console bar (phones: the rail collapses into it) ----
 
   // Under 720px the rail collapses to one bar (see the responsive section of
-  // style.css). That state lives on #panel as data-console, the toggle is the
-  // only thing that changes it, and the bar reports on the station the rail is
-  // currently showing — so a collapsed console still says what is set.
+  // style.css). That state lives on #panel as data-console; the toggle is the
+  // only thing that changes it, and the bar reports on the station the rail
+  // is currently showing.
   const CONSOLE_STORE = 'dither-studio.console';
 
   // Which station the bar is reporting on. markJump() keeps it current while it
@@ -416,10 +408,9 @@
     return !el.panel || el.panel.getAttribute('data-console') !== 'closed';
   }
 
-  // Does the console bar exist at this size? The stylesheet answers it — the
-  // toggle is shown by the same media query that collapses the rail — so the
-  // script and the CSS can never drift apart about where the phone layout
-  // begins. (A short landscape phone counts, whatever its width.)
+  // Does the console bar exist at this size? The stylesheet answers it: the
+  // toggle is shown by the same media query that collapses the rail, so the
+  // script and the CSS cannot drift apart about where the phone layout begins.
   function consoleLayered() {
     return !!el.consoleToggle && window.getComputedStyle(el.consoleToggle).display !== 'none';
   }
@@ -448,7 +439,7 @@
 
   function initConsole() {
     if (!el.consoleToggle) return;
-    // A phone opens on the proof, not on the rail — unless the user opened the
+    // A phone opens on the proof, not on the rail: unless the user opened the
     // console here before, in which case the bar remembers that.
     let saved = null;
     try { saved = window.localStorage.getItem(CONSOLE_STORE); } catch (err) { saved = null; }
@@ -519,8 +510,8 @@
     return stats.playing ? 'playing · ' + stats.fps + ' fps' : 'paused · ' + stats.fps + ' fps';
   }
 
-  // The ink strip under the palette picker: the actual colours the press will
-  // use, which is how a palette-first tool should read at a glance.
+  // The ink strip under the palette picker: the actual colours the press
+  // will use.
   function buildSwatches() {
     const palette = paletteById(state.settings.palette);
     const colors = palette.colors.slice();
@@ -538,13 +529,11 @@
     el.swatches.setAttribute('aria-label', palette.name + ': ' + colors.length + ' inks');
   }
 
-  /* ------------------------------------------------------------------ */
-  /* panel construction                                                 */
-  /* ------------------------------------------------------------------ */
+  // ---- panel construction ----
 
   // Four of the console's five dropdowns are the same list with a different
-  // label; `DitherCore.buildSelect` is that builder, so each of these is now
-  // the catalogue, its label, and nothing else.
+  // label; `DitherCore.buildSelect` is that builder, so each of these is the
+  // catalogue, its label, and nothing else.
   function buildAlgorithmSelect() {
     buildSelect(el.algorithm, D.ALGORITHMS, {
       group: function (algo) { return algo.group; },
@@ -567,10 +556,9 @@
   }
 
   // The effects stack: only what is switched on is on screen, added through
-  // the "add" list rather than a wall of thirteen toggles (the model Dither
-  // Boy 6 moved to, and the reason its rail stays readable). `glitches.order`
-  // still holds every id, so presets, JSON export and `deriveGlitches()` keep
-  // the shape they always had.
+  // the "add" list rather than a wall of thirteen toggles. `glitches.order`
+  // still holds every id, so presets, JSON export and `deriveGlitches()`
+  // keep the shape they always had.
   function activeEffects() {
     return glitches.order.filter(function (id) { return glitches.on[id]; });
   }
@@ -656,8 +644,8 @@
       tools.appendChild(remove);
 
       // Two lines per effect: index + name + tools, then the amount with the
-      // effect's mode beside it. The name gets the whole first line that way,
-      // which it needs ("Chromatic aberration" must not truncate).
+      // effect's mode beside it. The name gets the whole first line, which
+      // "Chromatic aberration" needs.
       const line = document.createElement('div');
       line.className = 'stack-line';
       line.appendChild(amount);
@@ -685,7 +673,7 @@
   }
 
   // The "add" list offers what is not already running, so it doubles as the
-  // catalogue of everything this press can do to a finished dither.
+  // catalogue of everything the stack can do to a finished dither.
   function syncEffectChoices() {
     el.effectAdd.textContent = '';
     const placeholder = document.createElement('option');
@@ -866,18 +854,16 @@
     applySettings(preset.settings, preset.name);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* rendering                                                          */
-  /* ------------------------------------------------------------------ */
+  // ---- rendering ----
 
   function toImageData(res) {
     return new ImageData(res.data, res.width, res.height);
   }
 
   function render(full) {
-    // During video playback the frame loop owns the canvas; a still render here
-    // would only be overwritten by the next frame. (A tickOnce render, an
-    // export or a paused frame still goes through the normal path.)
+    // During video playback the frame loop owns the canvas; a still render
+    // here would only be overwritten by the next frame. (A tickOnce render,
+    // an export or a paused frame still goes through the normal path.)
     if (state.videoOn && video && video.playing) return;
     const source = full ? state.source : state.preview;
     if (!source) return;
@@ -904,9 +890,7 @@
     updateStats(res, full);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* text mode                                                          */
-  /* ------------------------------------------------------------------ */
+  // ---- text mode ----
 
   function rampFor(id) {
     const found = byId(TEXT_RAMPS, id);
@@ -918,9 +902,9 @@
     return Math.max(3, Math.round(text.size * scale));
   }
 
-  // The character grid: one character per cell, picked by the mean luminance of
-  // the *dithered* cell, so the dither texture still shows through in which
-  // character is chosen.
+  // The character grid: one character per cell, picked by the mean luminance
+  // of the *dithered* cell, so the dither texture still shows through in
+  // which character is chosen.
   function textGrid(res) {
     const cell = textCellSize(res);
     const cols = Math.max(1, Math.ceil(res.width / cell));
@@ -1001,10 +985,9 @@
     return true;
   }
 
-  // The viewport update mode, which is how pro tools handle expensive previews:
-  // Full always renders at working resolution, Live renders a half-resolution
-  // frame while a control is moving, and Still waits until the control settles
-  // (for slow machines and the heavy recipes).
+  // The viewport update mode: Full always renders at working resolution,
+  // Live renders a half-resolution frame while a control is moving, and Still
+  // waits until the control settles (for slow machines and heavy recipes).
   const QUALITY_NOTES = {
     full: 'Full — every move renders at working resolution',
     live: 'Live — half-res while dragging',
@@ -1094,9 +1077,7 @@
     syncGroupNotes();
   }
 
-  /* ------------------------------------------------------------------ */
-  /* zoom, pan, compare                                                 */
-  /* ------------------------------------------------------------------ */
+  // ---- zoom, pan, compare ----
 
   function effectiveScale() {
     if (state.zoom !== null) return state.zoom;
@@ -1139,9 +1120,7 @@
     el.compare.classList.toggle('btn-primary', on);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* loading images                                                     */
-  /* ------------------------------------------------------------------ */
+  // ---- loading images ----
 
   function setSource(imageData, name, capped) {
     videoStop();
@@ -1208,11 +1187,10 @@
     img.src = url;
   }
 
-  // The desktop route into the same code: the main process reads the file and
-  // hands over bytes, so no file:// URL ever reaches the canvas (Chromium treats
-  // a file image in a file page as an opaque origin, which would taint it).
   // One decoder for every native route: the main process reads the file and
-  // hands over an ArrayBuffer, so each payload becomes a File the same way.
+  // hands over an ArrayBuffer, so no file:// URL ever reaches the canvas
+  // (Chromium treats a file image in a file page as an opaque origin, which
+  // would taint it).
   function payloadFile(payload, fallbackName, fallbackType) {
     const view = payload.bytes instanceof ArrayBuffer ? new Uint8Array(payload.bytes) : payload.bytes;
     const bytes = view instanceof Uint8Array ? view : new Uint8Array(view);
@@ -1234,9 +1212,7 @@
     });
   }
 
-  /* ------------------------------------------------------------------ */
-  /* demo scene (so the page opens with art)                            */
-  /* ------------------------------------------------------------------ */
+  // ---- demo scene (so the page opens with art) ----
 
   function rnd(i) {
     const s = Math.sin(i * 127.1 + 311.7) * 43758.5453;
@@ -1360,9 +1336,7 @@
     setSource(scratch.getContext('2d').getImageData(0, 0, w, h), 'demo scene', false);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* export                                                             */
-  /* ------------------------------------------------------------------ */
+  // ---- export ----
 
   function download(blob, filename) {
     // Desktop: the operating system asks where the file goes, and the path it
@@ -1496,9 +1470,7 @@
     applySettings(next, 'Random: ' + algo.name + ' · ' + palette.name);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* wiring                                                             */
-  /* ------------------------------------------------------------------ */
+  // ---- wiring ----
 
   function init() {
     buildAlgorithmSelect();
@@ -1672,9 +1644,9 @@
 
     el.export.addEventListener('click', exportPNG);
 
-    // Drag the canvas to pan it; two fingers pinch it. The canvas owns these
-    // gestures (touch-action: none on a coarse pointer), so a pan never turns
-    // into a page scroll and a pinch never zooms the page behind it.
+    // Drag the canvas to pan it; two fingers pinch it (touch-action: none on
+    // a coarse pointer), so a pan never turns into a page scroll and a pinch
+    // never zooms the page behind it.
     const pointers = new Map();
     let pinchFrom = 0;
     let pinchScale = 1;
@@ -1781,16 +1753,14 @@
     loadDemo();
   }
 
-  /* ------------------------------------------------------------------ */
-  /* video mode                                                         */
-  /* ------------------------------------------------------------------ */
+  // ---- video mode ----
 
   // video.js owns the source, the clock and the recorder; this shell decides
   // what a frame *means*. The temporal choice is the interesting part:
-  //   freeze  — one screen for the whole clip (the honest, calm look)
-  //   shimmer — a fresh seed per frame, so stochastic screens boil and the
-  //             tone stays put: a still idea of the palette's mixes
-  //   crawl   — the screen itself slides by a pixel per frame (tile screens)
+  //   freeze  - one screen for the whole clip (the calm, stable look)
+  //   shimmer - a fresh seed per frame, so stochastic screens boil and the
+  //             tone stays put
+  //   crawl   - the screen itself slides by a pixel per frame (tile screens)
   const video = (window.DitherVideo && window.DitherVideo.create)
     ? window.DitherVideo.create({
       onFrame: renderVideoFrame,
@@ -1805,8 +1775,8 @@
   }
 
   // The recipe travels per frame, so sliders and presets keep working during
-  // playback; only the temporal rule varies frame to frame. That rule lives in
-  // the core (D.temporalSettings), where node test.js can cover it.
+  // playback; only the temporal rule varies frame to frame. That rule lives
+  // in the core (D.temporalSettings), where node test.js can cover it.
   function videoSettingsFor(frameIndex) {
     const s = state.settings;
     const next = {};
@@ -1820,8 +1790,8 @@
   }
 
   // The status bar during video mode: frame, rate, drops, and a REC flag. The
-  // render loop calls it every frame, and the transport controls call it too so
-  // stopping a recording does not leave a stale "REC" behind.
+  // render loop calls it every frame, and the transport controls call it too,
+  // so stopping a recording does not leave a stale "REC" behind.
   function videoStatusLine() {
     if (!video) return;
     const s = video.stats();
@@ -1984,9 +1954,7 @@
     });
   }
 
-  /* ------------------------------------------------------------------ */
-  /* debug hook (also what tools/check.sh asserts against)              */
-  /* ------------------------------------------------------------------ */
+  // ---- debug hook (also what tools/check.sh asserts against) ----
 
   window.__dither = {
     stats: function () {
@@ -2073,7 +2041,7 @@
       syncUI();
       render(true);
     },
-    // unique colours actually drawn on the canvas — verifies palette membership
+    // unique colours actually drawn on the canvas: verifies palette membership
     canvasColors: function () {
       const data = ctx.getImageData(0, 0, el.canvas.width, el.canvas.height).data;
       const set = new Set();
@@ -2148,13 +2116,11 @@
     },
   };
 
-  /* ------------------------------------------------------------------ */
-  /* commands: one name per verb the menus and the tool rail can run      */
-  /* ------------------------------------------------------------------ */
+  // ---- commands: one name per verb the menus and the tool rail can run ----
 
-  // Everything the chrome can ask for, by name. The menus in menu-spec.js and
-  // the tool rail (renderer/shell.js) both speak this vocabulary, so the chrome
-  // never needs to know how a control works — only what it is called.
+  // Everything the chrome can ask for, by name. The menus in menu-spec.js
+  // and the tool rail (renderer/shell.js) both speak this vocabulary, so the
+  // chrome never needs to know how a control works - only what it is called.
   function setSelectValue(node, value) {
     if (value === undefined || value === null) return false;
     node.value = value;

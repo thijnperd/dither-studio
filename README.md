@@ -1,48 +1,42 @@
 # Dither Studio
 
-A print shop for pixels, in one folder. Load an image (or a video), pick an ink
-set, choose a press, stack a few effects, and export the proof as a PNG — or the
-video as WebM, or the proof as characters. Forty-six dither algorithms,
-twenty-four palettes, twenty-one presets and thirteen effects, offline, with no
-build step, no server and no packages.
+Dither Studio is a dithering workbench in one folder. Load an image or a
+video, pick one of 46 dither algorithms and one of 24 palettes, grade the
+picture, stack a few effects, and export the result — as a PNG, as a WebM
+recording, or as a grid of text characters. It runs completely offline: no
+build step, no server, no packages, nothing uploaded anywhere.
 
-It is a standalone app, not a website: double-click a launcher and it opens in
-its own window with its own session, drop a file on it and it prints. The same
-folder also opens as a page in any browser, and can be installed from the browser
-as an app. Everything runs on your machine; nothing is uploaded anywhere.
+There are three ways to run it, and they all share one engine. The web demo
+opens in any browser. The launchers put that same page in its own app window.
+The desktop app is a real Windows application with native menus and file
+dialogs — that's the one still being developed.
 
 ![The app window, the desktop build](docs/desktop-app.png)
 
 ## Three builds, one engine
 
-This repository ships Dither Studio three ways. They share exactly one thing —
-`dither.js`, the DOM-free engine — and differ everywhere else on purpose.
-
 | Build | Where | State | How you get it |
 |---|---|---|---|
-| **Web demo** | `demo/` | frozen | <https://thijnperd.github.io/dither-studio/> — published from `demo/` by GitHub Pages |
+| **Web demo** | `demo/` | frozen | <https://thijnperd.github.io/dither-studio/> — published to GitHub Pages from `demo/` |
 | **Launcher app** | this folder | frozen | the launchers: the page in an app-mode window with its own profile |
 | **Desktop app** | [`desktop/`](desktop/) | **active** | `Dither-Studio-Setup-<version>.exe` from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
-The desktop build is the one being developed: an Electron application with a
-caption bar it draws itself, menus holding the whole catalogue, the operating
-system's own open and save dialogs, a tool rail, tabbed documents and a dock of
-panels.
+What they share is `dither.js`, the dithering engine. It has no DOM
+dependencies, it is copied into the desktop build byte for byte, and
+`node desktop/tools/sync-renderer.js --check` (run by CI) fails if that copy
+ever drifts. Everything else — the shells, the window chrome — belongs to one
+build and is not shared.
 
-The two web builds are frozen: they are the versions people have links to.
-`demo/` is a self-contained copy kept apart so the demo can be hosted on Pages
-without the app the desktop build ships ever appearing on the public site.
-The **engine** is what all three share: `dither.js` is copied into the desktop
-build verbatim, and `node desktop/tools/sync-renderer.js --check`, which CI runs,
-fails if that copy drifts. Everything else — the shells, the chrome — is each
-build's own.
+The two web builds are frozen on purpose: they're what people have links to
+and install from. `demo/` is also kept self-contained so the public Pages site
+can never pick up desktop files. All new work happens in `desktop/`.
 
 ![The console](docs/screenshot-console.png)
 
-New here? **[GUIDE.md](GUIDE.md)** is the tour: running it as an app, the console
-station by station, the three structure-aware looks, video mode, exports, keys,
-performance and troubleshooting. The desktop window has its own tour in
-**[desktop/GUIDE.md](desktop/GUIDE.md)**.
+Just looking around? [GUIDE.md](GUIDE.md) is the tour of the console: running
+it as an app, each station in the rail, the three structure-aware looks, video
+mode, exports, keyboard shortcuts and troubleshooting. The desktop window has
+its own tour in [desktop/GUIDE.md](desktop/GUIDE.md).
 
 ## Run it
 
@@ -52,31 +46,32 @@ performance and troubleshooting. The desktop window has its own tour in
 | **macOS** | double-click **`Dither Studio.command`** (right-click → Open the first time, if Gatekeeper asks) |
 | **Linux** | `./dither-studio.sh` (make it executable once: `chmod +x dither-studio.sh`) |
 | **Any browser** | open **`index.html`** |
-| **Installed app** | open `index.html`, then use the browser's *Install* / *Create shortcut* command — `manifest.webmanifest` makes it installable |
-| **Desktop app** | [`desktop/`](desktop/) — or the installer from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
+| **Installed app** | open `index.html`, then use the browser's *Install* / *Create shortcut* command (`manifest.webmanifest` makes this work) |
+| **Desktop app** | [`desktop/`](desktop/), or the installer from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
-The launchers use Chrome, Edge, Brave or Chromium in app mode (`--app`), with a
-profile of the app's own — under `%LOCALAPPDATA%\Dither Studio`,
-`~/Library/Application Support/Dither Studio` or `~/.local/share/dither-studio`,
-never inside this folder. Nothing is installed, nothing is registered, and
-deleting that profile resets the app. If no Chromium-family browser is found, the
-launcher opens `index.html` in your default browser instead. Set
-`DITHER_DRY_RUN=1` to see the command it would run without running it.
+The launchers look for Chrome, Edge, Brave or Chromium and open `index.html`
+in app mode (`--app`) with a profile of the app's own, kept under
+`%LOCALAPPDATA%\Dither Studio`, `~/Library/Application Support/Dither Studio`
+or `~/.local/share/dither-studio` — never inside this folder. Nothing gets
+installed or registered, and deleting that profile resets the app. If no
+Chromium-family browser is found, the launcher falls back to opening
+`index.html` in your default browser. Set `DITHER_DRY_RUN=1` to print the
+command it would run instead of running it.
 
-Keep the folder together — the app is these files, and the launchers look for
-`index.html` next to themselves.
+Keep the folder together — the app *is* these files, and the launchers look
+for `index.html` next to themselves.
 
 ## The desktop app
 
-The press in its own window: a frameless Electron application with a caption
-bar, a menu bar, an options bar, a tool rail, tabbed documents and a dock of
-panels — Photoshop's shape, Dither Studio's palette. It opens images, clips and
-webcams through the operating system's own dialogs, saves proofs to real files,
-and ships as a Windows `.exe`.
+An Electron application with a window of its own: a caption bar it draws
+itself, menus holding the whole catalogue, an options bar, a tool rail,
+tabbed documents and a dock of panels. It opens images, clips and the webcam
+through the operating system's own dialogs and saves proofs to real files.
 
-**Download:** [the latest release](https://github.com/thijnperd/dither-studio/releases/latest)
-— take `Dither-Studio-Setup-<version>.exe` to install it, or
-`Dither-Studio-<version>-portable.exe` to run it from anywhere with no install.
+**Download:** [the latest release](https://github.com/thijnperd/dither-studio/releases/latest).
+Take `Dither-Studio-Setup-<version>.exe` to install it, or
+`Dither-Studio-<version>-portable.exe` to run it from anywhere without
+installing.
 
 ### Run it from source
 
@@ -86,8 +81,8 @@ npm install          # electron + electron-builder, the only dependencies
 npm start            # opens the app
 ```
 
-Node 20 or newer. `npm install` pulls Electron (about 100 MB) once; after that
-the app starts in a second or two.
+Node 20 or newer. The first `npm install` downloads Electron (about 100 MB);
+after that the app starts in a second or two.
 
 ### The window
 
@@ -103,21 +98,20 @@ the app starts in a second or two.
 │ ◉  │         (checkerboard well)                    │  Open image…        │
 │ ⚄  │                                                │  PRESS              │
 │    │                                                │  Floyd–Steinberg ▸  │
-│    │                                                │  ●━━━━━ 100%        │
 ├────┴────────────────────────────────────────────────┴─────────────────────┤
 │ Update Live                    ▶ Play  frame 0 · 12 fps                   │  viewport bar
 │ File demo scene │ Size 960×640 │ Algorithm … │ Colors 4 │ Render 71 ms     │  status bar
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-The caption bar is the window's own, and the note on its right is a receipt:
-after a save it names the file, and clicking it opens the file's folder. Every
-catalogue lives in the menus — all 46 algorithms, 24 palettes, 13 effects, 11
-tone maps and 21 recipes, expanded from the app's own tables, so a new algorithm
-can never be missing from a menu. The dock holds the ten panels as tabs; the
-status bar carries the file, its size, the press, the colours and the last render
-time. [desktop/GUIDE.md](desktop/GUIDE.md) walks the window and the menus menu by
-menu.
+Every catalogue lives in the menus — all 46 algorithms, 24 palettes, 13
+effects, 11 tone maps and 21 recipes, expanded from the app's own tables, so a
+new algorithm can never be missing from a menu. The dock holds the ten panels
+as tabs. The status bar carries the file, its size, the press, the colours and
+the last render time. The note on the right of the caption bar is a receipt:
+after a save it names the file, and clicking it opens the file's folder.
+[desktop/GUIDE.md](desktop/GUIDE.md) walks through the window and the menus one
+by one.
 
 ### Keyboard
 
@@ -148,8 +142,8 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
   hands the renderer an `ArrayBuffer`; a `file://` image in a `file://` page is
   an opaque origin to Chromium, which would taint the canvas and kill
   `getImageData` — the whole engine.
-- **The clipboard** is Electron's, so a copied proof is a real PNG on the system
-  clipboard, ready to paste into anything.
+- **The clipboard** is Electron's, so a copied proof is a real PNG on the
+  system clipboard, ready to paste into anything.
 - **One window per app**: a second launch focuses the running one, and image
   files can be opened *with* Dither Studio (`Ctrl+O` is not the only way in).
 - **The application menu** is a real Electron menu, which is what gives macOS a
@@ -166,7 +160,7 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
 | `electron/Splash/` | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
 | `src/index.html` | the window's markup: caption, menus, options, rail, document tabs, dock, status |
 | `src/menu-spec.js` | the one menu definition, shared by the native menu and the drawn one |
-| `src/renderer/core.js` | **the desktop core**: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
+| `src/renderer/core.js` | the desktop core: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
 | `src/renderer/dither.js` | the engine — DOM-free, byte-identical to the web builds |
 | `src/renderer/video.js` | the video source, clock and recorder |
 | `src/renderer/app.js` | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
@@ -177,12 +171,10 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
 | `tools/sync-renderer.js` | keeps `src/renderer/{dither,video}.js` byte-identical to the shared engine |
 | `tools/smoke-in-page.js` | the page half of the smoke run |
 
-The desktop shell is the desktop's own. It used to be the web shell with ten
-patches applied, which meant every console helper existed twice — once in the
-shared shell and once in the copy that actually runs — so the desktop now has a
-**core of its own**: `src/renderer/core.js`, the one place the colour pair, the
-catalogue lookups, the settings paths and the five dropdowns live. The web builds
-keep their shell; what every build shares is the engine.
+The desktop shell is its own code. It used to be the web shell with ten
+patches applied, which meant every helper existed twice, so the desktop now
+has a core of its own (`src/renderer/core.js`) holding the shared helpers once.
+What every build shares is the engine.
 
 ```bash
 node tools/sync-renderer.js          # refresh the engine copies
@@ -198,6 +190,13 @@ npm run dist     # dist/Dither-Studio-Setup-<version>.exe + the portable exe
 npm run pack     # dist/win-unpacked/ only, much faster while iterating
 ```
 
+You usually don't have to run this by hand: the **build** workflow on GitHub
+builds the Windows installer for every push that touches the app, checks the
+full code first (engine tests, desktop core tests, engine-copy sync, two smoke
+runs) and uploads the executables as artifacts. Push a `v<version>` tag — with
+`version` in `desktop/package.json` bumped to match — and the same workflow
+attaches the executables to that tag's GitHub release.
+
 electron-builder writes an NSIS installer (per-user, choose the folder, Start
 menu shortcut) and a portable single-file executable. The icon comes from
 `build/icon.png`, the app's own dithered mark; keep it in step with
@@ -205,24 +204,23 @@ menu shortcut) and a portable single-file executable. The icon comes from
 
 ### The startup screen
 
-Adam's arm reaches in from the left, God's from the right. When the two
-fingertips touch, Adam is dithered — his own pre-screened image is revealed over
-the painted one, spreading from the fingertip back along the arm — and starts to
-glow; God stays painted, so the moment reads as the press taking a hand. The
-wordmark inks in underneath and the window opens.
+Adam's arm reaches in from the left, God's from the right. When the fingertips
+touch, Adam is dithered — his own pre-screened image is revealed over the
+painted one, spreading from the fingertip back along the arm — and starts to
+glow; God stays painted. The wordmark inks in underneath and the window opens.
 
 `electron/splash.html` is one self-contained document (inline style, inline
 script, every image inlined as a data URI, nothing fetched from disk) and it is
 meant to be replaced. Its header names the three parts to change: `HANDS`, the
 three images and the fingertip inside each one; `T`, the whole schedule in
-milliseconds; and the ink colour. The frames only blit — the three images decode
-once, the light dots of the dithered one are recoloured to the ink once, the glow
-is a single blurred copy built when the box is laid out, and every frame after
-that only draws them. A splash that re-screened the hand sixty times a second
-would be the one thing in this project that pegged a core. If you change the
-total, change `SPLASH_MIN_MS` in `electron/main.js` (2900 ms) to match.
+milliseconds; and the ink colour. The frames only blit — the three images
+decode once, the light dots of the dithered one are recoloured to the ink once,
+the glow is a single blurred copy built when the box is laid out, and every
+frame after that only draws them. If you change the total, change
+`SPLASH_MIN_MS` in `electron/main.js` (2900 ms) to match.
 
-To look at a single frame while you work on it, hold the animation and shoot it:
+To look at a single frame while you work on it, hold the animation and shoot
+it:
 
 ```bash
 DITHER_SPLASH_MS=99999 DITHER_SPLASH_AT=2400 npm run smoke
@@ -234,9 +232,9 @@ DITHER_SPLASH_MS=99999 DITHER_SPLASH_AT=2400 npm run smoke
 The desktop build inherits the engine's budget unchanged: the working image is
 capped at 1600 px on its longest side, dragging a slider renders a half-res
 preview on the next frame, and the full pass runs when the control is released.
-The chrome adds nothing per frame — the only timer in the app polls a recording
-flag twice a second. On a 1024² frame the heaviest algorithm stays in the low
-seconds, which is the same number the web build reports.
+The chrome adds nothing per frame — the only timer in the app polls a
+recording flag twice a second. On a 1024² frame the heaviest algorithm stays in
+the low seconds, which is the same number the web build reports.
 
 ## What it does
 
@@ -254,19 +252,19 @@ seconds, which is the same number the web build reports.
   into one console bar with a live summary of the station in view.
 - **Tone, detail, ink** — black/white point, gamma, brightness, contrast,
   saturation, hue; blur, unsharp mask, median denoise; eleven tone maps that
-  re-ink the finished dither so 1-bit stays exactly two inks, including your own
-  ink and paper.
+  re-ink the finished dither so 1-bit stays exactly two inks, including your
+  own ink and paper.
 - **Thirteen effects in a stack** — chromatic aberration, JPEG blocks, scanlines,
   grain, pixel sort, wave, drip, kaleidoscope, dead pixels, vignette, CRT bloom,
-  ripple, starfield — added one at a time, reorderable, each with its own amount
-  and mode. Plus a blurred **glow** pass in linear light.
+  ripple, starfield — added one at a time, reorderable, each with its own
+  amount and mode. Plus a blurred **glow** pass in linear light.
 - **Chunky pixels** — a pixel size of 1–16 box-averages the image before
   dithering and upscales it without smoothing, for pixel-art output.
 - **Text mode** — print the proof as ASCII, blocks, shades, hex or binary, and
   export the grid as `.txt`.
-- **Video** — a video file or the webcam through the whole press, 1–30 fps, three
-  temporal dither rules, and WebM recording. A frame that overruns its slot is
-  dropped rather than queued.
+- **Video** — a video file or the webcam through the whole press, 1–30 fps,
+  three temporal dither rules, and WebM recording. A frame that overruns its
+  slot is dropped rather than queued.
 - **Exports** — PNG at 1×, 2×, 4× or 8× with nearest-neighbour scaling, copy to
   clipboard, the text grid, and the current recipe as JSON.
 
@@ -286,10 +284,10 @@ screen follows shading instead of fighting it.
 ![Matrix Rain](docs/screenshot-matrix-rain.png)
 ![Ice Dot Field](docs/screenshot-ice-dot-field.png)
 
-Three sliders push them around — **Smoothness** (feature size), **Flow** (how far
-the screen stretches along contours) and **Streak** (how far it runs vertically)
-— and both reaches are bounded by a sample budget, so a large working image
-cannot make the screen loop unbounded.
+Three sliders push them around — **Smoothness** (feature size), **Flow** (how
+far the screen stretches along contours) and **Streak** (how far it runs
+vertically) — and both reaches are bounded by a sample budget, so a large
+working image cannot make the screen loop unbounded.
 
 ## Exports
 
@@ -303,10 +301,11 @@ cannot make the screen loop unbounded.
 
 ## Requirements
 
-A modern browser (Chrome, Edge, Brave, Firefox or Safari). A Chromium-family
-browser is only needed for the app-window launchers. Nothing else: no Node, no
-Python, no package manager — Node is needed only to run the tests or regenerate
-the icons. The desktop build adds Node 20+ and its two dev dependencies.
+A modern browser (Chrome, Edge, Brave, Firefox or Safari) is enough for the web
+builds. A Chromium-family browser is only needed for the app-window launchers.
+No Node, no Python, no package manager — Node is needed only to run the tests
+or regenerate the icons, and the desktop build adds Node 20+ and its two dev
+dependencies.
 
 ## Repository layout
 
@@ -319,10 +318,10 @@ the icons. The desktop build adds Node 20+ and its two dev dependencies.
 | `tools/make-icons.js` | regenerates `icons/` through the app's own core |
 | `test.js` | the engine's Node tests |
 | `tools/` | optional browser-check harness (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency |
-| `demo/` | the **frozen** web demo published to GitHub Pages |
+| `demo/` | the **frozen** web demo published to GitHub Pages, favicon and icons included |
 | `desktop/` | the **active** Electron build, in its own folder with its own dependencies |
 | `docs/` | the screenshots in this file and the guides |
-| `.github/workflows/` | `test.yml` runs the engine tests and the renderer-sync check; `pages.yml` publishes `demo/` |
+| `.github/workflows/` | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and publishes releases; `pages.yml` publishes `demo/` |
 | `README.md` | this file — the front door for the whole repository |
 | `GUIDE.md` | the tour: the console, the catalogue, video, exports, troubleshooting |
 | `desktop/GUIDE.md` | the tour of the desktop window |
@@ -345,13 +344,13 @@ every output pixel, seeded determinism across all 46 algorithms, the
 structure-aware screens, pixel chunking, settings clamping, the adjustments,
 every effect and its modes, glow, tone maps, the three alpha modes, the video
 temporal rules, and the performance budget — and they print the timings for the
-1024×1024 pixel-size-1 budget, so a regression is visible even when the generous
-cap still passes. CI runs the same command on Node 20 and 22.
+1024×1024 pixel-size-1 budget, so a regression is visible even when the
+generous cap still passes. CI runs the same command on Node 20 and 22.
 
 ### The page, in a real browser
 
-`tools/` holds a small headless driver that loads a page, records console and page
-errors, can press keys, click, assert selectors exist, evaluate JS and
+`tools/` holds a small headless driver that loads a page, records console and
+page errors, can press keys, click, assert selectors exist, evaluate JS and
 screenshot. It prints a JSON summary and exits non-zero on any error or missing
 `--expect`.
 
@@ -370,18 +369,19 @@ bash tools/check.sh index.html --expect canvas --screenshot /tmp/dither.png
 | `--eval <js>` | evaluate JS in the page and print the result |
 | `--headed` | show a real window (default: headless) |
 
-A local path is turned into a `file://` URL automatically. `check.sh` is a wrapper
-that points `NODE_PATH` at the global npm root; `browser-check.cjs` also falls
-back to `npm root -g` itself, so the wrapper is a convenience, not a requirement.
-It needs Playwright installed **globally**, so the app stays dependency-free:
+A local path is turned into a `file://` URL automatically. `check.sh` is a
+wrapper that points `NODE_PATH` at the global npm root; `browser-check.cjs`
+also falls back to `npm root -g` itself, so the wrapper is a convenience, not a
+requirement. It needs Playwright installed **globally**, so the app stays
+dependency-free:
 
 ```bash
 npm install -g playwright
 playwright install chromium
 ```
 
-The page exposes `window.__dither`, so a check can set a recipe, run a preset or
-step through video frames without clicking anything:
+The page exposes `window.__dither`, so a check can set a recipe, run a preset
+or step through video frames without clicking anything:
 
 ```bash
 # what the app currently reports
@@ -402,11 +402,11 @@ bash tools/check.sh index.html --eval \
   "JSON.stringify(window.__dither.videoSynthetic(480, 320))"
 ```
 
-Run from the repository root so `index.html` resolves, and note that the harness
-takes only the last `--eval` — chain multi-step checks inside one (async)
-expression. `ok` is `true` only when there are no console errors, no page errors
-and every `--expect` matched. [GUIDE.md](GUIDE.md) describes what the app should
-do when you drive it, and lists every hook.
+Run from the repository root so `index.html` resolves, and note that the
+harness takes only the last `--eval` — chain multi-step checks inside one
+(async) expression. `ok` is `true` only when there are no console errors, no
+page errors and every `--expect` matched. [GUIDE.md](GUIDE.md) describes what
+the app should do when you drive it, and lists every hook.
 
 ### The desktop app
 
@@ -427,15 +427,15 @@ evaluates that file in the page, then the harness prints one JSON report and
 exits non-zero on any console error, page error, failed check or failed command
 — the page's own verdict is part of the run's, not a footnote beside it. It also
 photographs both windows into `$DITHER_SMOKE_DIR`: the splash window shoots
-itself as its animation reaches the wordmark (it is over in under three seconds,
-so waiting for the page checks to finish would miss it), and the app window is
-shot at the end.
+itself as its animation reaches the wordmark (it is over in under three
+seconds, so waiting for the page checks to finish would miss it), and the app
+window is shot at the end.
 
 The current run makes 34 checks: the chrome exists, the catalogues fill their
-lists, every slider is painted, the menus draw, their submenus expand to the full
-catalogue and stay open while the pointer is on one of their rows, all 32 command
-names are wired, the effects stack is the real markup, panels answer to their own
-verbs, and **a key press runs exactly one command**.
+lists, every slider is painted, the menus draw, their submenus expand to the
+full catalogue and stay open while the pointer is on one of their rows, all 32
+command names are wired, the effects stack is the real markup, panels answer to
+their own verbs, and **a key press runs exactly one command**.
 
 Environment variables let it exercise the parts a page cannot reach:
 

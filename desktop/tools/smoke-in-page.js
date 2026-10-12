@@ -1,4 +1,4 @@
-/* smoke-in-page.js — the page-half of the desktop smoke run.
+/* smoke-in-page.js: the page-half of the desktop smoke run.
  *
  *     cd desktop
  *     DITHER_SMOKE_SAVE=/tmp/proof.png DITHER_SMOKE_OPEN=<any image> \

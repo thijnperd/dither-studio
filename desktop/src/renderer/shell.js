@@ -1,20 +1,19 @@
-/* shell.js — the desktop chrome.
+/* shell.js - the desktop chrome.
  *
  * The app's behaviour lives in app.js; this file is the window around it. It
  * owns exactly four things:
  *
- *   1. the menu bar, in both places it exists — the drawn one (from menu-spec.js
- *      expanded against the app's own catalogues) and the tree handed to the
- *      main process, which is what gives the app real accelerators;
+ *   1. the menu bar, in both places it exists - the drawn one (from
+ *      menu-spec.js, expanded against the app's own catalogues) and the tree
+ *      handed to the main process, which gives the app real accelerators;
  *   2. the tool rail, the caption bar's window buttons and the document tab;
  *   3. the painting the panels cannot do themselves: the filled part of every
  *      slider, drawn from one `--fill` variable per input;
- *   4. a small set of window-level verbs (reload, dev tools, full screen, the
- *      help dialogs) that have no meaning inside the renderer.
+ *   4. window-level verbs (reload, dev tools, full screen, the help dialogs)
+ *      that have no meaning inside the renderer.
  *
- * Every other verb is one of DS.command's names. The chrome never reaches into
- * the dithering app: it says what it wants by name and lets app.js decide what
- * that means. That is also why the two builds can share app.js unmodified.
+ * Every other verb is one of DS.command's names: the chrome says what it
+ * wants by name and lets app.js decide what that means.
  */
 (function () {
   'use strict';
@@ -28,9 +27,7 @@
   const $ = function (id) { return document.getElementById(id); };
   const isMac = desktop.platform === 'darwin';
 
-  /* ================================================================ */
-  /* the menu tree, expanded against the app's own catalogues          */
-  /* ================================================================ */
+  // ---- the menu tree, expanded against the app's own catalogues ----
 
   function catalogue(name) {
     const lists = DS.catalogues || {};
@@ -74,9 +71,7 @@
     return null;
   }
 
-  /* ================================================================ */
-  /* what is switched on (feeds both menu bars and the title bar)       */
-  /* ================================================================ */
+  // ---- what is switched on (feeds both menu bars and the title bar) ----
 
   let appState = DS.state();
 
@@ -114,9 +109,7 @@
     if (force) desktop.sendMenu(TREE);
   }
 
-  /* ================================================================ */
-  /* the drawn menu bar                                               */
-  /* ================================================================ */
+  // ---- the drawn menu bar ----
 
   const pop = $('menu-pop');
   if (pop) pop.__level = 0;   // the drop-down itself; submenus count up from it
@@ -135,11 +128,11 @@
     return out;
   }
 
-  // A submenu always opens from an item inside a box, so the open submenus form a
-  // chain: the drop-down at level 0, its submenus at 1, theirs at 2. Closing is
-  // therefore relative to where the pointer is, not all-or-nothing — hovering a
-  // leaf must close the submenus deeper than the box that leaf stands in, and
-  // never the box it is standing in, or the item under the cursor deletes itself.
+  // A submenu always opens from an item inside a box, so the open submenus
+  // form a chain: the drop-down at level 0, its submenus at 1, theirs at 2.
+  // Closing is therefore relative to where the pointer is: hovering a leaf
+  // must close the submenus deeper than the box that leaf stands in, never the
+  // box itself, or the item under the cursor deletes itself.
   function closeSubMenusFrom(level) {
     subMenus = subMenus.filter(function (node) {
       if ((node.__level || 1) > level) { node.remove(); return false; }
@@ -311,18 +304,16 @@
     }
   });
 
-  /* ================================================================ */
-  /* accelerators                                                      */
-  /* ================================================================ */
+  // ---- accelerators ----
 
-  // The main process registers the same menu with Electron, which is what gives
-  // macOS a real menu bar. On Windows and Linux a frameless window has no menu
-  // bar to own the accelerator table — the smoke harness proves it: a Ctrl+S sent
-  // through the window never reached the app — so the chrome binds the keys
-  // itself. Binding them on macOS as well would run every command twice.
-  // Both a menu accelerator and a real key become the same string: modifiers in
-  // one fixed order, then the key. `CmdOrCtrl+Shift+R` and Ctrl+Shift+R therefore
-  // both read `ctrl+shift+r`, which is also what the smoke run asserts against.
+  // The main process registers the same menu with Electron, which gives macOS
+  // a real menu bar. On Windows and Linux a frameless window has no menu bar
+  // to own the accelerator table (the smoke harness proved it: a Ctrl+S sent
+  // through the window never reached the app), so the chrome binds the keys
+  // itself; binding them on macOS as well would run every command twice. Both
+  // a menu accelerator and a real key become the same string (modifiers in a
+  // fixed order, then the key), so `CmdOrCtrl+Shift+R` and Ctrl+Shift+R both
+  // read `ctrl+shift+r`, which is what the smoke run asserts against.
   function signature(parts) {
     const order = ['ctrl', 'alt', 'shift'];
     const mods = order.filter(function (name) { return parts.indexOf(name) > -1; });
@@ -377,9 +368,7 @@
     }, true);
   }
 
-  /* ================================================================ */
-  /* verbs that only exist because there is a window                   */
-  /* ================================================================ */
+  // ---- verbs that only exist because there is a window ----
 
   const SHELL_COMMANDS = {
     'view-reload': function () { desktop.win.reload(); },
@@ -411,9 +400,7 @@
     return DS.command(name, arg);
   }
 
-  /* ================================================================ */
-  /* the caption bar                                                   */
-  /* ================================================================ */
+  // ---- the caption bar ----
 
   const tbNote = $('tb-note');
   let noteTimer = 0;
@@ -486,9 +473,7 @@
     });
   }
 
-  /* ================================================================ */
-  /* the tool rail                                                     */
-  /* ================================================================ */
+  // ---- the tool rail ----
 
   const TOOLS = {
     open: function () { run('file-open'); },
@@ -525,9 +510,7 @@
     button.addEventListener('click', function () { if (TOOLS[name]) TOOLS[name](); });
   });
 
-  /* ================================================================ */
-  /* drop veil, recording pulse, slider fills                          */
-  /* ================================================================ */
+  // ---- drop veil, recording pulse, slider fills ----
 
   const veil = $('drop-veil');
   const well = $('canvas-wrap');
@@ -542,8 +525,8 @@
   }
 
   // The REC state is the one thing the app has no UI event for (a recording
-  // runs between two syncs), so the chrome polls it gently — twice a second,
-  // reading one small object, adding or removing one class.
+  // runs between two syncs), so the chrome polls it gently: twice a second,
+  // one small object, one class toggle.
   setInterval(function () {
     const api = window.__dither;
     const stats = api && api.videoStats ? api.videoStats() : null;
@@ -572,9 +555,8 @@
     }
   }
 
-  // What any change to the app ends with: the slider fills, the caption, and the
-  // menu ticks. The boot, the ds:ui event and the dock toggle all want exactly
-  // this, so it is written once and called three times.
+  // What any change to the app ends with: the slider fills, the caption and
+  // the menu ticks. Written once and called three times (boot, ds:ui, dock).
   function refresh() {
     paintRanges();
     appState = DS.state();
@@ -604,9 +586,7 @@
 
   window.addEventListener('resize', paintRanges);
 
-  /* ================================================================ */
-  /* boot                                                             */
-  /* ================================================================ */
+  // ---- boot ----
 
   refresh();
   window.__shell = {
@@ -618,9 +598,9 @@
     savedCount: function () { return savedCount; },
     run: run,
   };
-  // Hand main the finished tree (the native menu and its accelerators) and the
-  // first set of ticks. Only now is the app ready, splash included: the window is
-  // not finished until its menu bar and its caption carry real values.
+  // Hand main the finished tree (the native menu and its accelerators) and
+  // the first set of ticks: the window is not ready until its menu bar and its
+  // caption carry real values.
   pushToMain(true);
   if (desktop.ready) desktop.ready();
   setTimeout(refresh, 300);

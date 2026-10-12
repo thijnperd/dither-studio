@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* browser-check.cjs — headless browser verification for the projects in this
+/* browser-check.cjs: headless browser verification for the projects in this
  * repo, driven by Playwright.
  *
  * Playwright is installed globally (see the verification section of README.md).

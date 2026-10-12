@@ -1,33 +1,30 @@
-/* menu-spec.js — the one menu definition, shared by both menu bars.
+/* menu-spec.js - the one menu definition, shared by both menu bars.
  *
- * The desktop app has two menus that must never drift apart:
- *   - the native application menu (a real macOS menu bar, and the accelerator
- *     table on Windows/Linux), built in electron/main.js;
- *   - the in-window menu bar that gives the app its Photoshop shape, built in
- *     src/renderer/shell.js.
- *
- * So neither one owns the list. This file does, in the two shapes a menu needs:
+ * The desktop app has two menus that must never drift apart: the native
+ * application menu (a real macOS menu bar, and the accelerator table on
+ * Windows/Linux), built in electron/main.js; and the in-window menu bar that
+ * gives the app its shape, built in src/renderer/shell.js. Neither one owns
+ * the list. This file does, in the two shapes a menu needs:
  *
  *   { label, command, arg, accel }        a leaf that runs a command
  *   { type: 'sep' }                       a separator
  *   { label, submenu: [ ... ] }           a nested menu
  *   { label, check, command, arg }        a leaf whose tick state comes from
- *                                         the app (menu bar shows ✓, native
- *                                         menu shows a checkbox)
+ *                                         the app (the menu bar shows a tick,
+ *                                         the native menu a checkbox)
  *   { label, radio: 'algorithm', ... }    one of a radio set inside its parent
  *                                         (its own branch), ticked while the
  *                                         app's value matches `arg`
  *   { label, catalogue: 'ALGORITHMS' }    a submenu whose contents are the
- *                                         app's own catalogue, so a new
- *                                         algorithm can never be missing from
- *                                         the menu: the host expands it.
+ *                                         app's own catalogue, expanded by
+ *                                         the host so nothing can go missing
  *
  * `accel` uses Electron's spelling (`CmdOrCtrl+O`); the in-window bar renders
  * it for the current platform, the native menu passes it through untouched.
  *
- * The renderer expands the catalogues (the presets and character ramps live in
- * the shell, not in the core) and hands the finished tree to main, which is why
- * main never needs to know a single algorithm's name.
+ * The renderer expands the catalogues (the presets and character ramps live
+ * in the shell, not in the core) and hands the finished tree to main, which
+ * is why main never needs to know a single algorithm's name.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();

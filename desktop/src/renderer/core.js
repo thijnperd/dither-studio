@@ -1,25 +1,21 @@
-/* core.js — the desktop core, v2.
+/* core.js - the desktop core: the helpers the desktop shell shares with
+ * itself.
  *
- * The desktop shell used to be the web shell with ten patches applied, so every
- * helper below existed twice: once in the shared shell and once in the copy the
- * desktop actually runs. This file is the desktop's own core instead — one
- * version of each idea, written as a set rather than as five near-copies.
- *
- *   colour      clampByte, rgbToHex, hexToRgb      (#rrggbb ↔ three bytes)
+ *   colour      clampByte, rgbToHex, hexToRgb      (#rrggbb <-> three bytes)
  *   catalogues  byId, indexOfId, stepThrough        (every list is [{ id }])
  *   settings    getPath, setPath                    ("adjustments.contrast")
  *   the rail    buildSelect, summarise, setNote, shortPalette
  *
- * Nothing here holds app state or touches the DOM at load, so the same file runs
- * in the window (as `DitherCore`) and in Node (`node tools/core.test.js`).
+ * Nothing here holds app state or touches the DOM at load, so the same file
+ * runs in the window (as `DitherCore`) and in Node (`node tools/core.test.js`).
  */
 (function (global) {
   'use strict';
 
-  /* ---- colour ---------------------------------------------------------- */
+  // ---- colour ----
 
-  // One channel, clamped: a stray value can never print `#-1` or a four-digit
-  // channel, which is the only reason the old pair needed a nested helper.
+  // One channel, clamped: a stray value can never print `#-1` or a
+  // four-digit channel.
   function clampByte(value) {
     return Math.max(0, Math.min(255, Math.round(value || 0)));
   }
@@ -32,18 +28,18 @@
   }
 
   // Unreadable input is black rather than a throw: the ink pickers feed this
-  // while they are being typed into, so a half-finished colour must not break
-  // a render.
+  // while they are being typed into, so a half-finished colour must not
+  // break a render.
   function hexToRgb(hex) {
     const digits = /^#?([0-9a-f]{6})$/i.exec(String(hex));
     if (!digits) return [0, 0, 0];
     return [0, 2, 4].map(function (at) { return parseInt(digits[1].substr(at, 2), 16); });
   }
 
-  /* ---- catalogues ------------------------------------------------------ */
+  // ---- catalogues ----
 
-  // Every catalogue in the app is `[{ id, ... }]`, and every lookup is the same
-  // scan. The shell carried seven copies of it; these are the scan, once.
+  // Every catalogue in the app is `[{ id, ... }]` and every lookup is the
+  // same scan. The shell carried seven copies of it; these are the scan, once.
   function byId(list, id) {
     return list.find(function (entry) { return entry.id === id; });
   }
@@ -52,7 +48,7 @@
     return list.findIndex(function (entry) { return entry.id === id; });
   }
 
-  // The arrow steppers walk one catalogue, and the algorithm and the palette
+  // The arrow steppers walk one catalogue; the algorithm and the palette
   // step are the same walk over a different list. Nothing selected (-1) starts
   // at the first entry rather than wrapping backwards out of the list.
   function stepThrough(list, current, delta) {
@@ -60,7 +56,7 @@
     return list[(at + delta + list.length) % list.length];
   }
 
-  /* ---- settings paths -------------------------------------------------- */
+  // ---- settings paths ----
 
   // The rail describes every control as a path ("adjustments.contrast"), which
   // is what lets one binding list drive both reading and writing.
@@ -74,13 +70,13 @@
     parts.reduce(function (target, key) { return target[key]; }, obj)[leaf] = value;
   }
 
-  /* ---- the rail -------------------------------------------------------- */
+  // ---- the rail ----
 
-  // Every `<select>` in the console is built here. `spec.label` names an entry,
-  // `spec.group` (the algorithm picker is the only one) splits them into
-  // optgroups, and `spec.placeholder` prepends the empty first row a picker
-  // needs. Options and groups keep catalogue order, and a group that recurs
-  // later in the list joins the group already on screen.
+  // Every `<select>` in the console is built here. `spec.label` names an
+  // entry, `spec.group` (the algorithm picker is the only one) splits them
+  // into optgroups, and `spec.placeholder` prepends the empty first row a
+  // picker needs. Options and groups keep catalogue order, and a group that
+  // recurs later joins the group already on screen.
   function buildSelect(node, entries, spec) {
     const want = spec || {};
     const label = want.label || function (entry) { return entry.name || entry.id; };
@@ -120,7 +116,7 @@
     if (node) node.textContent = value;
   }
 
-  // "C64 · 16c" — the palette without its parenthetical, plus its ink count.
+  // "C64 · 16c": the palette without its parenthetical, plus its ink count.
   function shortPalette(palette) {
     return palette.name.replace(/\s*\(.*?\)/, '') + ' · ' + palette.colors.length + 'c';
   }

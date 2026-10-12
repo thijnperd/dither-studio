@@ -1,14 +1,14 @@
-/* panels.css — the dock: Photoshop's panel column in the house palette.
+/* panels.css - the dock: the panel column in the house palette.
  *
- * Load order: tokens.css → chrome.css → panels.css, so this file may assume the
- * tokens and the element-level control rules. It styles classes only.
+ * Load order: tokens.css -> chrome.css -> panels.css, so this file may assume
+ * the tokens and the element-level control rules. It styles classes only.
  *
  * Everything the shared renderer builds lives here as well as the markup in
  * index.html, because that is what the dock actually contains:
- *   .jump-chip                                  ← the panel tab strip
- *   .swatch                                     ← the ink strip
+ *   .jump-chip                                  <- the panel tab strip
+ *   .swatch                                     <- the ink strip
  *   .stack-empty, .stack-row, .stack-top, .stack-index, .stack-name,
- *   .stack-tools, .stack-mode, .stack-line, .icon-btn   ← the effects stack
+ *   .stack-tools, .stack-mode, .stack-line, .icon-btn   <- the effects stack
  */
 
 .dock {
@@ -100,7 +100,7 @@
 
 .group:last-child { border-bottom: none; }
 
-/* The panel header. Caret, uppercase name, then the note pushed right — the
+/* The panel header. Caret, uppercase name, then the note pushed right: the
    note is the panel's state readout while it is collapsed. */
 .group-head {
   display: flex;
@@ -334,7 +334,7 @@
 
 .stack-tools { display: flex; gap: 3px; }
 
-/* ↑ ↓ ✕ — a column of small square buttons that stay quiet until hovered. */
+/* ↑ ↓ ✕: a column of small square buttons that stay quiet until hovered. */
 .icon-btn {
   width: 18px;
   height: 18px;

@@ -1,10 +1,9 @@
-/* tokens.css — the foundation both chrome.css and panels.css build on.
+/* tokens.css - the foundation both chrome.css and panels.css build on.
  *
  * The world is DESIGN.md's ("a dark instrument panel for a gallery at night").
- * The desktop app adds one thing the browser never needed: *window structure*.
- * Photoshop's shape — caption bar, menu bar, options bar, tool rail, document
- * tabs, a dock of panels, a status bar — in the house's palette rather than
- * Photoshop's mid-greys.
+ * The desktop app adds one thing the browser never needed: window structure.
+ * Caption bar, menu bar, options bar, tool rail, document tabs, a dock of
+ * panels, a status bar - in the house's palette.
  *
  * This file owns: tokens, the page grid, and every element-level control
  * (buttons, selects, sliders, number/colour fields). The component files style

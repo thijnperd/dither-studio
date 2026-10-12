@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* make-icons.js — generate the app icons with Dither Studio's own press.
+/* make-icons.js: generate the app icons with Dither Studio's own press.
  *
  * The mark is a real proof, not a drawing of one: a soft disc of light is run
  * through the app's core (Bayer 8×8, the 1-bit path, tinted with the console's

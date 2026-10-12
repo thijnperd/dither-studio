@@ -1,27 +1,25 @@
-/* main.js — the desktop shell around the press.
+/* main.js - the desktop shell around the press.
  *
  * What belongs here and nowhere else:
  *   - the window itself (frameless, so the app draws its own caption bar);
  *   - the startup splash, shown while the renderer boots;
  *   - everything the operating system owns: open/save dialogs, the clipboard,
- *     the real application menu (a genuine macOS menu bar, and the accelerator
- *     table on Windows and Linux);
- *   - reading files OFF disk and handing the renderer bytes, never a path it
+ *     the real application menu (a macOS menu bar, and the accelerator table
+ *     on Windows and Linux);
+ *   - reading files off disk and handing the renderer bytes, never a path it
  *     would have to fetch (a file:// image would taint the canvas).
  *
- * What does NOT belong here: any dithering, any panel, any algorithm name. The
- * renderer expands the menu tree (src/menu-spec.js plus the app's own
+ * What does NOT belong here: any dithering, any panel, any algorithm name.
+ * The renderer expands the menu tree (src/menu-spec.js plus the app's own
  * catalogues) and sends it over, so this file stays free of the catalogue.
  *
- * Test affordances, all opt-in through the environment so a human double-click
- * never hits them:
+ * Test affordances, all opt-in through the environment:
  *   --smoke                    boot, verify, screenshot, exit with a verdict
  *   --smoke-script <file.js>   evaluate a script in the page before capturing
  *   DITHER_SMOKE_SAVE=<path>   answer every save dialog with this path
  *   DITHER_SMOKE_OPEN=<path>   answer every open dialog with this file
  *   DITHER_SPLASH_MS=<ms>      override how long the splash stays up
- *   DITHER_SPLASH_AT=<ms>      freeze the splash animation at that moment and
- *                              hold it there (how its stages are photographed)
+ *   DITHER_SPLASH_AT=<ms>      freeze the splash animation at that moment
  */
 'use strict';
 
@@ -31,11 +29,10 @@ const fsSync = require('fs');
 const path = require('path');
 
 const APP_ROOT = path.join(__dirname, '..');
-// The splash plays a fixed animation — two hands reaching, then the left one
-// dithered and glowing — and this is what the window waits for before it opens.
-// It matches the animation's own total (T.settle in splash.html): raise one
-// without the other and the app either cuts the animation short or leaves a
-// finished splash sitting over an open window.
+// The splash plays a fixed animation and this is what the window waits for
+// before it opens. It matches the animation's own total (T.settle in
+// splash.html): raise one without the other and the app either cuts the
+// animation short or leaves a finished splash sitting over an open window.
 const SPLASH_MIN_MS = Number(process.env.DITHER_SPLASH_MS || 2900);
 const SMOKE = process.argv.includes('--smoke');
 const SMOKE_SCRIPT = (function () {
@@ -62,9 +59,7 @@ let menuTree = null;
 let menuState = {};
 let pendingPaths = [];
 
-/* ------------------------------------------------------------------ */
-/* helpers                                                             */
-/* ------------------------------------------------------------------ */
+// ---- helpers ----
 
 function mimeFor(file) {
   return MIME_BY_EXT[path.extname(file || '').toLowerCase()] || 'application/octet-stream';
@@ -107,9 +102,7 @@ function answerSave(options) {
   });
 }
 
-/* ------------------------------------------------------------------ */
-/* windows                                                             */
-/* ------------------------------------------------------------------ */
+// ---- windows ----
 
 function createSplash() {
   splashWindow = new BrowserWindow({
@@ -200,9 +193,7 @@ function createWindow() {
   mainWindow.webContents.on('will-navigate', function (event) { event.preventDefault(); });
 }
 
-/* ------------------------------------------------------------------ */
-/* the native menu (built from the tree the renderer sends)             */
-/* ------------------------------------------------------------------ */
+// ---- the native menu (built from the tree the renderer sends) ----
 
 function leafTemplate(node) {
   const item = {
@@ -256,9 +247,7 @@ function installMenu(tree) {
   Menu.setApplicationMenu(buildMenu(tree));
 }
 
-/* ------------------------------------------------------------------ */
-/* ipc: files and the clipboard                                        */
-/* ------------------------------------------------------------------ */
+// ---- ipc: files and the clipboard ----
 
 // The three "open" routes differ only in their dialog; picking the file and the
 // failure message are the same in all of them. openRoute takes the reader too,
@@ -340,9 +329,7 @@ ipcMain.handle('ds:open-external', async function (_event, url) {
   return { ok: true };
 });
 
-/* ------------------------------------------------------------------ */
-/* ipc: window, menus, dialogs                                         */
-/* ------------------------------------------------------------------ */
+// ---- ipc: window, menus, dialogs ----
 
 ipcMain.handle('ds:win', function (event, action) {
   const win = BrowserWindow.fromWebContents(event.sender);
@@ -411,9 +398,7 @@ ipcMain.on('ds:ready', function () {
   if (SMOKE) smokeLooksReady();
 });
 
-/* ------------------------------------------------------------------ */
-/* smoke harness                                                       */
-/* ------------------------------------------------------------------ */
+// ---- smoke harness ----
 
 const smoke = {
   console: [],
@@ -450,11 +435,10 @@ function smokeOutDir() {
   return process.env.DITHER_SMOKE_DIR || require('os').tmpdir();
 }
 
-// A smoke run photographs the splash from the splash window itself, at a fixed
-// point in the animation. Waiting for the page checks to finish first — as this
-// did — missed the splash whenever the renderer took longer to come up than the
-// animation lasts, which is the normal case; DITHER_SPLASH_AT freezes the frame,
-// so the moment below only decides what a plain run shows.
+// A smoke run photographs the splash from the splash window itself, at a
+// fixed point in the animation. Waiting for the page checks to finish missed
+// the splash whenever the renderer took longer to come up than the animation
+// lasts (the normal case); DITHER_SPLASH_AT freezes the frame.
 function scheduleSplashCapture() {
   const wait = Math.max(300, Math.min(2400, SPLASH_MIN_MS - 400));
   setTimeout(async function () {
@@ -558,9 +542,9 @@ async function runSmoke() {
   await new Promise(function (resolve) { setTimeout(resolve, 900); });
   const shot = path.join(outDir, 'dither-desktop.png');
   try { smoke.shots.push(await captureTo(mainWindow, shot)); } catch (err) { smoke.errors.push('capture: ' + err.message); }
-  // The splash window photographs itself as its animation reaches the wordmark;
-  // a 2.9 s animation is over long before the page checks are done, so waiting
-  // for them would usually miss it. This only fills in if that never happened.
+  // The splash window photographs itself as its animation reaches the
+  // wordmark; the animation is over long before the page checks are done.
+  // This only fills in if that never happened.
   await collectSplashShot(outDir);
 
   // A smoke script is a verdict of its own: if the page ran checks and one
@@ -637,9 +621,7 @@ function wireSmoke() {
   }, 15000);
 }
 
-/* ------------------------------------------------------------------ */
-/* lifecycle                                                           */
-/* ------------------------------------------------------------------ */
+// ---- lifecycle ----
 
 function pathsFromArgv(argv) {
   const known = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.avif', '.mp4', '.webm', '.mov', '.mkv', '.m4v'];
@@ -671,10 +653,10 @@ if (!gotLock) {
 
   app.whenReady().then(function () {
     if (process.platform === 'win32') app.setAppUserModelId('com.thijnperd.ditherstudio');
-    // Electron installs a default menu (File ▸ Exit, Edit ▸ Copy…) until one is
-    // set. The app draws its own menu bar and sends the tree a moment after the
-    // window appears, so clear the default rather than let it flash — or answer
-    // an accelerator — in that window.
+    // Electron installs a default menu (File > Exit, Edit > Copy...) until
+    // one is set. The app draws its own menu bar and sends the tree a moment
+    // after the window appears, so clear the default rather than let it flash,
+    // or answer an accelerator, in that window.
     Menu.setApplicationMenu(null);
     const startup = { startedAt: Date.now() };
     if (!process.env.DITHER_NO_SPLASH) createSplash();

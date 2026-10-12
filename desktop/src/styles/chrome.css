@@ -1,11 +1,10 @@
-/* chrome.css — the window around the work: caption, menus, options, tools,
+/* chrome.css - the window around the work: caption, menus, options, tools,
  * document tabs, the proof well, and the two bars that close the frame.
  *
- * This is where the desktop app stops being a page. Photoshop's shape is the
- * reference — a caption you can drag, a menu bar, a context bar, a rail of
- * tools down the left, tabbed documents in the middle, status lines top and
- * bottom — but the palette, the hairlines and the single accent are the
- * house's (DESIGN.md), not Photoshop's mid-greys.
+ * This is where the desktop app stops being a page. The reference is a classic
+ * editing app's shape - a caption you can drag, a menu bar, a context bar, a
+ * rail of tools down the left, tabbed documents, status lines - but the
+ * palette, the hairlines and the single accent are the house's (DESIGN.md).
  *
  * Class selectors only: tokens.css owns every raw element and every token, so
  * nothing here can fight it over load order.
@@ -328,7 +327,7 @@
 
 .tool:active { background: var(--pressed); }
 
-/* The selected tool is marked three ways at once — fill, ink, and a strip on
+/* The selected tool is marked three ways at once: fill, ink, and a strip on
    the edge — because at this size a single cue is easy to miss. */
 .tool.is-active {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--edge));
@@ -561,9 +560,9 @@
   .is-recording { animation: none; }
 }
 
-/* ============================== shell.js contract ============================
+/* ============================ shell.js contract ===========================
  * Three rules the chrome needs that are not part of a component: the side of a
- * submenu, and the work area when the dock is hidden (View ▸ Panels on the
+ * submenu, and the work area when the dock is hidden (View > Panels on the
  * Right). They live here rather than in tokens.css because they are chrome.
  */
 

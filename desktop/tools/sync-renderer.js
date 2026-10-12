@@ -1,19 +1,15 @@
-/* sync-renderer.js — how the desktop build stays in step with the engine.
+/* sync-renderer.js - how the desktop build stays in step with the engine.
  *
  * The desktop app runs the SAME dithering engine as the two web builds, so it
- * does not fork it: this tool copies `dither.js` and `video.js` across verbatim,
- * and `--check` fails if either copy has drifted.
+ * does not fork it: this tool copies `dither.js` and `video.js` across
+ * verbatim, and `--check` fails if either copy has drifted.
  *
  *     node desktop/tools/sync-renderer.js           # regenerate the copies
  *     node desktop/tools/sync-renderer.js --check   # fail if out of step (CI)
  *
- * The desktop *shell* is the desktop's own: `src/renderer/core.js` is its core
- * (colour, catalogue lookups, the rail's dropdowns) and `src/renderer/app.js` is
- * its wiring. The web builds keep their own shell, so a change to the console
- * plumbing is written once, here, instead of being carried as a patch that both
- * copies have to agree about. What must stay identical is the engine — the 46
- * algorithms, the palettes, the pipeline, the video clock — because that is what
- * makes the same picture come out of every build.
+ * The desktop shell is the desktop's own (core.js, app.js). What must stay
+ * identical is the engine: the algorithms, the palettes, the pipeline, the
+ * video clock - that is what makes the same picture come out of every build.
  */
 'use strict';
 
