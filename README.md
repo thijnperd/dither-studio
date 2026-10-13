@@ -107,14 +107,20 @@ honest about it: a frame that overruns its slot is counted as dropped.
 
 All three share one engine, [`dither.js`](launcher/dither.js): DOM-free, copied
 into the desktop build byte for byte, with a CI check that fails if the copy
-drifts. The two web builds are frozen on purpose — they are what people have
-links to — so all new work lands in `desktop/`.
+drifts. The built-in sources, [`samples.js`](launcher/samples.js), travel the
+same way, so every build opens on the same three paintings. The two web builds
+are frozen on purpose — they are what people have links to — so all new work
+lands in `desktop/`.
 
 ## Quick start
 
-**In a browser.** Open <https://thijnperd.github.io/dither-studio/>. It starts
-on a generated demo scene, so there is something on the stage before you load
-anything; drop a picture onto the proof, paste one, or use **Open image…**.
+**In a browser.** Open <https://thijnperd.github.io/dither-studio/>. It opens on
+a built-in sample, so there is something on the stage before you load anything:
+three public-domain paintings travel with the app — Gustave Moreau's *Oedipus
+and the Sphinx*, Mårten Eskil Winge's *Tor's Fight with the Giants* and *The
+Council of the Gods* from the Villa Farnesina — and **Demo scene** steps through
+them, then a generated scene. Drop a picture onto the proof, paste one, or use
+**Open image…** to bring your own.
 
 ![The console in a browser, running the Wired Portrait recipe on a photograph](docs/screenshot-console-photo.png)
 
@@ -156,7 +162,7 @@ themselves.
 |---|---|
 | `Ctrl+O` / `Ctrl+Shift+O` | open an image / a clip |
 | `Ctrl+S` / `Ctrl+Shift+C` | save the proof as a PNG / copy it to the clipboard |
-| `Ctrl+D` | the generated demo scene |
+| `Ctrl+D` | the next built-in source: a painting, then a generated scene |
 | `Ctrl+R` / `Ctrl+Shift+R` | a fresh recipe / a new seed |
 | `Ctrl+↑` `Ctrl+↓` | previous / next algorithm |
 | `Ctrl+←` `Ctrl+→` | previous / next palette |

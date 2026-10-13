@@ -45,8 +45,10 @@ The screen stays up for 2900 ms or until the window is genuinely ready,
 whichever is longer, so it never covers a half-drawn app. The main window then
 takes focus.
 
-The app opens on a generated demo scene, so there is something to dither before
-you have found a file.
+The app opens on a built-in sample — three public-domain paintings (Moreau's
+*Oedipus and the Sphinx*, Winge's *Tor's Fight with the Giants*, and *The Council
+of the Gods* from the Villa Farnesina) travel with the app — so there is something
+to dither before you have found a file.
 
 ## 3. Choosing something to work on
 
@@ -62,8 +64,10 @@ Four ways in, all of them native:
   Windows; double-clicking one opens it here. A second launch focuses the window
   that is already running instead of starting another.
 
-The **Source** panel shows what is loaded and offers the generated demo scene
-again (`Ctrl+D`). The caption bar and the document tab both name the proof.
+The **Source** panel shows what is loaded, and its own control offers the built-in
+sources again: `Ctrl+D` steps on to the next painting, and after the third it
+draws a generated scene, then comes round to the first. The caption bar and the
+document tab both name whatever is on the stage.
 
 **Clips and webcams** live in the **Motion** panel, and in *File ▸ Open Clip…*
 (`Ctrl+Shift+O`). The transport appears under the proof; see §8.
@@ -95,7 +99,8 @@ web page:
 
 ### Menu by menu
 
-**File** — open an image or a clip, the demo scene, save the proof as a PNG,
+**File** — open an image or a clip, the next built-in source (`Ctrl+D`), save the
+proof as a PNG,
 copy it to the clipboard, export a text proof, import and export presets, quit.
 
 **Edit** — roll a fresh recipe (`Ctrl+R`, the equivalent of the Random tool), a

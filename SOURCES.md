@@ -120,10 +120,38 @@ feature set navigable — not the paint.
 ## What is not from anywhere
 
 The press console itself — `index.html`, `style.css`, `app.js`, the demo scene,
-the text mode, the preset recipes, the glitch stack's implementation, the
-tone-map system, the alpha pipeline, the tests and this file — is original work
-for this repository, written against the visual language in
-[`DESIGN.md`](../DESIGN.md).
+the sample table, the text mode, the preset recipes, the glitch stack's
+implementation, the tone-map system, the alpha pipeline, the tests and this
+file — is original work for this repository, written against the visual
+language in [`DESIGN.md`](../DESIGN.md). The paintings in `samples.js` are
+other people's work, and are credited below.
+
+## The built-in samples
+
+Three paintings travel inside every build as the sources the **Source** panel's
+own control steps through, in [`launcher/samples.js`](launcher/samples.js) (the
+desktop's copy is written by `desktop/tools/sync-renderer.js`, `demo/`
+carries its own because the Pages site may not reach outside its folder).
+All three works are public domain.
+
+| Sample | Work and collection | Rights |
+|---|---|---|
+| `Oedipus and the Sphinx` | Gustave Moreau, *Oedipus and the Sphinx*, 1864, detail — The Metropolitan Museum of Art, New York (21.134.1) | Public domain; the Met released the image under CC0. [Commons](https://commons.wikimedia.org/wiki/File:Oedipus_and_the_Sphinx_MET_DP-14201-023.jpg) |
+| `Tor's Fight with the Giants` | Mårten Eskil Winge, *Tors strid med jättarna*, 1872 — Nationalmuseum, Stockholm (NM 1250) | Public domain (Winge died in 1896); the museum releases its out-of-copyright images freely. [Commons](https://commons.wikimedia.org/wiki/File:M%C3%A5rten_Eskil_Winge_-_Tor%27s_Fight_with_the_Giants_-_Google_Art_Project.jpg) |
+| `The Council of the Gods` | *Concilio degli dei*, Raphael and his workshop, 1517–18 — Loggia of Cupid and Psyche, Villa Farnesina, Rome | Public domain. **The one to watch**: Italy's cultural-heritage code can constrain reproduction of the asset itself even when the artwork is out of copyright, so this is the sample to replace first if that ever matters. [Commons](https://commons.wikimedia.org/wiki/File:Raffaello,_concilio_degli_dei_02.jpg) |
+
+The attribution used for the fresco is the standard one — Raphael's design,
+executed with his workshop — not Raphael alone, and not Giulio Romano alone.
+The app's startup splash, which uses *The Creation of Adam*, has carried the
+same Italian caveat since it was written.
+
+How each sample was made: cropped to the picture itself (the fresco's painted
+border went), left at its native resolution, encoded once at WebP quality 80
+(65 KB, 128 KB and 70 KB), and inlined as a data URI. The inlining is not a
+packaging preference — a console opened from `file://` may not read pixels back
+out of a local file, because drawing one into a canvas taints it and
+`getImageData` throws. [DEVELOPMENT.md](DEVELOPMENT.md) says how to replace
+one.
 
 ## Keeping this current
 

@@ -1,15 +1,17 @@
 /* sync-renderer.js - how the desktop build stays in step with the engine.
  *
  * The desktop app runs the SAME dithering engine as the two web builds, so it
- * does not fork it: this tool copies launcher/`dither.js` and `video.js` across
- * verbatim, and `--check` fails if either copy has drifted.
+ * does not fork it: this tool copies launcher/`dither.js`, `video.js` and the
+ * built-in `samples.js` across verbatim, and `--check` fails if any copy has
+ * drifted.
  *
  *     node desktop/tools/sync-renderer.js           # regenerate the copies
  *     node desktop/tools/sync-renderer.js --check   # fail if out of step (CI)
  *
  * The desktop shell is the desktop's own (core.js, app.js). What must stay
- * identical is the engine: the algorithms, the palettes, the pipeline, the
- * video clock - that is what makes the same picture come out of every build.
+ * identical is the engine - the algorithms, the palettes, the pipeline, the
+ * video clock - and the paintings the Source panel steps through: that is what
+ * makes the same picture come out of every build.
  */
 'use strict';
 
@@ -21,8 +23,8 @@ const ROOT = path.join(DESKTOP, '..', 'launcher');
 const OUT = path.join(DESKTOP, 'src', 'renderer');
 const CHECK = process.argv.includes('--check');
 
-// The engine, copied verbatim. Nothing else is.
-const COPIES = ['dither.js', 'video.js'];
+// The engine and the built-in source table, copied verbatim. Nothing else is.
+const COPIES = ['dither.js', 'video.js', 'samples.js'];
 
 // A checkout may hand these files over with CRLF (Windows runners do), which is
 // a property of the checkout and not of the source. Compare on normalised text

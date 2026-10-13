@@ -47,7 +47,8 @@
     document.querySelectorAll('#rail .group').length);
   check('and a tab for each of them', document.querySelectorAll('#jump .jump-chip').length === 11,
     document.querySelectorAll('#jump .jump-chip').length);
-  check('the document tab names the open proof', /demo/.test(document.getElementById('doc-name').textContent),
+  check('the document tab names the open proof',
+    document.getElementById('doc-name').textContent === DS.state().name,
     document.getElementById('doc-name').textContent);
   report.notes.title = document.title;
 
@@ -464,10 +465,17 @@
 
   /* ---- the caption and the status line follow the app -------------- */
 
+  const beforeStep = DS.state().name;
   DS.command('file-demo');
   await wait(150);
   const after = window.DS.state();
   report.notes.state = after;
+  check('the built-in samples travel with the app and one of them is loaded',
+    !!window.DitherSamples && window.DitherSamples.length >= 3
+      && window.DitherSamples.some(function (sample) { return sample.name === beforeStep; }),
+    (window.DitherSamples ? window.DitherSamples.length : 0) + ' samples, loaded: ' + beforeStep);
+  check('the Source panel steps to the next built-in source', after.name !== beforeStep,
+    beforeStep + ' -> ' + after.name);
   check('the status line reports what was made', /Ready|Exported|Saved|Demo/.test(after.status), after.status);
   check('the proof has real pixels', after.width > 100 && after.height > 100, after.width + 'x' + after.height);
 

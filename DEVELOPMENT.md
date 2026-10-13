@@ -12,8 +12,9 @@ performance budget, and every check that ships with the app.
 
 | Path | What it is |
 |---|---|
-| [`launcher/`](launcher/) | the **launcher** build, self-contained: the page (`index.html`, `style.css`, `app.js`, `video.js`), the engine master (`dither.js`) and its tests (`test.js`), the three launchers, `manifest.webmanifest` and `icons/` |
+| [`launcher/`](launcher/) | the **launcher** build, self-contained: the page (`index.html`, `style.css`, `app.js`, `video.js`, `samples.js`), the engine master (`dither.js`) and its tests (`test.js`), the three launchers, `manifest.webmanifest` and `icons/` |
 | [`launcher/dither.js`](launcher/dither.js) | the engine: screens and masks, 46 algorithms, palettes, mixing plans, adjustments, tone maps, alpha, effects, glow, video temporal rules, `process()`. DOM-free, shared by all three builds |
+| [`launcher/samples.js`](launcher/samples.js) | the built-in sources the Source panel steps through: three public-domain paintings inlined as data URIs, so no build has to fetch anything and a console opened from `file://` still gets real pixels. Shared by all three builds |
 | [`launcher/test.js`](launcher/test.js) | the engine's Node tests |
 | [`launcher/Dither Studio.cmd`](launcher/Dither%20Studio.cmd), [`launcher/Dither Studio.command`](launcher/Dither%20Studio.command), [`launcher/dither-studio.sh`](launcher/dither-studio.sh) | the app-mode launchers (Windows / macOS / Linux) |
 | [`launcher/manifest.webmanifest`](launcher/manifest.webmanifest), [`launcher/icons/`](launcher/icons/) | installable-app metadata and the generated mark |
@@ -33,8 +34,19 @@ performance budget, and every check that ships with the app.
 
 The two web builds are frozen on purpose: they are what people have links to and
 install from, and `demo/` is kept self-contained so the public Pages site can
-never pick up desktop files. `dither.js` is the one shared file; everything else
-— the shells, the window chrome — belongs to a single build.
+never pick up desktop files. `dither.js` and `samples.js` are the shared files;
+everything else — the shells, the window chrome — belongs to a single build.
+
+### Replacing a built-in sample
+
+`launcher/samples.js` is generated and committed, and never hand-edited: the
+desktop's copy is written by `desktop/tools/sync-renderer.js --check`-ed against
+it, and `demo/samples.js` and the portfolio's `dither studio web/` follow the
+demo. The paintings are read out of the git-ignored `inbox/` drop box, cropped
+to the picture itself, encoded at WebP quality 80 and base64'd into the table;
+`SOURCES.md` holds the works, the collections and the rights. Keep a new sample
+under about 150 KB of pixels: the table loads with the page, in all three
+builds.
 
 ## The desktop shell
 
@@ -50,24 +62,25 @@ never pick up desktop files. `dither.js` is the one shared file; everything else
 | [`src/renderer/core.js`](desktop/src/renderer/core.js) | the desktop core: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
 | [`src/renderer/dither.js`](desktop/src/renderer/dither.js) | the engine — DOM-free, byte-identical to the web builds |
 | [`src/renderer/video.js`](desktop/src/renderer/video.js) | the video source, clock and recorder |
+| [`src/renderer/samples.js`](desktop/src/renderer/samples.js) | the built-in source table — generated from the launcher build, like the engine |
 | [`src/renderer/app.js`](desktop/src/renderer/app.js) | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
 | [`src/renderer/shell.js`](desktop/src/renderer/shell.js) | the chrome: menus, tool rail, caption, slider fills, window verbs |
 | [`src/renderer/tour.js`](desktop/src/renderer/tour.js) | the tutorial's runner: the Learn panel's list, the coach mark, step navigation, Skip, the first-run intro and progress |
 | [`src/styles/tokens.css`](desktop/src/styles/tokens.css) | tokens, the page grid, every element-level control |
 | [`src/styles/chrome.css`](desktop/src/styles/chrome.css) | caption, menus, options bar, rail, document tabs, the well, the bars |
 | [`src/styles/panels.css`](desktop/src/styles/panels.css) | the dock: panel tabs, fields, sliders, swatches, the effects stack |
-| [`tools/sync-renderer.js`](desktop/tools/sync-renderer.js) | keeps `src/renderer/{dither,video}.js` byte-identical to the shared engine |
+| [`tools/sync-renderer.js`](desktop/tools/sync-renderer.js) | keeps `src/renderer/{dither,video,samples}.js` byte-identical to the launcher build's copies |
 | [`tools/tour.test.js`](desktop/tools/tour.test.js) | the tutorial data's own suite: real panels, real commands, nothing already done on a fresh app |
 | [`tools/smoke-in-page.js`](desktop/tools/smoke-in-page.js) | the page half of the smoke run |
 
 The desktop shell is its own code. It used to be the web shell with ten patches
 applied, which meant every helper existed twice, so the desktop now has a core of
 its own (`src/renderer/core.js`) holding the shared helpers once. What every
-build shares is the engine.
+build shares is the engine and the sample table.
 
 ```bash
-node tools/sync-renderer.js          # refresh the engine copies
-node tools/sync-renderer.js --check  # fail if either has drifted (CI runs this)
+node tools/sync-renderer.js          # refresh the engine and sample copies
+node tools/sync-renderer.js --check  # fail if any has drifted (CI runs this)
 node tools/core.test.js              # the core's own rules, in Node
 ```
 
@@ -309,7 +322,7 @@ shot at the end. The run also gets a profile of its own, deleted before it
 starts, so it always meets the app the way a fresh install does — the presets,
 panels and tutorial progress on the machine running it are untouched.
 
-The current run makes 76 checks: the chrome exists, the catalogues fill their
+The current run makes 78 checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw, their submenus expand to the full
 catalogue and stay open while the pointer is on one of their rows, the 32 command
 names the run exercises are all wired, the effects stack is the real markup,

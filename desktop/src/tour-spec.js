@@ -49,7 +49,7 @@
         steps: [
           {
             title: 'There is already something on the table',
-            body: 'The app opens on a generated demo scene, so the press has something to print and nothing has to be loaded first. Your own picture goes in the same way: Open image… in the Source panel, a file dropped straight onto the proof, or Ctrl+V to paste one.',
+            body: 'The app opens on a built-in sample — three classical paintings travel with the app, and the Source panel\'s own control steps through them and then a generated scene — so the press has something to print and nothing has to be loaded first. Your own picture goes in the same way: Open image… in the Source panel, a file dropped straight onto the proof, or Ctrl+V to paste one.',
             why: 'Everything below is made from this one source, so changing it changes every proof.',
             target: '#canvas-wrap',
             open: 'source',
