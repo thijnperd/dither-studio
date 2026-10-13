@@ -21,10 +21,13 @@ performance budget, and every check that ships with the app.
 | [`launcher/manifest.webmanifest`](launcher/manifest.webmanifest), [`launcher/icons/`](launcher/icons/) | installable-app metadata and the generated mark |
 | [`tools/make-icons.js`](tools/make-icons.js) | regenerates `launcher/icons/` through the app's own core |
 | [`tools/inbox.js`](tools/inbox.js) | lists what is waiting in `inbox/`, with each capture's format, bytes and pixel size |
+| [`tools/make-examples.js`](tools/make-examples.js) | rebuilds [`examples/`](examples/) — the proofs, the contact sheet, the manifest and the README's table — by driving the launcher build in a real browser |
+| [`tools/check-examples.js`](tools/check-examples.js) | checks that folder against its own manifest in Node; `test.yml` runs it |
 | [`tools/`](tools/) | optional browser-check harness (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency |
 | [`demo/`](demo/) | the **frozen** web demo published to GitHub Pages, favicon, icons and its own startup overlay included |
 | [`desktop/`](desktop/) | the **active** Electron build, in its own folder with its own dependencies |
 | [`docs/`](docs/) | the screenshots in this file, the README and the guides |
+| [`examples/`](examples/) | twelve generated proofs of the app's own output, with the contact sheet that shows them, the manifest that describes them and the README list that mirrors it |
 | [`inbox/`](inbox/) | where a new capture waits to be developed into `docs/`; the folder ignores its own contents, so nothing dropped in it can reach a commit |
 | [`.github/workflows/`](.github/workflows/) | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and the macOS disk images and publishes releases; `pages.yml` publishes `demo/` |
 | [`README.md`](README.md) | the front door for the whole repository |
@@ -297,6 +300,37 @@ harness takes only the last `--eval` — chain multi-step checks inside one
 (async) expression. `ok` is `true` only when there are no console errors, no page
 errors and every `--expect` matched. [GUIDE.md](GUIDE.md) describes what the app
 should do when you drive it, and lists every hook.
+
+### The examples folder
+
+`examples/` is generated rather than maintained — [`tools/make-examples.js`](tools/make-examples.js)
+writes the pictures, the contact sheet, the manifest and the README's table from
+one list — so what it needs is a check that the four still describe the same set:
+
+```bash
+node tools/check-examples.js
+```
+
+It runs in Node with no browser and no dependencies, reads each PNG's own header
+to confirm the size the manifest claims, and fails on a file that was added by
+hand, a picture re-exported at another size, a table row that lost its picture,
+prose that names a file which is not there, or a page that reaches outside the
+folder. `test.yml` runs it beside the engine tests.
+
+Rebuilding the set needs a browser, because it is the app's real press:
+
+```bash
+node tools/make-examples.js                 # every picture
+node tools/make-examples.js vhs text        # only the ones named
+node tools/make-examples.js --list          # print the set, draw nothing
+node tools/make-examples.js --width 1400    # draw bigger; 0 uses the painting's own size
+```
+
+It opens [`launcher/index.html`](launcher/index.html) in Chromium through the
+global Playwright, applies each recipe through the same calls the panels make,
+and saves the pixels on the proof canvas. Before it draws anything it checks
+every recipe against the app's own catalogues, so a name the app does not have
+fails the run and names itself.
 
 ### The desktop app's own checks
 

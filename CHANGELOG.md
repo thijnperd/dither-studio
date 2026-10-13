@@ -10,6 +10,25 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## Unreleased
+
+**A folder of examples you can rebuild.** [`examples/`](examples/) holds twelve
+proofs of the app's own output — a zine's single ink, the Commodore 64's palette,
+a pixel-sorted proof, the whole effects stack, type mode set in characters —
+each drawn from the three paintings that ship inside the app and each captioned
+with the recipe behind it. They come from the built-in sources rather than from
+`inbox/`, so `node tools/make-examples.js` regenerates every one of them from a
+clone and lands on the same bytes; the recipes carry no seed, and a rerun here
+produced identical files.
+
+[`examples/index.html`](examples/index.html) shows the set as a contact sheet —
+one self-contained page, no server and no network, each proof opening at full
+size. The generator writes the page, the manifest and the README's table from one
+list, checks every recipe against the app's own catalogues before it draws, and
+refuses to draw a setting the app does not have;
+[`tools/check-examples.js`](tools/check-examples.js) then checks the four against
+each other in Node, which is what `test.yml` runs.
+
 ## 0.2.4 — 2026-10-13
 
 **The release job attaches the installers again.** The job that fills a tag's

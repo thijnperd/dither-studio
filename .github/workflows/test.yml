@@ -35,6 +35,12 @@ jobs:
       - name: Desktop tour tests
         run: node desktop/tools/tour.test.js
 
+      # examples/ is generated: the pictures, the contact sheet, the manifest and
+      # the README's table are all written by tools/make-examples.js. This is what
+      # keeps the four describing the same set, on any machine, without a browser.
+      - name: The examples folder matches its own manifest
+        run: node tools/check-examples.js
+
   desktop:
     name: desktop (windows)
     runs-on: windows-latest

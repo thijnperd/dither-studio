@@ -69,6 +69,38 @@ cyanotype re-ink, a 3 px glow.*
 **Spectrum Loading**: Sierra error diffusion at pixel size 2 onto the ZX
 Spectrum's fifteen inks.*
 
+## Examples
+
+A set of proofs built to be *rebuilt*: [`examples/`](examples/) holds twelve
+pictures, each one drawn by the app from the paintings that ship inside it, with
+the recipe recorded beside it. They come from the built-in sources rather than
+from `inbox/`, so anyone who clones this repository can regenerate every one of
+them with
+
+```bash
+node tools/make-examples.js
+```
+
+and land on the same files, byte for byte. [`examples/index.html`](examples/index.html)
+shows the set as a contact sheet you can open straight from a clone — no server,
+no network — and [`examples/README.md`](examples/README.md) lists it as a table
+with every setting behind it.
+
+![Winge's Thor's Fight with the Giants, diffused into a single ink](examples/thor-zine-1bit.png)
+
+*Winge, **Thor's Fight with the Giants** (1872), through the **Zine** preset:
+Floyd–Steinberg diffusion into one bit.*
+
+![The Council of the Gods, drawn on the Commodore 64's own inks](examples/council-c64-poster.png)
+
+*Raphael's workshop, **The Council of the Gods** (1517–18), through **C64**: a
+Bayer 8 screen on the Commodore 64's sixteen-colour palette.*
+
+![Oedipus and the Sphinx re-inked as gold leaf](examples/oedipus-gold-leaf.png)
+
+*Moreau, **Oedipus and the Sphinx** (1864), four greys under a blue-noise screen,
+re-inked as gold leaf and lit from behind.*
+
 ## Structure-aware screens
 
 Three of the algorithms build their screen *from the picture*: a noise field is
@@ -199,14 +231,16 @@ telemetry, no update check.
 ```bash
 node launcher/test.js                                        # 87 engine tests
 bash tools/check.sh launcher/index.html --expect canvas       # a page in a real browser
+node tools/check-examples.js                                 # examples/ against its own manifest
 cd desktop && npm test && npm run smoke                       # 39 core and tour checks, then the window
 ```
 
 The smoke run boots the real desktop app on a profile of its own, makes 76
 checks and screenshots both windows. [DEVELOPMENT.md](DEVELOPMENT.md) has the
 rest: the repository layout file by file, how the desktop shell and the startup
-screen are built, the installer and the release workflow, and what every
-harness option and environment variable does.
+screen are built, how the generated [examples](examples/) set is rebuilt and
+checked, the installer and the release workflow, and what every harness option
+and environment variable does.
 
 ## Credits
 

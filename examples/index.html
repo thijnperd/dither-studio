@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dither Studio — examples</title>
+<meta name="description" content="Proofs drawn by Dither Studio itself, with the recipe behind each one.">
+<style>
+  :root {
+    --bg: #0e0f13;        /* page ground            */
+    --panel: #15171d;     /* rails, headers          */
+    --panel-2: #1b1e26;   /* controls, raised chips  */
+    --line: #262a34;      /* hairlines and borders   */
+    --text: #e8eaf0;      /* primary text            */
+    --muted: #8b91a3;     /* labels, secondary text  */
+    --accent: #7aa2ff;    /* the single accent       */
+    --well: #0b0c10;      /* the recessed glass      */
+    --radius: 8px;
+    --font: "SF Mono", "Cascadia Code", Consolas, "JetBrains Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 13px/1.5 var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header {
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    padding: 22px clamp(16px, 4vw, 44px) 18px;
+  }
+
+  h1 { margin: 0; font-size: 20px; letter-spacing: 0.06em; font-weight: 600; }
+  h1 .mark { color: var(--accent); }
+  h1 .tag { color: var(--muted); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+
+  header p { margin: 10px 0 0; max-width: 80ch; color: var(--muted); }
+
+  .statusbar {
+    display: flex; flex-wrap: wrap; gap: 6px 22px;
+    margin-top: 15px; color: var(--muted); font-size: 12px;
+  }
+  .statusbar b { color: var(--text); font-weight: 600; }
+
+  main {
+    columns: 330px 3;
+    column-gap: 24px;
+    padding: 24px clamp(16px, 4vw, 44px) 20px;
+  }
+
+  .card { margin: 0 0 26px; break-inside: avoid; display: flex; flex-direction: column; gap: 10px; }
+
+  .shot {
+    position: relative;
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--well);
+    overflow: hidden;
+  }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot .zoom {
+    position: absolute; right: 8px; bottom: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 11px; letter-spacing: 0.06em;
+    padding: 2px 8px; border-radius: 999px;
+    opacity: 0; transition: opacity 150ms ease;
+  }
+  .shot:hover .zoom, .shot:focus-visible .zoom { opacity: 1; }
+
+  figcaption p { margin: 0; }
+  .name { font-size: 12px; letter-spacing: 0.02em; }
+  .shows { margin-top: 5px; }
+  .readout, .recipe { color: var(--muted); font-size: 12px; margin-top: 5px; }
+  .readout b { color: var(--text); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 18px clamp(16px, 4vw, 44px) 34px;
+    color: var(--muted);
+  }
+  footer p { margin: 0 0 8px; max-width: 84ch; }
+  code {
+    background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 4px; padding: 1px 5px; color: var(--text);
+  }
+
+  dialog {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--panel); color: var(--text);
+    padding: 10px; max-width: 96vw; max-height: 96vh;
+  }
+  dialog::backdrop { background: rgba(4, 5, 8, 0.87); }
+  dialog img { display: block; max-width: 92vw; max-height: 82vh; }
+  dialog .bar { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; padding: 0 2px 8px; }
+  dialog .bar b { font-weight: 600; }
+  dialog .bar span { color: var(--muted); font-size: 12px; }
+  dialog button {
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+    font: 12px/1 var(--font); padding: 5px 9px; border-radius: 6px; cursor: pointer;
+  }
+  dialog button:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 1080px) {
+    main { columns: 320px 2; }
+  }
+
+  @media (max-width: 720px) {
+    main { columns: 1; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="mark">Dither Studio</span> <span class="tag">/ examples</span></h1>
+  <p>Every picture here was drawn by Dither Studio itself, from the paintings that ship
+  inside it — no exported mock-ups, no outside sources. The recipe under each one is what
+  the app was actually set to; the readout beside it is what came out. Choose a proof to open
+  the file itself.</p>
+  <div class="statusbar">
+    <span>Pictures <b>12</b></span>
+    <span>Algorithms <b>10</b></span>
+    <span>Palettes <b>9</b></span>
+    <span>On disk <b>3731 KB</b></span>
+    <span>Rebuild <b>node tools/make-examples.js</b></span>
+  </div>
+</header>
+<main>
+      <figure class="card">
+        <a class="shot" href="thor-zine-1bit.png" data-full="thor-zine-1bit.png">
+          <img src="thor-zine-1bit.png" width="900" height="1301" loading="eager" alt="Tor's Fight with the Giants — Floyd–Steinberg diffusion into one bit, the honest photocopied zine">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">thor-zine-1bit.png</p>
+          <p class="shows">Floyd–Steinberg diffusion into one bit, the honest photocopied zine</p>
+          <p class="readout">Tor's Fight with the Giants → <b>floyd-steinberg</b> · <b>bw</b> · 2 colours · 900×1301 · 496 KB</p>
+          <p class="recipe">preset zine</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="council-riso-duotone.png" data-full="council-riso-duotone.png">
+          <img src="council-riso-duotone.png" width="900" height="365" loading="eager" alt="The Council of the Gods — two inks and nothing else, the duotone a riso poster is built on">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">council-riso-duotone.png</p>
+          <p class="shows">two inks and nothing else, the duotone a riso poster is built on</p>
+          <p class="readout">The Council of the Gods → <b>clustered-dot-8</b> · <b>bw</b> · 2 colours · 900×365 · 23 KB</p>
+          <p class="recipe">preset duo</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="council-c64-poster.png" data-full="council-c64-poster.png">
+          <img src="council-c64-poster.png" width="900" height="365" loading="eager" alt="The Council of the Gods — the Commodore 64's own sixteen colours, a poster forty years late">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">council-c64-poster.png</p>
+          <p class="shows">the Commodore 64's own sixteen colours, a poster forty years late</p>
+          <p class="readout">The Council of the Gods → <b>bayer8</b> · <b>c64</b> · 14 colours · 900×365 · 57 KB</p>
+          <p class="recipe">preset c64</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="oedipus-terminal-green.png" data-full="oedipus-terminal-green.png">
+          <img src="oedipus-terminal-green.png" width="900" height="600" loading="lazy" alt="Oedipus and the Sphinx — a phosphor re-ink on a four-shade screen, with scanlines over the top">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">oedipus-terminal-green.png</p>
+          <p class="shows">a phosphor re-ink on a four-shade screen, with scanlines over the top</p>
+          <p class="readout">Oedipus and the Sphinx → <b>clustered-dot</b> · <b>gameboy</b> · 4 colours · 900×600 · 82 KB</p>
+          <p class="recipe">preset terminal</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="thor-vhs-decay.png" data-full="thor-vhs-decay.png">
+          <img src="thor-vhs-decay.png" width="900" height="1301" loading="lazy" alt="Tor's Fight with the Giants — the whole effects stack at once - aberration, blocks, scanlines and grain">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">thor-vhs-decay.png</p>
+          <p class="shows">the whole effects stack at once - aberration, blocks, scanlines and grain</p>
+          <p class="readout">Tor's Fight with the Giants → <b>bayer4</b> · <b>pico8</b> · 90730 colours · 900×1301 · 1135 KB</p>
+          <p class="recipe">preset vhs</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="oedipus-glitch-sort.png" data-full="oedipus-glitch-sort.png">
+          <img src="oedipus-glitch-sort.png" width="900" height="600" loading="lazy" alt="Oedipus and the Sphinx — pixel sorting - rows of the proof reordered by tone instead of drawn in place">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">oedipus-glitch-sort.png</p>
+          <p class="shows">pixel sorting - rows of the proof reordered by tone instead of drawn in place</p>
+          <p class="readout">Oedipus and the Sphinx → <b>floyd-steinberg</b> · <b>cga</b> · 18 colours · 900×600 · 604 KB</p>
+          <p class="recipe">preset sort</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="thor-thermal-cam.png" data-full="thor-thermal-cam.png">
+          <img src="thor-thermal-cam.png" width="900" height="1301" loading="lazy" alt="Tor's Fight with the Giants — a thermal re-ink: the grade decides what is hot, the dither decides the edges">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">thor-thermal-cam.png</p>
+          <p class="shows">a thermal re-ink: the grade decides what is hot, the dither decides the edges</p>
+          <p class="readout">Tor's Fight with the Giants → <b>bayer16</b> · <b>gray-16</b> · 16 colours · 900×1301 · 361 KB</p>
+          <p class="recipe">preset thermal</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="oedipus-newsprint.png" data-full="oedipus-newsprint.png">
+          <img src="oedipus-newsprint.png" width="900" height="600" loading="lazy" alt="Oedipus and the Sphinx — a halftone screen - an ordered dot at every pixel size, no noise anywhere">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">oedipus-newsprint.png</p>
+          <p class="shows">a halftone screen - an ordered dot at every pixel size, no noise anywhere</p>
+          <p class="readout">Oedipus and the Sphinx → <b>halftone</b> · <b>bw</b> · 2 colours · 900×600 · 58 KB</p>
+          <p class="recipe">preset newsprint</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="council-yliluoma-ega.png" data-full="council-yliluoma-ega.png">
+          <img src="council-yliluoma-ega.png" width="900" height="365" loading="lazy" alt="The Council of the Gods — Yliluoma mixing: a sixteen-colour hardware palette, blended in dots rather than snapped">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">council-yliluoma-ega.png</p>
+          <p class="shows">Yliluoma mixing: a sixteen-colour hardware palette, blended in dots rather than snapped</p>
+          <p class="readout">The Council of the Gods → <b>yliluoma-polished</b> · <b>ega</b> · 16 colours · 900×365 · 160 KB</p>
+          <p class="recipe">yliluoma-polished · ega · pixel size 2</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="thor-pixel-art-6x.png" data-full="thor-pixel-art-6x.png">
+          <img src="thor-pixel-art-6x.png" width="900" height="1301" loading="lazy" alt="Tor's Fight with the Giants — pixel size 6 on a four-ink handheld screen - the chunky output people come for">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">thor-pixel-art-6x.png</p>
+          <p class="shows">pixel size 6 on a four-ink handheld screen - the chunky output people come for</p>
+          <p class="readout">Tor's Fight with the Giants → <b>clustered-dot</b> · <b>gameboy-pocket</b> · 4 colours · 900×1301 · 46 KB</p>
+          <p class="recipe">clustered-dot · gameboy-pocket · pixel size 6</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="oedipus-gold-leaf.png" data-full="oedipus-gold-leaf.png">
+          <img src="oedipus-gold-leaf.png" width="900" height="600" loading="lazy" alt="Oedipus and the Sphinx — four greys under a blue-noise screen, re-inked as gold leaf and lit from behind">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">oedipus-gold-leaf.png</p>
+          <p class="shows">four greys under a blue-noise screen, re-inked as gold leaf and lit from behind</p>
+          <p class="readout">Oedipus and the Sphinx → <b>blue-noise-32</b> · <b>gray-4</b> · 1906 colours · 900×600 · 634 KB</p>
+          <p class="recipe">blue-noise-32 · gray-4 · tone gold · pixel size 1 · effects: vignette 45 · glow 2/40</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <a class="shot" href="oedipus-text-mode-ascii.png" data-full="oedipus-text-mode-ascii.png">
+          <img src="oedipus-text-mode-ascii.png" width="900" height="600" loading="lazy" alt="Oedipus and the Sphinx — type mode: the same proof set in characters, the grid the .txt export carries">
+          <span class="zoom">open full size</span>
+        </a>
+        <figcaption>
+          <p class="name">oedipus-text-mode-ascii.png</p>
+          <p class="shows">type mode: the same proof set in characters, the grid the .txt export carries</p>
+          <p class="readout">Oedipus and the Sphinx → <b>atkinson</b> · <b>bw</b> · 108 colours · 900×600 · 74 KB</p>
+          <p class="recipe">atkinson · bw · pixel size 1 · type mode, ascii at 12px</p>
+        </figcaption>
+      </figure>
+</main>
+<footer>
+  <p>Rebuild this page and every file on it from a clone with <code>node tools/make-examples.js</code>.
+  The generator opens the real build, applies each recipe through the same calls the panels
+  make, checks it against the app’s own catalogues, and fails rather than drawing something
+  the app cannot make.</p>
+  <p>The paintings and their licences are recorded in <a href="../SOURCES.md">SOURCES.md</a>;
+  <a href="README.md">README.md</a> lists the same set as a table, and
+  <a href="../GUIDE.md">GUIDE.md</a> explains every control named above.</p>
+</footer>
+
+<dialog id="viewer">
+  <div class="bar">
+    <b id="viewer-name"></b>
+    <span id="viewer-facts"></span>
+    <button type="button" id="viewer-close">close (esc)</button>
+  </div>
+  <img id="viewer-image" alt="">
+</dialog>
+
+<script>
+  (function () {
+    const viewer = document.getElementById('viewer');
+    const image = document.getElementById('viewer-image');
+    const name = document.getElementById('viewer-name');
+    const facts = document.getElementById('viewer-facts');
+    if (!viewer || typeof viewer.showModal !== 'function') return;   // plain links without it
+
+    document.querySelectorAll('.shot').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        const card = link.closest('.card');
+        event.preventDefault();
+        image.src = link.getAttribute('data-full');
+        image.alt = link.querySelector('img').alt;
+        name.textContent = link.getAttribute('data-full');
+        facts.textContent = card ? card.querySelector('.readout').textContent : '';
+        viewer.showModal();
+      });
+    });
+
+    document.getElementById('viewer-close').addEventListener('click', function () { viewer.close(); });
+    viewer.addEventListener('click', function (event) {
+      if (event.target === viewer) viewer.close();      // the backdrop is the dialog itself
+    });
+  }());
+</script>
+</body>
+</html>
