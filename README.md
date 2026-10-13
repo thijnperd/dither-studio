@@ -111,7 +111,8 @@ press, one station at a time.
 **Download:** [the latest release](https://github.com/thijnperd/dither-studio/releases/latest).
 Take `Dither-Studio-Setup-<version>.exe` to install it, or
 `Dither-Studio-<version>-portable.exe` to run it from anywhere without
-installing.
+installing. Running a newer setup removes any older Dither Studio it finds
+first, wherever that one was installed.
 
 ### Run it from source
 
@@ -239,9 +240,16 @@ node tools/core.test.js              # the core's own rules, in Node
 
 ```bash
 cd desktop
-npm run dist     # dist/Dither-Studio-Setup-<version>.exe + the portable exe
+npm run build    # the checks, then dist/Dither-Studio-Setup-<version>.exe + the portable exe
+npm run dist     # the packaging step on its own, once the checks have run
 npm run pack     # dist/win-unpacked/ only, much faster while iterating
 ```
+
+`npm run build` is the local half of that workflow — the same checks in the same
+order, then packaging (`node tools/build-checks.js`; `--skip-smoke` drops the
+window-driven run when no desktop can be spared) — so a setup built here carries
+what a released one does. It prints both executables and their sizes when it is
+done.
 
 You usually don't have to run this by hand: the **build** workflow on GitHub
 builds the Windows installer for every push that touches the app, checks the
@@ -254,6 +262,19 @@ electron-builder writes an NSIS installer (per-user, choose the folder, Start
 menu shortcut) and a portable single-file executable. The icon comes from
 `build/icon.png`, the app's own dithered mark; keep it in step with
 `icons/icon-512.png` in the repository root, which is the same 512 px proof.
+
+Installing a newer setup removes the older ones first. electron-builder removes
+the copy it knows about, under the app's own registry key in the install context
+being used; [`desktop/build/installer.nsh`](desktop/build/installer.nsh),
+compiled in through `nsis.include`, covers what that misses — a build installed
+for all users and replaced by a per-user setup or the reverse, an install whose
+folder was picked somewhere else the first time, and a row in *Apps & features*
+whose files are already gone. It removes those files itself and never runs an
+older build's uninstaller: that uninstaller works out its own folder from a
+registry key and falls back to the default per-user folder, which is exactly
+where the new setup is writing. In *Apps & features* it appears once, as
+"Dither Studio", with the version beside it, and everything in
+`%APPDATA%\Dither Studio` — presets, panels, tutorial progress — is kept.
 
 ### The startup screen
 

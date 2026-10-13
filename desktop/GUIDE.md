@@ -15,12 +15,19 @@ Two files come out of a release:
 
 | File | What it is |
 |---|---|
-| `Dither-Studio-Setup-<version>.exe` | an installer. Per-user by default (no administrator prompt), you choose the folder, it adds a Start menu entry and a desktop shortcut if you ask |
+| `Dither-Studio-Setup-<version>.exe` | an installer. Per-user by default (no administrator prompt), you choose the folder, it adds a Start menu entry and a desktop shortcut if you ask. A newer one removes any older Dither Studio first |
 | `Dither-Studio-<version>-portable.exe` | one file, no install. Put it on a USB stick and it runs from there |
 
 Both are the same application. The portable build keeps its own settings next
 to nothing — it writes to the standard per-user application data folder, so your
 panels and presets survive moving the file around.
+
+Installing a newer version replaces the old one. The setup looks for any earlier
+Dither Studio first — one you put in a folder of your own, one installed for all
+users, one left behind with its files already gone — removes it, and only then
+installs itself. It shows up in *Apps & features* once, as "Dither Studio", with
+the version beside it. Presets, panels and tutorial progress live in
+`%APPDATA%\Dither Studio` and survive the upgrade.
 
 Windows may show a SmartScreen notice the first time, because the builds are not
 code-signed. *More info* → *Run anyway*.

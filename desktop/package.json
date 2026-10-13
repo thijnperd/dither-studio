@@ -1,7 +1,7 @@
 {
   "name": "dither-studio-desktop",
   "productName": "Dither Studio",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dither Studio as a desktop application: the offline dithering press in its own window, with native open/save, a tool rail, a panel dock and a guided tutorial.",
   "author": "Thijn Köhne",
   "private": true,
@@ -16,7 +16,8 @@
     "test": "node tools/core.test.js && node tools/tour.test.js",
     "smoke": "electron . --smoke --smoke-script tools/smoke-in-page.js",
     "pack": "electron-builder --win --dir",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "build": "node tools/build-checks.js && electron-builder --win --publish never"
   },
   "devDependencies": {
     "electron": "^44.7.0",
@@ -62,7 +63,8 @@
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Dither Studio",
       "artifactName": "Dither-Studio-Setup-${version}.exe",
-      "uninstallDisplayName": "Dither Studio ${version}"
+      "include": "build/installer.nsh",
+      "uninstallDisplayName": "Dither Studio"
     },
     "portable": {
       "artifactName": "Dither-Studio-${version}-portable.exe"
