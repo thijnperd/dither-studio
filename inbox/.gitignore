@@ -1,0 +1,6 @@
+# Scratch space. Everything dropped in here is ignored, so a new capture can
+# never reach a commit by accident. The pictures the documentation actually
+# shows live in ../docs and are added there on purpose, one at a time.
+*
+!.gitignore
+!README.md
