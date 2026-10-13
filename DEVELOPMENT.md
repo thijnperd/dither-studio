@@ -139,9 +139,11 @@ sizes when it is done.
 
 electron-builder writes an NSIS installer (per-user, choose the folder, Start
 menu shortcut) and a portable single-file executable on Windows, and one
-unsigned disk image per Mac architecture on macOS. The icon comes from
-`build/icon.png`, the app's own dithered mark; keep it in step with
-`icons/icon-512.png` in the repository root, which is the same 512 px proof.
+unsigned disk image per Mac architecture on macOS. The packaging icon comes from
+`desktop/build/icon.png`, the app's own dithered mark. The web builds' mark is
+made by [`tools/make-icons.js`](tools/make-icons.js), which writes
+`launcher/icons/icon.svg`, `icon-192.png` and `icon-512.png` through the same
+press.
 
 Installing a newer setup removes the older ones first. electron-builder removes
 the copy it knows about, under the app's own registry key in the install context
