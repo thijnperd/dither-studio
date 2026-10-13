@@ -17,6 +17,7 @@
     "smoke": "electron . --smoke --smoke-script tools/smoke-in-page.js",
     "pack": "electron-builder --win --dir",
     "dist": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
     "build": "node tools/build-checks.js && electron-builder --win --publish never"
   },
   "devDependencies": {
@@ -57,6 +58,20 @@
         }
       ]
     },
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.graphics-design",
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
@@ -68,6 +83,9 @@
     },
     "portable": {
       "artifactName": "Dither-Studio-${version}-portable.exe"
+    },
+    "dmg": {
+      "artifactName": "Dither-Studio-${version}-${arch}.dmg"
     },
     "publish": null
   }

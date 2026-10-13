@@ -10,7 +10,9 @@
  *   - the lesson list in the Learn panel, built from tour-spec.js, grouped by
  *     theme and ticked as lessons finish;
  *   - the runner: one step at a time, the hole over the target, Back/Next/Exit,
- *     Show me (which runs that step's own commands), Escape to leave;
+ *     Skip, Show me (which runs that step's own commands), Escape to leave;
+ *   - the intro: the one time the tour opens by itself, on a build that has
+ *     never met it, and the bookkeeping that stops it ever doing so twice;
  *   - progress, in a localStorage key of the same kind the dock's groups use.
  *
  * What it never does: draw a control of its own, swallow a click meant for the
@@ -30,20 +32,22 @@
 
   const $ = function (id) { return document.getElementById(id); };
   const STORE = 'dither-studio.tour';
+  // How long the card of a finished tour stays up before it closes itself. A
+  // beat to read the verdict - one shot, never a loop - with the Close button
+  // still there for anyone who would rather not wait.
+  const VERDICT_MS = 3200;
 
   // ---- progress ----------------------------------------------------------
 
-  // { done: { lessonId: true }, at: { lessonId: stepIndex } } - the same shape
-  // of key the dock uses for which panels are open, with the same guard: a
-  // disabled or unavailable storage is not worth failing over.
-  function blank() { return { done: {}, at: {} }; }
-
-  let known = false;
+  // { done: { lessonId: true }, at: { lessonId: stepIndex }, seen: bool } - the
+  // same shape of key the dock uses for which panels are open, with the same
+  // guard: a disabled or unavailable storage is not worth failing over. `seen`
+  // is the intro question: the tour has had its one free appearance.
+  function blank() { return { done: {}, at: {}, seen: false }; }
 
   function loadProgress() {
     let raw = null;
     try { raw = window.localStorage.getItem(STORE); } catch (err) { raw = null; }
-    known = raw !== null;
     const out = blank();
     if (!raw) return out;
     try {
@@ -51,6 +55,7 @@
       if (parsed && typeof parsed === 'object') {
         if (parsed.done && typeof parsed.done === 'object') out.done = parsed.done;
         if (parsed.at && typeof parsed.at === 'object') out.at = parsed.at;
+        if (parsed.seen === true) out.seen = true;
       }
     } catch (err) { /* unreadable progress starts over rather than throwing */ }
     return out;
@@ -84,6 +89,39 @@
   function nextUnfinished() {
     const open = lessons.find(function (lesson) { return !progress.done[lesson.id]; });
     return open ? open.id : lessons[0].id;
+  }
+
+  function allDone() {
+    return lessons.every(function (lesson) { return !!progress.done[lesson.id]; });
+  }
+
+  // The intro is owed to a build that has never met the tour and has not
+  // finished it. Being declined counts as being met: a tutorial that returns
+  // after it has been waved away is an advertisement, not a lesson.
+  function shouldIntro() {
+    return !progress.seen && !allDone();
+  }
+
+  function markSeen() {
+    if (progress.seen) return false;
+    progress.seen = true;
+    saveProgress();
+    return true;
+  }
+
+  function learnOpen() {
+    return (stateNow().openGroups || []).indexOf('learn') >= 0;
+  }
+
+  // Starting the tour has to reveal the station it lives in, now that a
+  // finished tour folds it away: Help > Take the Tour must not run a tutorial
+  // whose list of lessons is nowhere to be found.
+  function revealLearn() {
+    return DS.command('window-panel-open', 'learn');
+  }
+
+  function foldLearn() {
+    return learnOpen() ? DS.command('window-panel-close', 'learn') : false;
   }
 
   function buildList() {
@@ -151,6 +189,7 @@
   const elWhy = $('tour-why');
   const elFill = $('tour-fill');
   const btnExit = $('tour-exit');
+  const btnSkip = $('tour-skip');
   const btnShow = $('tour-show');
   const btnBack = $('tour-back');
   const btnNext = $('tour-next');
@@ -314,6 +353,7 @@
     btnBack.disabled = at === 0;
     btnNext.textContent = at === total - 1 ? 'Finish' : 'Next';
     btnShow.hidden = !(step.show && step.show.length);
+    syncSkip();
     card.classList.remove('is-complete');
     card.classList.toggle('is-done', satisfied(step));
     running.scrolled = -1;      // this step may need the rail moved for it
@@ -360,6 +400,13 @@
     return true;
   }
 
+  // Skip belongs to a tour the learner did not ask for: it is on the card while
+  // the intro is unclaimed and gone once they have met the tour, which leaves
+  // Exit as the only way out of a lesson they started themselves.
+  function syncSkip() {
+    if (btnSkip) btnSkip.hidden = !shouldIntro();
+  }
+
   // The last card is a verdict, not a step: the lesson is recorded as finished,
   // the list ticks, and the next lesson is offered by name.
   function finish() {
@@ -377,24 +424,58 @@
     elTitle.textContent = nextLesson ? 'That is ' + lesson.title.toLowerCase() + '.' : 'That is every lesson.';
     elBody.textContent = nextLesson
       ? 'Next: ' + nextLesson.title + ' — ' + nextLesson.summary
-      : 'Ten lessons, the whole press. Every one of them can be run again from this list.';
+      : lessons.length + ' lessons, the whole press. Every one of them can be run again from this list.';
     elWhy.textContent = '';
     elWhy.hidden = true;
     if (elFill) elFill.style.width = '100%';
     btnBack.disabled = true;
     btnShow.hidden = true;
     btnNext.textContent = nextLesson ? 'Next lesson' : 'Close';
+    if (!nextLesson) {
+      // The whole tour, finished. The tutorial has done its job, so it gets out
+      // of the way by itself: the station folds, the intro is spent for good,
+      // and the card closes after a beat instead of waiting to be dismissed.
+      markSeen();
+      foldLearn();
+      const shown = running;
+      window.setTimeout(function () { if (running === shown) exit(); }, VERDICT_MS);
+    }
+    syncSkip();
     buildList();
     place();
     return true;
   }
 
+  // Leave: the learner's own way out of a lesson. Progress is kept, the station
+  // stays as they left it, and leaving the intro at all counts as having met it.
   function exit() {
     if (!running) return false;
     running = null;
+    markSeen();
     if (layer) layer.hidden = true;
+    syncSkip();
     buildList();
     return true;
+  }
+
+  // Skip: the tutorial opened itself, and this is the learner saying it should
+  // not have. The choice is stored so the intro never returns, and the station
+  // the intro opened folds away with it.
+  function skip() {
+    const was = !!running;
+    markSeen();
+    exit();
+    foldLearn();
+    syncSkip();          // covers a skip pressed outside a running lesson
+    return was;
+  }
+
+  // Open (Help > Take the Tour): reveal the station, then pick up where the
+  // learner left off.
+  function open() {
+    if (!ready) return false;
+    revealLearn();
+    return start(nextUnfinished(), 0);
   }
 
   function showMe() {
@@ -408,9 +489,11 @@
   }
 
   function reset() {
+    // Leave first: leaving writes `seen`, and the blank slate has to have the
+    // last word or Reset would answer the intro question for the learner.
+    if (running) exit();
     progress = blank();
     saveProgress();
-    if (running) exit();
     buildList();
     return true;
   }
@@ -418,6 +501,7 @@
   // ---- wiring ------------------------------------------------------------
 
   if (btnExit) btnExit.addEventListener('click', exit);
+  if (btnSkip) btnSkip.addEventListener('click', skip);
   if (btnNext) btnNext.addEventListener('click', next);
   if (btnBack) btnBack.addEventListener('click', back);
   if (btnShow) btnShow.addEventListener('click', showMe);
@@ -444,10 +528,14 @@
 
   buildList();
 
-  // The first time this build runs anywhere, the Learn panel is put in front of
-  // the learner: it is the one station that cannot explain itself closed. After
-  // that the dock remembers what is open like everywhere else.
-  if (!known && DS.command('window-panel-open', 'learn')) buildList();
+  // A build that has never met the tutorial meets it now: the Learn station
+  // comes forward - it is the one station that cannot explain itself closed -
+  // and the first unfinished lesson starts itself. Once, and only once: Skip,
+  // Exit and Escape all end it for good, and a finished tour never opens again.
+  if (shouldIntro()) {
+    revealLearn();
+    start(nextUnfinished());
+  }
 
   // ---- the test surface (tools/smoke-in-page.js) -------------------------
 
@@ -455,15 +543,18 @@
     lessons: lessons,
     spec: SPEC,
     start: start,
+    open: open,
     next: next,
     back: back,
     exit: exit,
+    skip: skip,
     showMe: showMe,
     reset: reset,
     nextUnfinished: nextUnfinished,
+    shouldIntro: shouldIntro,
     rows: function () { return list ? list.querySelectorAll('.tour-row').length : 0; },
     progress: function () {
-      return { done: Object.keys(progress.done), at: progress.at };
+      return { done: Object.keys(progress.done), at: progress.at, seen: !!progress.seen };
     },
     status: function () {
       return {

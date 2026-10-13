@@ -8,8 +8,9 @@ build step, no server, no packages, nothing uploaded anywhere.
 
 There are three ways to run it, and they all share one engine. The web demo
 opens in any browser. The launchers put that same page in its own app window.
-The desktop app is a real Windows application with native menus, file
-dialogs and a built-in tutorial — that's the one still being developed.
+The desktop app is a real desktop application — Windows, and a macOS disk image
+as of this release — with native menus, file dialogs and a built-in tutorial;
+that's the one still being developed.
 
 ![The app window, the desktop build](docs/desktop-app.png)
 
@@ -18,7 +19,7 @@ dialogs and a built-in tutorial — that's the one still being developed.
 | Start here | |
 |---|---|
 | **Use it now** | [the web demo](https://thijnperd.github.io/dither-studio/) — nothing to install |
-| **Install the desktop app** | [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) — the Setup or the portable `.exe` |
+| **Install the desktop app** | [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) — the Setup or the portable `.exe` on Windows, the `.dmg` on macOS |
 | **Run it from this folder** | [Run it](#run-it) — the launchers and the browser they use |
 | **Learn the console** | [GUIDE.md](GUIDE.md) — the tour, station by station |
 | **Learn the desktop window** | [desktop/GUIDE.md](desktop/GUIDE.md) |
@@ -56,7 +57,7 @@ Every section, in order:
 |---|---|---|---|
 | **Web demo** | [`demo/`](demo/) | frozen | <https://thijnperd.github.io/dither-studio/> — published to GitHub Pages from `demo/` |
 | **Launcher app** | [`launcher/`](launcher/) | frozen | the launchers: the page in an app-mode window with its own profile |
-| **Desktop app** | [`desktop/`](desktop/) | **active** | `Dither-Studio-Setup-<version>.exe` from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
+| **Desktop app** | [`desktop/`](desktop/) | **active** | the installer, or the `.dmg` on macOS, from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
 What they share is `dither.js`, the dithering engine. It has no DOM
 dependencies, it is copied into the desktop build byte for byte, and
@@ -82,7 +83,7 @@ its own tour in [desktop/GUIDE.md](desktop/GUIDE.md).
 | **Linux** | [`./launcher/dither-studio.sh`](launcher/dither-studio.sh) (make it executable once: `chmod +x launcher/dither-studio.sh`) |
 | **Any browser** | open **[`launcher/index.html`](launcher/index.html)** |
 | **Installed app** | open [`launcher/index.html`](launcher/index.html), then use the browser's *Install* / *Create shortcut* command (`manifest.webmanifest` makes this work) |
-| **Desktop app** | [`desktop/`](desktop/), or the installer from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
+| **Desktop app** | [`desktop/`](desktop/), or the installer — or the `.dmg` on macOS — from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
 The launchers look for Chrome, Edge, Brave or Chromium and open `index.html`
 in app mode (`--app`) with a profile of the app's own, kept under
@@ -109,10 +110,14 @@ it teaches itself: the **Learn** panel runs ten lessons that walk the whole
 press, one station at a time.
 
 **Download:** [the latest release](https://github.com/thijnperd/dither-studio/releases/latest).
-Take `Dither-Studio-Setup-<version>.exe` to install it, or
+On Windows, take `Dither-Studio-Setup-<version>.exe` to install it, or
 `Dither-Studio-<version>-portable.exe` to run it from anywhere without
-installing. Running a newer setup removes any older Dither Studio it finds
-first, wherever that one was installed.
+installing. On macOS, take `Dither-Studio-<version>-arm64.dmg` on Apple silicon
+or `-x64.dmg` on Intel, open the disk image and drag the app to Applications.
+Running a newer setup removes any older Dither Studio it finds first, wherever
+that one was installed. Neither build is signed, so both systems will ask once:
+Windows SmartScreen wants *More info ▸ Run anyway*, and macOS Gatekeeper wants a
+right-click ▸ *Open* the first time.
 
 ### Run it from source
 
@@ -161,12 +166,19 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
 
 ### The tutorial
 
-The app teaches itself. **Take the Tour** in the **Learn** panel — or *Help ▸
-Take the Tour* in the menu bar — runs ten short lessons, one per station, from
-the first proof to the last export. Each lesson is five or six steps, and each
-step dims the window, opens the panel it is about, and settles a ring around the
-one control it means. If that control is far down the rail, the rail is scrolled
-to it first, the way a guide turns the page for you.
+The app teaches itself. A fresh install is met by the tour: the **Learn** panel
+comes forward and the first lesson is already on screen, with **Skip** in the
+corner of the card. Skip — or **Exit**, or `Escape` — ends it for good, and the
+answer is remembered, so the tour never opens by itself again. After that
+**Take the Tour** in the **Learn** panel, or *Help ▸ Take the Tour* in the menu
+bar, starts it whenever you like; both bring the station back if it has folded
+away.
+
+Ten short lessons, one per station, from the first proof to the last export.
+Each lesson is five or six steps, and each step dims the window, opens the panel
+it is about, and settles a ring around the one control it means. If that control
+is far down the rail, the rail is scrolled to it first, the way a guide turns the
+page for you.
 
 The learner does the work, not the app. The spotlight never takes a click, so
 every control under it stays live; a step the app can check — an algorithm, a
@@ -174,7 +186,12 @@ palette, a recipe applied, text mode on — ticks itself off the moment the stat
 changes, and a step that cannot be checked simply says what to do. **Show me**
 performs that one step for a stuck learner, **Back** and **Next** move, and
 **Escape** leaves. Progress is kept per lesson and per step, so a lesson resumes
-where it was left; **Reset** clears the ticks.
+where it was left; **Reset** clears the ticks and puts the intro back on offer.
+
+Finishing the last lesson is the end of it: the Learn station folds itself away
+and the verdict card closes on its own a moment later, so a tutorial that has
+been completed stops taking up the dock. Nothing is lost — *Help ▸ Take the
+Tour* opens the station again, ticks and all.
 
 The lessons are data ([src/tour-spec.js](desktop/src/tour-spec.js)): a title, a
 body, a selector for the control, an optional panel to open, an optional command
@@ -205,7 +222,7 @@ change, never per frame.
 
 | File | |
 |---|---|
-| [`electron/main.js`](desktop/electron/main.js) | the window, the splash, the native dialogs, the clipboard, the application menu, and the smoke harness |
+| [`electron/main.js`](desktop/electron/main.js) | the window, the splash, the native dialogs, the clipboard, the application menu, and the smoke harness (which runs on a profile of its own) |
 | [`electron/preload.js`](desktop/electron/preload.js) | the only bridge to the OS — `window.ditherDesktop`, context-isolated, no Node in the renderer |
 | [`electron/splash.html`](desktop/electron/splash.html) | the startup animation: **this is the file to replace** (see below) |
 | [`electron/Splash/`](desktop/electron/Splash/) | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
@@ -217,7 +234,7 @@ change, never per frame.
 | [`src/renderer/video.js`](desktop/src/renderer/video.js) | the video source, clock and recorder |
 | [`src/renderer/app.js`](desktop/src/renderer/app.js) | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
 | [`src/renderer/shell.js`](desktop/src/renderer/shell.js) | the chrome: menus, tool rail, caption, slider fills, window verbs |
-| [`src/renderer/tour.js`](desktop/src/renderer/tour.js) | the tutorial's runner: the Learn panel's list, the coach mark, step navigation and progress |
+| [`src/renderer/tour.js`](desktop/src/renderer/tour.js) | the tutorial's runner: the Learn panel's list, the coach mark, step navigation, Skip, the first-run intro and progress |
 | [`src/styles/tokens.css`](desktop/src/styles/tokens.css) | tokens, the page grid, every element-level control |
 | [`src/styles/chrome.css`](desktop/src/styles/chrome.css) | caption, menus, options bar, rail, document tabs, the well, the bars |
 | [`src/styles/panels.css`](desktop/src/styles/panels.css) | the dock: panel tabs, fields, sliders, swatches, the effects stack |
@@ -241,7 +258,8 @@ node tools/core.test.js              # the core's own rules, in Node
 ```bash
 cd desktop
 npm run build    # the checks, then dist/Dither-Studio-Setup-<version>.exe + the portable exe
-npm run dist     # the packaging step on its own, once the checks have run
+npm run dist     # the Windows packaging step on its own, once the checks have run
+npm run dist:mac # the macOS disk images, x64 and arm64 (run it on macOS)
 npm run pack     # dist/win-unpacked/ only, much faster while iterating
 ```
 
@@ -252,14 +270,16 @@ what a released one does. It prints both executables and their sizes when it is
 done.
 
 You usually don't have to run this by hand: the **build** workflow on GitHub
-builds the Windows installer for every push that touches the app, checks the
-full code first (engine tests, desktop core tests, tour tests, engine-copy
-sync, two smoke runs) and uploads the executables as artifacts. Push a `v<version>` tag — with
-`version` in `desktop/package.json` bumped to match — and the same workflow
-attaches the executables to that tag's GitHub release.
+builds both platforms for every push that touches the app — the setup and the
+portable exe on a Windows runner, the x64 and arm64 disk images on a macOS one —
+and checks the full code first (engine tests, desktop core tests, tour tests,
+engine-copy sync, two smoke runs), so a broken commit is never packaged. Push a
+`v<version>` tag, with `version` in `desktop/package.json` bumped to match, and a
+third job attaches every artifact to that tag's GitHub release.
 
 electron-builder writes an NSIS installer (per-user, choose the folder, Start
-menu shortcut) and a portable single-file executable. The icon comes from
+menu shortcut) and a portable single-file executable on Windows, and one
+unsigned disk image per Mac architecture on macOS. The icon comes from
 `build/icon.png`, the app's own dithered mark; keep it in step with
 `icons/icon-512.png` in the repository root, which is the same 512 px proof.
 
@@ -398,7 +418,7 @@ dependencies.
 | [`desktop/`](desktop/) | the **active** Electron build, in its own folder with its own dependencies |
 | [`docs/`](docs/) | the screenshots in this file and the guides |
 | [`inbox/`](inbox/) | where a new capture waits to be developed into `docs/`; the folder ignores its own contents, so nothing dropped in it can reach a commit |
-| [`.github/workflows/`](.github/workflows/) | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and publishes releases; `pages.yml` publishes `demo/` |
+| [`.github/workflows/`](.github/workflows/) | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and the macOS disk images and publishes releases; `pages.yml` publishes `demo/` |
 | [`README.md`](README.md) | this file — the front door for the whole repository |
 | [`GUIDE.md`](GUIDE.md) | the tour: the console, the catalogue, video, exports, troubleshooting |
 | [`desktop/GUIDE.md`](desktop/GUIDE.md) | the tour of the desktop window |
@@ -508,9 +528,11 @@ exits non-zero on any console error, page error, failed check or failed command
 photographs both windows into `$DITHER_SMOKE_DIR`: the splash window shoots
 itself as its animation reaches the wordmark (it is over in under three
 seconds, so waiting for the page checks to finish would miss it), and the app
-window is shot at the end.
+window is shot at the end. The run also gets a profile of its own, deleted
+before it starts, so it always meets the app the way a fresh install does — the
+presets, panels and tutorial progress on the machine running it are untouched.
 
-The current run makes 61 checks: the chrome exists, the catalogues fill their
+The current run makes 76 checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw, their submenus expand to the
 full catalogue and stay open while the pointer is on one of their rows, all 33
 command names are wired, the effects stack is the real markup, panels answer to
@@ -521,7 +543,11 @@ named control (measured against that control's own box), Next and Back move one
 step at a time, **Show me** performs the step and the card ticks itself off once
 the app agrees, a row the app is hiding is pointed at through the panel around
 it, the rail is scrolled until that panel is on screen, Escape leaves, and
-finishing a lesson records it and offers the next one.
+finishing a lesson records it and offers the next one. The new behaviour is held
+to the same bar: an install that has never run the tour is met by it with Skip on
+the card, Skip is remembered and folds the Learn station away with it, *Take the
+Tour* brings that station back, and finishing every lesson folds the station away
+and closes the card without waiting to be dismissed.
 
 Environment variables let it exercise the parts a page cannot reach:
 

@@ -275,6 +275,17 @@
       .filter(function (theme, at, all) { return all.indexOf(theme) === at; }),
   };
 
+  // The intro. A profile that has never met the tutorial is met by it: the first
+  // unfinished lesson is already running when the page checks arrive, and the
+  // card carries its own way out. The smoke run gets an empty profile of its own
+  // (electron/main.js), so this is the answer a fresh install gives.
+  check('a build that has never run the tour is met by it',
+    tour.status().running === true && tour.status().lesson === tour.nextUnfinished(),
+    JSON.stringify(tour.status()));
+  check('and the intro card is on screen', document.getElementById('tour').hidden === false);
+  check('and it comes with its way out',
+    document.getElementById('tour-skip').hidden === false);
+
   // A started lesson: the card, the coach mark, and the mark over the right
   // control - the only way to prove a selector really lands where it claims.
   DS.command('window-panel-open', 'source');
@@ -367,6 +378,35 @@
   check('Escape exits the tutorial', tour.status().running === false, JSON.stringify(tour.status()));
   check('and the card goes with it', document.getElementById('tour').hidden === true);
 
+  // Skip: the deliberate way out of a tour that opened itself. It leaves, it is
+  // remembered, it takes the station with it, and it does not come back.
+  tour.reset();
+  await wait(50);
+  check('Reset re-arms the intro, so it can be seen again',
+    tour.progress().seen === false && tour.shouldIntro() === true,
+    JSON.stringify(tour.progress()));
+  tour.start(spec.lessons[0].id, 0);
+  await wait(60);
+  check('a tour the learner did not ask for offers Skip',
+    document.getElementById('tour-skip').hidden === false);
+  tour.skip();
+  await wait(80);
+  check('Skip leaves the tutorial', tour.status().running === false, JSON.stringify(tour.status()));
+  check('and folds the Learn station away with it',
+    DS.state().openGroups.indexOf('learn') < 0, DS.state().openGroups.join(','));
+  check('and the answer is remembered, so the intro never returns',
+    tour.progress().seen === true && tour.shouldIntro() === false,
+    JSON.stringify(tour.progress()));
+  check('and Skip is gone once the tour has been met',
+    document.getElementById('tour-skip').hidden === true);
+  check('Take the Tour brings the station back',
+    tour.open() === true && DS.state().openGroups.indexOf('learn') >= 0,
+    DS.state().openGroups.join(','));
+  await wait(60);
+  check('and starts the first unfinished lesson',
+    tour.status().running === true && tour.status().lesson === tour.nextUnfinished(),
+    JSON.stringify(tour.status()));
+
   // Finishing a lesson records it, ticks the list and offers the next one.
   tour.start(spec.lessons[0].id, 0);
   await wait(60);
@@ -396,6 +436,31 @@
   check('and the note goes back to counting lessons',
     /lessons/.test(document.getElementById('note-learn').textContent),
     document.getElementById('note-learn').textContent);
+
+  // Finishing every lesson: the tour has done its job, so it folds the station
+  // away, spends the intro for good and closes its own card - a finished
+  // tutorial is not a panel left open for the rest of the app's life.
+  spec.lessons.forEach(function (lesson) {
+    tour.start(lesson.id, lesson.steps.length - 1);
+    tour.next();
+  });
+  await wait(140);
+  check('finishing every lesson records every lesson',
+    tour.progress().done.length === spec.lessons.length,
+    tour.progress().done.length + ' of ' + spec.lessons.length);
+  check('the verdict card names the whole tour',
+    /every lesson/.test(document.getElementById('tour-title').textContent),
+    document.getElementById('tour-title').textContent);
+  check('and the finished tour folds the Learn station away',
+    DS.state().openGroups.indexOf('learn') < 0, DS.state().openGroups.join(','));
+  check('and it is spent, so it never opens by itself again',
+    tour.shouldIntro() === false, JSON.stringify(tour.progress()));
+  await wait(3400);                 // the verdict card closes itself, no click
+  check('and the card closes itself once it has been read',
+    tour.status().running === false && document.getElementById('tour').hidden === true,
+    JSON.stringify(tour.status()));
+  tour.reset();
+  await wait(50);
 
   /* ---- the caption and the status line follow the app -------------- */
 

@@ -667,6 +667,22 @@
 .tour-card.is-done .tour-title::after { content: ' ✓'; color: var(--accent); }
 .tour-card.is-complete { border-color: color-mix(in srgb, var(--accent) 45%, var(--edge)); }
 
+/* The one way out of a tour the learner did not ask for: quiet, in the meta row
+   beside the step count, and on the card only while the intro is unclaimed. */
+.tour-skip {
+  padding: 0 5px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--fs-small);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: border-color var(--fast), color var(--fast);
+}
+
+.tour-skip:hover { border-color: var(--accent); color: var(--text); }
+.tour-skip:focus-visible { outline: none; box-shadow: var(--focus); }
+
 @media (prefers-reduced-motion: reduce) {
   .tour-card { animation: none; }
   .tour-fill { transition: none; }

@@ -2201,6 +2201,12 @@
       setGroup(id, toOpen);
       if (toOpen) revealGroup(id);
     },
+    // And the third case: a verb that only ever closes. The tutorial puts the
+    // Learn station away with it - a toggle would open it again next time.
+    'window-panel-close': function (id) {
+      if (!id) return;
+      setGroup(id, false);
+    },
     'window-panels-open': function () { GROUPS.forEach(function (g) { setGroup(g.id, true); }); },
     'window-panels-collapse': function () { GROUPS.forEach(function (g) { setGroup(g.id, false); }); },
   };

@@ -126,9 +126,16 @@ document, the project page, and About.
 
 ## 5. The tutorial
 
-The app can teach itself. Open the **Learn** panel — first in the dock, and the
-only station that starts open — and press **Take the Tour**, or use *Help ▸ Take
-the Tour* from the menu bar.
+The app can teach itself. A fresh install is met by the tour: the **Learn** panel
+comes forward and the first lesson is already on screen. If you would rather not
+be taught, **Skip** in the corner of the card ends it for good — that answer is
+remembered, so the tour never opens by itself again — and **Exit** or `Escape`
+does the same thing for this run.
+
+To start it yourself, open the **Learn** panel — first in the dock, and the only
+station that starts open — and press **Take the Tour**, or use *Help ▸ Take the
+Tour* from the menu bar. Both bring the station back if it has folded itself
+away.
 
 Ten lessons, one per station, in the order the work happens: the first proof, the
 press itself, the grade, ink and paper, the effects stack, text mode, the three
@@ -145,9 +152,13 @@ agrees with the proof rather than with your memory of it.
 Three buttons do the rest. **Show me** performs the current step's own setting
 for you, **Back** and **Next** move one step at a time, and the last *Next*
 records the lesson as finished and offers the next one by name. **Reset**, beside
-*Take the Tour*, clears every tick and starts the count again. *Exit* or
-`Escape` leaves at any point, and whatever you set while following a lesson
-stays set: the tour changes settings, never files.
+*Take the Tour*, clears every tick, starts the count again and puts the intro
+back on offer. *Exit*, *Skip* or `Escape` leaves at any point, and whatever you
+set while following a lesson stays set: the tour changes settings, never files.
+
+Finish the last lesson and the tutorial takes itself out of the way: the Learn
+station folds and the verdict card closes on its own a moment later. *Help ▸
+Take the Tour* opens the station again with every tick still in place.
 
 Two notes. The tour describes the *desktop* panels; the web console has the same
 controls in its own layout, and its [GUIDE.md](../GUIDE.md) is the tour for that

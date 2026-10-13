@@ -40,6 +40,18 @@ const SMOKE_SCRIPT = (function () {
   return i > -1 && process.argv[i + 1] ? process.argv[i + 1] : null;
 }());
 
+// A smoke run gets a profile of its own, and starts it empty: without this the
+// run would write into the developer's own presets and tutorial progress, and
+// the first-run path - the one the page checks are about - could only ever be
+// exercised on a machine that had never opened the app before.
+if (SMOKE) {
+  try {
+    const smokeProfile = path.join(require('os').tmpdir(), 'dither-studio-smoke');
+    fsSync.rmSync(smokeProfile, { recursive: true, force: true });
+    app.setPath('userData', smokeProfile);
+  } catch (err) { /* an isolated profile is a convenience, not a requirement */ }
+}
+
 const MIME_BY_EXT = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.webp': 'image/webp', '.gif': 'image/gif', '.bmp': 'image/bmp',

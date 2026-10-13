@@ -1,13 +1,15 @@
 name: build
 
-# Builds the desktop app on GitHub, so the Windows installer no longer has to
-# be built by hand. Every push that touches the app or the shared engine builds
-# it and uploads the two executables as artifacts; pushing a `v<version>` tag
-# also attaches them to that tag's GitHub release.
+# Builds the desktop app on GitHub, so no installer has to be built by hand.
+# Every push that touches the app or the shared engine runs the checks and then
+# packages the platform it can: the Windows setup and portable exe, and the
+# macOS disk images - arm64 for Apple silicon, x64 for Intel. Pushing a
+# `v<version>` tag also attaches every artifact to that tag's GitHub release.
 #
 # Before anything is built the full code is checked: the engine tests, the
-# desktop core tests, the engine-copy sync check, and the smoke run that boots
-# the real window and drives it. A broken commit never gets an installer.
+# desktop core tests, the tutorial's lesson data, the engine-copy sync check,
+# and the smoke run that boots the real window and drives it. A broken commit
+# never gets an installer.
 
 on:
   push:
@@ -23,8 +25,8 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: desktop build (windows)
+  windows:
+    name: windows build
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
@@ -105,25 +107,99 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      # On a version tag the executables become the release. Created if it does
-      # not exist yet, updated in place if it does.
-      - name: Attach the executables to the release
+  macos:
+    name: macos build
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      # The same DOM-free checks the Windows job runs. The smoke run - the half
+      # that drives a real window - stays there: it is the same renderer on both
+      # platforms, and a CI machine is the wrong place to find out that a window
+      # server is having an off day.
+      - name: The desktop engine copies are in step with the shared engine
+        run: node desktop/tools/sync-renderer.js --check
+
+      - name: Engine tests
+        run: node launcher/test.js
+
+      - name: Desktop core tests
+        run: node desktop/tools/core.test.js
+
+      - name: Desktop tour tests
+        run: node desktop/tools/tour.test.js
+
+      - name: Install
+        working-directory: desktop
+        run: npm ci
+
+      - name: The tag and the package version agree
         if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          v=$(node -p "require('./desktop/package.json').version")
+          test "v$v" = "$GITHUB_REF_NAME" || {
+            echo "tag $GITHUB_REF_NAME does not match desktop/package.json version $v"
+            exit 1
+          }
+
+      # x64 and arm64, unsigned: CI holds no certificate, and `mac.identity` in
+      # package.json is null, so electron-builder does not go looking for one.
+      - name: Build the disk images
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run dist:mac -- --publish never
+
+      - name: Keep the build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: dither-studio-macos
+          path: desktop/dist/*.dmg
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: release
+    needs: [windows, macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect every build
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dither-studio-*
+          path: dist
+          merge-multiple: true
+
+      # One job owns the release: the two platforms cannot race to create it,
+      # and nothing is published until both of them are green.
+      - name: Attach every build to the release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
         run: |
-          shopt -s nullglob
-          files=(desktop/dist/Dither-Studio-Setup-*.exe desktop/dist/Dither-Studio-*-portable.exe)
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber
+          set -euo pipefail
+          ls -l dist
+          notes=$(printf '%s\n' \
+            "Windows and macOS builds of Dither Studio $TAG." \
+            "" \
+            "**Windows** — Dither-Studio-Setup-*.exe installs it; the portable exe runs it from anywhere with no install." \
+            "" \
+            "**macOS** — Dither-Studio-*-arm64.dmg is for Apple silicon, Dither-Studio-*-x64.dmg for Intel. Open the disk image and drag Dither Studio to Applications." \
+            "" \
+            "Neither build is signed, so Windows SmartScreen may warn on the first run (choose More info, then Run anyway), and macOS Gatekeeper will refuse a plain double-click of a downloaded app (right-click it and choose Open, or allow it under System Settings then Privacy & Security).")
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
           else
-            gh release create "$GITHUB_REF_NAME" "${files[@]}" \
-              --title "Dither Studio $GITHUB_REF_NAME" \
-              --notes "Windows build of Dither Studio $GITHUB_REF_NAME.
-
-          Take Dither-Studio-Setup-*.exe to install it, or the portable exe to
-          run it from anywhere with no install. The executables are unsigned, so
-          Windows SmartScreen may warn on the first run: choose 'More info' ->
-          'Run anyway'."
+            gh release create "$TAG" dist/* --title "Dither Studio $TAG" --notes "$notes"
           fi

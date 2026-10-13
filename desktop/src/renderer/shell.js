@@ -390,7 +390,7 @@
     'help-tour': function () {
       const tour = window.DitherTour;
       if (!tour) return;
-      tour.start(tour.nextUnfinished(), 0);
+      tour.open();
     },
     'help-shortcuts': function () { desktop.shortcuts(); },
     'help-about': function () { desktop.about(); },
