@@ -182,12 +182,17 @@ function recipeOf(item) {
   return parts.join(' ' + DOT + ' ');
 }
 
+/* The README's list carries the pictures themselves: GitHub renders the images,
+ * so the folder's front door is the gallery, and every file name is a link to the
+ * proof at full size. */
 function table(items) {
-  const head = '| File | From | Recipe | Drawn as | What it shows |\n|---|---|---|---|---|\n';
+  const head = '| Picture | File, source and recipe | Drawn as | What it shows |\n|---|---|---|---|\n';
   return head + items.map(function (item) {
-    return '| `' + item.out + '` | ' + item.sample + ' | ' + recipeOf(item) + ' | ' +
-      item.algorithm + ' ' + DOT + ' ' + item.palette + ' ' + DOT + ' ' + item.colors + ' colours ' + DOT +
-      ' ' + item.px + ' | ' + item.shows + ' |';
+    return '| [![' + item.sample + ': ' + item.shows + '](' + item.out + ')](' + item.out + ')' +
+      ' | **`' + item.out + '`**<br>' + item.sample + '<br>' + recipeOf(item) +
+      ' | ' + item.algorithm + ' ' + DOT + ' ' + item.palette + ' ' + DOT + ' ' + item.colors + ' colours ' + DOT +
+      ' ' + item.px + '<br>' + Math.round(item.bytes / 1024) + ' KB' +
+      ' | ' + item.shows + ' |';
   }).join('\n') + '\n';
 }
 

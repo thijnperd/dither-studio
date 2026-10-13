@@ -160,7 +160,7 @@
       "effects": [],
       "textMode": false,
       "colors": 2,
-      "ms": 135,
+      "ms": 512,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -320,7 +320,7 @@
       "effects": [],
       "textMode": false,
       "colors": 2,
-      "ms": 81,
+      "ms": 97,
       "grid": {
         "cols": 90,
         "rows": 37,
@@ -386,7 +386,7 @@
       "effects": [],
       "textMode": false,
       "colors": 14,
-      "ms": 47,
+      "ms": 75,
       "grid": {
         "cols": 90,
         "rows": 37,
@@ -452,7 +452,7 @@
       "effects": [],
       "textMode": false,
       "colors": 4,
-      "ms": 65,
+      "ms": 113,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -545,7 +545,7 @@
       ],
       "textMode": false,
       "colors": 90730,
-      "ms": 280,
+      "ms": 315,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -708,7 +708,7 @@
       ],
       "textMode": false,
       "colors": 18,
-      "ms": 201,
+      "ms": 117,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -797,7 +797,7 @@
       "effects": [],
       "textMode": false,
       "colors": 16,
-      "ms": 184,
+      "ms": 224,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -957,7 +957,7 @@
       "effects": [],
       "textMode": false,
       "colors": 2,
-      "ms": 118,
+      "ms": 87,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -1050,7 +1050,7 @@
       "effects": [],
       "textMode": false,
       "colors": 16,
-      "ms": 104,
+      "ms": 87,
       "grid": {
         "cols": 90,
         "rows": 37,
@@ -1120,7 +1120,7 @@
       "effects": [],
       "textMode": false,
       "colors": 4,
-      "ms": 223,
+      "ms": 216,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -1292,7 +1292,7 @@
       ],
       "textMode": false,
       "colors": 1906,
-      "ms": 316,
+      "ms": 478,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -1391,7 +1391,7 @@
       ],
       "textMode": true,
       "colors": 108,
-      "ms": 454,
+      "ms": 390,
       "grid": {
         "cols": 75,
         "rows": 50,

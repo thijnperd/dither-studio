@@ -135,16 +135,27 @@ test('it carries a caption for each one', function () {
 
 group('the reference list');
 
-test('the table lists the set, in the same order', function () {
+test('the list shows the set, in the same order', function () {
   const begin = readme.indexOf('<!-- examples:begin -->');
   const end = readme.indexOf('<!-- examples:end -->');
   if (begin < 0 || end < begin) throw new Error('the markers are missing from examples/README.md');
-  const rows = matches(readme.slice(begin, end), /^\| `([^`]+)` \|/gm).map(function (row) {
-    return row.replace(/^\| `([^`]+)` \|.*/, '$1');
+  const block = readme.slice(begin, end);
+  // Every row leads with the picture and links to the same file, so the list is
+  // the gallery rather than a description of one.
+  const rows = matches(block, /^\| \[!\[[^\]]*\]\(([^)]+)\)\]\(([^)]+)\) \|/gm).map(function (row) {
+    return row.replace(/^\| \[!\[[^\]]*\]\(([^)]+)\)\]\(([^)]+)\) \|.*/, '$1|$2');
   });
-  if (rows.join(',') !== files.join(',')) {
-    throw new Error('the table lists ' + rows.length + ' rows:\n       ' + rows.join('\n       '));
+  const shown = rows.map(function (row) { return row.split('|')[0]; });
+  const linked = rows.map(function (row) { return row.split('|')[1]; });
+  if (shown.join(',') !== files.join(',')) {
+    throw new Error('the list shows ' + shown.length + ' pictures:\n       ' + shown.join('\n       '));
   }
+  const wrongLinks = rows.filter(function (row) {
+    return row.split('|')[0] !== row.split('|')[1];
+  });
+  if (wrongLinks.length) throw new Error('an image that does not link to itself: ' + wrongLinks.join(', '));
+  const named = matches(block, /\*\*`([^`]+)`\*\*/g).length;
+  if (named !== files.length) throw new Error(named + ' file names for ' + files.length + ' pictures');
 });
 
 test('and the prose points at files that exist', function () {
