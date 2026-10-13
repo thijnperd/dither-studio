@@ -118,8 +118,9 @@ lands in `desktop/`.
 a built-in sample, so there is something on the stage before you load anything:
 three public-domain paintings travel with the app — Gustave Moreau's *Oedipus
 and the Sphinx*, Mårten Eskil Winge's *Tor's Fight with the Giants* and *The
-Council of the Gods* from the Villa Farnesina — and **Demo scene** steps through
-them, then a generated scene. Drop a picture onto the proof, paste one, or use
+Council of the Gods* from the Villa Farnesina — and **Built-in source** steps
+through them and comes round again. Drop a picture onto the proof, paste one,
+or use
 **Open image…** to bring your own.
 
 ![The console in a browser, running the Wired Portrait recipe on a photograph](docs/screenshot-console-photo.png)
@@ -162,7 +163,7 @@ themselves.
 |---|---|
 | `Ctrl+O` / `Ctrl+Shift+O` | open an image / a clip |
 | `Ctrl+S` / `Ctrl+Shift+C` | save the proof as a PNG / copy it to the clipboard |
-| `Ctrl+D` | the next built-in source: a painting, then a generated scene |
+| `Ctrl+D` | the next built-in source: the three paintings, in turn |
 | `Ctrl+R` / `Ctrl+Shift+R` | a fresh recipe / a new seed |
 | `Ctrl+↑` `Ctrl+↓` | previous / next algorithm |
 | `Ctrl+←` `Ctrl+→` | previous / next palette |

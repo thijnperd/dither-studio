@@ -119,12 +119,12 @@ feature set navigable — not the paint.
 
 ## What is not from anywhere
 
-The press console itself — `index.html`, `style.css`, `app.js`, the demo scene,
-the sample table, the text mode, the preset recipes, the glitch stack's
+The press console itself — `index.html`, `style.css`, `app.js`, the sample
+table, the text mode, the preset recipes, the glitch stack's
 implementation, the tone-map system, the alpha pipeline, the tests and this
 file — is original work for this repository, written against the visual
-language in [`DESIGN.md`](../DESIGN.md). The paintings in `samples.js` are
-other people's work, and are credited below.
+language in [`DESIGN.md`](../DESIGN.md). The tool rail's glyphs and the
+paintings in `samples.js` are other people's work, and are credited below.
 
 ## The built-in samples
 
@@ -152,6 +152,21 @@ packaging preference — a console opened from `file://` may not read pixels bac
 out of a local file, because drawing one into a canvas taints it and
 `getImageData` throws. [DEVELOPMENT.md](DEVELOPMENT.md) says how to replace
 one.
+
+## The desktop's tool rail
+
+The eight buttons down the left edge of the desktop window are
+[Lucide](https://lucide.dev) icons, inlined in `desktop/src/index.html`: a folder
+for *Open image…*, an image for the built-in sources, an eye for *Compare*, a
+shuffle for a fresh recipe, then webcam, video, record and preset marks. They are
+drawn at a 1.6 stroke because the rail renders them at 18 px, which keeps the
+1.2 px weight the rest of the chrome is drawn at, and they are inlined rather
+than fetched, so the window still needs no network and no asset file.
+
+Lucide is ISC-licensed. Its notice ships as
+[`desktop/LICENSE-LUCIDE.txt`](desktop/LICENSE-LUCIDE.txt) and is reproduced
+there verbatim — the file also carries the MIT notice for the icons Lucide
+derives from Feather, though none of these eight are on that list.
 
 ## Keeping this current
 

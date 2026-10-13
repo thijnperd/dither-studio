@@ -126,7 +126,7 @@ rail lights up as you scroll, so the strip doubles as a position readout.
 
 | Station | What is in it |
 |---|---|
-| **Source** | **Open image…**, **Demo scene** — which steps through the three built-in paintings and then a generated scene — and the drop/paste hint. Drag a file onto the stage, or press `Ctrl+V` to paste an image from anywhere. |
+| **Source** | **Open image…**, **Built-in source** — which steps through the three built-in paintings and comes round again — and the drop/paste hint. Drag a file onto the stage, or press `Ctrl+V` to paste an image from anywhere. |
 | **Press** | **Algorithm** (46, in six groups) and **Palette** (24) with ◀ ▶ steppers to walk each list; the **swatch strip** showing the actual inks; **Pixel size** 1–16; **Threshold** (mono only, 0–255); **Strength** 0–200 %; **Serpentine sweep**; **Seed** with a dice button. |
 | **Tone** | Black point, white point, gamma, brightness, contrast, saturation and hue — applied before dithering, in linear light where it matters. The header note shows the current gamma (`ct 1.20`). |
 | **Ink** | Eleven **tone maps** that re-ink the finished dither (Halftone noir, Amber CRT, Thermal, Matrix green, Ice …), a **custom** entry that takes your own ink and paper colours, and the **Alpha** rule: flatten onto paper, dither the matte to hard edges, or keep a real PNG alpha channel. |

@@ -383,7 +383,7 @@ ipcMain.handle('ds:shortcuts', function () {
   return infoBox('Keyboard Shortcuts', 'Keyboard shortcuts', [
     'Ctrl+O        open an image            Ctrl+S    save the proof as PNG',
     'Ctrl+Shift+O  open a clip              Ctrl+Shift+C  copy the proof',
-    'Ctrl+D        demo scene               Ctrl+Shift+I  developer tools',
+    'Ctrl+D        built-in source          Ctrl+Shift+I  developer tools',
     '',
     'Ctrl+R        roll a fresh recipe      C         hold to compare',
     'Ctrl+Shift+R  new seed                 + / −     zoom, 0 fits',

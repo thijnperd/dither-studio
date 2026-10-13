@@ -93,6 +93,19 @@ jobs:
             exit 1
           }
 
+      # The release notes are the changelog's section for this version, so a
+      # tag with no section here would publish an empty release page. Catch it
+      # before anything is built.
+      - name: The changelog has a section for this version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          grep -q "^## $v " CHANGELOG.md || {
+            echo "CHANGELOG.md has no '## $v' section"
+            exit 1
+          }
+
       - name: Build the installer and the portable exe
         working-directory: desktop
         run: npm run dist -- --publish never
@@ -150,6 +163,19 @@ jobs:
             exit 1
           }
 
+      # The release notes are the changelog's section for this version, so a
+      # tag with no section here would publish an empty release page. Catch it
+      # before anything is built.
+      - name: The changelog has a section for this version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          grep -q "^## $v " CHANGELOG.md || {
+            echo "CHANGELOG.md has no '## $v' section"
+            exit 1
+          }
+
       # x64 and arm64, unsigned: CI holds no certificate, and `mac.identity` in
       # package.json is null, so electron-builder does not go looking for one.
       - name: Build the disk images
@@ -190,16 +216,27 @@ jobs:
         run: |
           set -euo pipefail
           ls -l dist
-          notes=$(printf '%s\n' \
-            "Windows and macOS builds of Dither Studio $TAG." \
-            "" \
-            "**Windows** — Dither-Studio-Setup-*.exe installs it; the portable exe runs it from anywhere with no install." \
-            "" \
-            "**macOS** — Dither-Studio-*-arm64.dmg is for Apple silicon, Dither-Studio-*-x64.dmg for Intel. Open the disk image and drag Dither Studio to Applications." \
-            "" \
-            "Neither build is signed, so Windows SmartScreen may warn on the first run (choose More info, then Run anyway), and macOS Gatekeeper will refuse a plain double-click of a downloaded app (right-click it and choose Open, or allow it under System Settings then Privacy & Security).")
+          version="${TAG#v}"
+          # The notes are the changelog's own section for this version, with the
+          # platform and signing facts a downloader needs underneath it, so the
+          # release page and CHANGELOG.md cannot drift apart.
+          {
+            awk -v v="$version" '
+              /^## / { if (found) exit; if (index($0, "## " v " ") == 1) { found = 1; next } }
+              found { print }
+            ' CHANGELOG.md | sed '/./,$!d'
+            printf '%s\n' \
+              "" \
+              "**Windows** — Dither-Studio-Setup-*.exe installs it; the portable exe runs it from anywhere with no install." \
+              "" \
+              "**macOS** — Dither-Studio-*-arm64.dmg is for Apple silicon, Dither-Studio-*-x64.dmg for Intel. Open the disk image and drag Dither Studio to Applications." \
+              "" \
+              "Neither build is signed, so Windows SmartScreen may warn on the first run (choose More info, then Run anyway), and macOS Gatekeeper will refuse a plain double-click of a downloaded app (right-click it and choose Open, or allow it under System Settings then Privacy & Security)."
+          } > "$RUNNER_TEMP/notes.md"
+          test -s "$RUNNER_TEMP/notes.md" || { echo "the notes came out empty"; exit 1; }
           if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "Dither Studio $TAG" --notes-file "$RUNNER_TEMP/notes.md"
             gh release upload "$TAG" dist/* --clobber
           else
-            gh release create "$TAG" dist/* --title "Dither Studio $TAG" --notes "$notes"
+            gh release create "$TAG" dist/* --title "Dither Studio $TAG" --notes-file "$RUNNER_TEMP/notes.md"
           fi

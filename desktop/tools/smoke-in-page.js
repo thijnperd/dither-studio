@@ -476,8 +476,22 @@
     (window.DitherSamples ? window.DitherSamples.length : 0) + ' samples, loaded: ' + beforeStep);
   check('the Source panel steps to the next built-in source', after.name !== beforeStep,
     beforeStep + ' -> ' + after.name);
-  check('the status line reports what was made', /Ready|Exported|Saved|Demo/.test(after.status), after.status);
+  check('the status line reports what was made', /Ready|Exported|Saved/.test(after.status), after.status);
   check('the proof has real pixels', after.width > 100 && after.height > 100, after.width + 'x' + after.height);
+
+  // The drawn demo scene is gone, so the control's whole cycle is the table in
+  // samples.js: nothing in it is a scene, and stepping its length comes back
+  // round to the source the app opened on.
+  check('every built-in source is one of the samples, not a drawn scene',
+    window.DitherSamples.every(function (sample) { return !/scene/i.test(sample.name); }),
+    window.DitherSamples.map(function (sample) { return sample.name; }).join(', '));
+  for (let i = 0; i < window.DitherSamples.length; i++) {
+    DS.command('file-demo');
+    await wait(150);
+  }
+  const cycled = DS.state().name;
+  check('and stepping the whole table comes round to where it started',
+    cycled === after.name, after.name + ' -> ' + cycled);
 
   report.ok = report.failures.length === 0;
   return report;

@@ -87,7 +87,7 @@ const PRESETS = (function () {
 /* ---- the states a predicate has to be true for ------------------------- */
 
 const BASE = {
-  name: 'demo', path: null, savedPath: null,
+  name: 'untitled', path: null, savedPath: null,
   algorithm: D.DEFAULTS.algorithm,
   palette: D.DEFAULTS.palette,
   toneMap: D.DEFAULTS.toneMap,

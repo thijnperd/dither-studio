@@ -66,7 +66,7 @@ Four ways in, all of them native:
 
 The **Source** panel shows what is loaded, and its own control offers the built-in
 sources again: `Ctrl+D` steps on to the next painting, and after the third it
-draws a generated scene, then comes round to the first. The caption bar and the
+comes round to the first. The caption bar and the
 document tab both name whatever is on the stage.
 
 **Clips and webcams** live in the **Motion** panel, and in *File ▸ Open Clip…*

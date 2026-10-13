@@ -4,7 +4,8 @@ This is the engineering half of the documentation. The front door — what the a
 does, what it looks like, how to get it — is [README.md](README.md); using the
 console is [GUIDE.md](GUIDE.md), the desktop window is
 [desktop/GUIDE.md](desktop/GUIDE.md), and where every algorithm, table and
-palette came from is [SOURCES.md](SOURCES.md). What follows is the repository
+palette came from is [SOURCES.md](SOURCES.md), and what changed in each desktop
+version is [CHANGELOG.md](CHANGELOG.md). What follows is the repository
 itself: the layout, the desktop shell, packaging, the startup screen, the
 performance budget, and every check that ships with the app.
 
@@ -31,6 +32,7 @@ performance budget, and every check that ships with the app.
 | [`GUIDE.md`](GUIDE.md) | the tour: the console, the catalogue, video, exports, troubleshooting |
 | [`desktop/GUIDE.md`](desktop/GUIDE.md) | the tour of the desktop window |
 | [`SOURCES.md`](SOURCES.md) | where every feature, table and palette came from |
+| [`CHANGELOG.md`](CHANGELOG.md) | what changed in each desktop version; `build.yml` reads the release notes out of it |
 
 The two web builds are frozen on purpose: they are what people have links to and
 install from, and `demo/` is kept self-contained so the public Pages site can
@@ -56,7 +58,8 @@ builds.
 | [`electron/preload.js`](desktop/electron/preload.js) | the only bridge to the OS — `window.ditherDesktop`, context-isolated, no Node in the renderer |
 | [`electron/splash.html`](desktop/electron/splash.html) | the startup animation: **this is the file to replace** (see below) |
 | [`electron/Splash/`](desktop/electron/Splash/) | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
-| [`src/index.html`](desktop/src/index.html) | the window's markup: caption, menus, options, rail, document tabs, dock, status |
+| [`src/index.html`](desktop/src/index.html) | the window's markup: caption, menus, options, the rail (its Lucide icons inlined), document tabs, dock, status |
+| [`LICENSE-LUCIDE.txt`](desktop/LICENSE-LUCIDE.txt) | the ISC notice for the rail's Lucide icons; `build.files` ships it beside the app |
 | [`src/menu-spec.js`](desktop/src/menu-spec.js) | the one menu definition, shared by the native menu and the drawn one |
 | [`src/tour-spec.js`](desktop/src/tour-spec.js) | the tutorial's lessons, as data: a target selector, a body, an optional panel, an optional command and a `when` predicate per step |
 | [`src/renderer/core.js`](desktop/src/renderer/core.js) | the desktop core: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
@@ -322,7 +325,7 @@ shot at the end. The run also gets a profile of its own, deleted before it
 starts, so it always meets the app the way a fresh install does — the presets,
 panels and tutorial progress on the machine running it are untouched.
 
-The current run makes 78 checks: the chrome exists, the catalogues fill their
+The current run makes 80 checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw, their submenus expand to the full
 catalogue and stay open while the pointer is on one of their rows, the 32 command
 names the run exercises are all wired, the effects stack is the real markup,
