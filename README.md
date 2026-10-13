@@ -53,9 +53,7 @@ operating system's own dialogs and makes no network request at all.
 ## Made with Dither Studio
 
 Every picture below came out of the app's own engine, and each caption names the
-recipe that made it. The sources are the paintings and photographs waiting in
-[`inbox/`](inbox/), which exists to feed the documentation; it is not committed
-to this repository.
+recipe that made it. These images are made by users of the app and can be used as an example of what can be made.
 
 ![Gustave Moreau's Oedipus and the Sphinx, dithered and re-inked in cyanotype blue](docs/showcase-void-bloom.png)
 
@@ -73,8 +71,7 @@ Spectrum's fifteen inks.*
 
 A set of proofs built to be *rebuilt*: [`examples/`](examples/) holds twelve
 pictures, each one drawn by the app from the paintings that ship inside it, with
-the recipe recorded beside it. They come from the built-in sources rather than
-from `inbox/`, so anyone who clones this repository can regenerate every one of
+the recipe recorded beside it. They come from the built-in sources that come pre-installed, so anyone who clones this repository can regenerate every one of
 them with
 
 ```bash
