@@ -10,6 +10,20 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.2.4 — 2026-10-13
+
+**The release job attaches the installers again.** The job that fills a tag's
+release page reads its notes out of this file, and it ran with no checkout: for
+`v0.2.3` both platform builds succeeded — the Windows setup, the portable exe
+and both disk images were built — and the step that would have attached them
+stopped with `awk: cannot open CHANGELOG.md`. It checks the tree out now, and
+this version is the download that carries what `v0.2.3` built.
+
+Nothing in the app changed since `v0.2.3` — the same console, the same engine,
+the same three built-in sources. The only file touched is the workflow, which is
+not part of the package; the version stamp and the file names are the
+difference.
+
 ## 0.2.3 — 2026-10-13
 
 **The generated demo scene is gone.** Every build used to cycle three paintings

@@ -1,7 +1,7 @@
 {
   "name": "dither-studio-desktop",
   "productName": "Dither Studio",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Dither Studio as a desktop application: the offline dithering press in its own window, with native open/save, a tool rail, a panel dock and a guided tutorial.",
   "author": "Thijn Köhne",
   "private": true,

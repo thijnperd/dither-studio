@@ -198,6 +198,11 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
+      # The notes are read out of CHANGELOG.md, so this job needs the tree
+      # as well as the artifacts: the build jobs check out, and until this
+      # step existed the notes had no file to come from.
+      - uses: actions/checkout@v4
+
       - name: Collect every build
         uses: actions/download-artifact@v4
         with:
