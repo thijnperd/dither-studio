@@ -260,6 +260,7 @@ mid-tones come out as flowing lines, vertical rain, or dots on clean paper.
 
 ![Matrix Rain](docs/screenshot-matrix-rain.png)
 ![Ice Dot Field](docs/screenshot-ice-dot-field.png)
+![Smooth Diffusion](docs/screenshot-smooth-diffusion.png)
 
 Three sliders appear in the Press station for these screens:
 

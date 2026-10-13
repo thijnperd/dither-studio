@@ -88,6 +88,9 @@ command it would run instead of running it.
 Keep `launcher/` together — the app *is* those files, and the launchers look
 for `index.html` next to themselves.
 
+![The console in a browser](docs/screenshot-console.png)
+![The same console with a photograph through the press](docs/screenshot-console-photo.png)
+
 ## The desktop app
 
 An Electron application with a window of its own: a caption bar it draws
@@ -113,7 +116,7 @@ after that the app starts in a second or two.
 
 ### The window
 
-![The window](docs/screenshot-console.png)
+![The window](docs/desktop-window.png)
 
 Every catalogue lives in the menus — all 46 algorithms, 24 palettes, 13
 effects, 11 tone maps and 21 recipes, expanded from the app's own tables, so a
@@ -294,6 +297,7 @@ screen follows shading instead of fighting it.
 
 ![Matrix Rain](docs/screenshot-matrix-rain.png)
 ![Ice Dot Field](docs/screenshot-ice-dot-field.png)
+![Smooth Diffusion](docs/screenshot-smooth-diffusion.png)
 
 Three sliders push them around — **Smoothness** (feature size), **Flow** (how
 far the screen stretches along contours) and **Streak** (how far it runs
