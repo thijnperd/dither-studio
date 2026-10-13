@@ -476,6 +476,13 @@ ${cards}
 
   const done = [];
   for (const job of jobs) {
+    // Settings and the effects stack live in the running session, not in the
+    // file, so one recipe would otherwise inherit the last one's: the reload is
+    // what makes each example stand on its own.
+    await page.goto(APP);
+    await page.waitForFunction(function () { return !!(window.__dither && window.__dither.stats); });
+    await page.waitForTimeout(300);
+
     // The painting, as the app itself carries it.
     const data = await page.evaluate(function (name) {
       const found = (window.DitherSamples || []).filter(function (sample) { return sample.name === name; })[0];
@@ -568,9 +575,27 @@ ${cards}
         png: canvas.toDataURL('image/png'),
         stats: window.__dither.stats(),
         colors: window.__dither.canvasColors(),
-        grid: window.__dither.textGrid ? window.__dither.textGrid() : null,
+        grid: window.__dither.textGrid ? (function () {
+          const grid = window.__dither.textGrid();
+          return grid ? { cols: grid.cols, rows: grid.rows, cell: grid.cell } : null;
+        }()) : null,
       };
     });
+    // A recipe that never reached the draw is the quietest failure this script
+    // can have, so the settings this example asked for are read back off the
+    // finished frame. Presets set their own, which is why only the explicit ones
+    // are compared.
+    const wanted = Object.assign({}, job.recipe || {});
+    if (job.text) wanted.textMode = true;
+    const wrongSettings = Object.keys(wanted).filter(function (key) {
+      return shot.stats[key] !== wanted[key];
+    });
+    if (wrongSettings.length) {
+      throw new Error(job.out + ' was drawn with ' + wrongSettings.map(function (key) {
+        return key + '=' + shot.stats[key] + ' instead of ' + wanted[key];
+      }).join(', '));
+    }
+
     const file = path.join(OUT, job.out);
     fs.writeFileSync(file, Buffer.from(shot.png.split(',')[1], 'base64'));
     const bytes = fs.statSync(file).size;
