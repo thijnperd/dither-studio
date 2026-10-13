@@ -1611,6 +1611,7 @@
     el.random.addEventListener('click', randomize);
 
     el.demo.addEventListener('click', loadSample);
+    el.demo.title = 'Built-in source';
     el.open.addEventListener('click', openImageDialog);
     el.file.addEventListener('change', function () {
       loadFile(el.file.files && el.file.files[0]);

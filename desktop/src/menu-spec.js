@@ -40,7 +40,7 @@
           { label: 'Open Image…', command: 'file-open', accel: 'CmdOrCtrl+O' },
           { label: 'Open Clip…', command: 'file-open-clip', accel: 'CmdOrCtrl+Shift+O' },
           { type: 'sep' },
-          { label: 'Generated Demo Scene', command: 'file-demo', accel: 'CmdOrCtrl+D' },
+          { label: 'Built-in Source', command: 'file-demo', accel: 'CmdOrCtrl+D' },
           { type: 'sep' },
           { label: 'Save Proof as PNG…', command: 'file-save-png', accel: 'CmdOrCtrl+S' },
           { label: 'Copy Proof to Clipboard', command: 'file-copy-png', accel: 'CmdOrCtrl+Shift+C' },
