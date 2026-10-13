@@ -25,22 +25,29 @@ dialogs — that's the one still being developed.
 | **Read the code** | [How it is put together](#how-it-is-put-together) · [Repository layout](#repository-layout) |
 | **Check it** | [Verification](#verification) — the engine tests, the browser harness, the desktop smoke run |
 
-Every section:
+Every section, in order:
 
 - [Three builds, one engine](#three-builds-one-engine) — what is shared and what is frozen
-- [Run it](#run-it)
-- [The desktop app](#the-desktop-app)
-  - [Run it from source](#run-it-from-source) · [The window](#the-window) · [Keyboard](#keyboard)
+- [Run it](#run-it) — the launchers and the browser they use
+- [The desktop app](#the-desktop-app) — the active build, and how to run it
+  - [Run it from source](#run-it-from-source)
+  - [The window](#the-window)
+  - [Keyboard](#keyboard)
   - [What is genuinely native](#what-is-genuinely-native)
   - [How it is put together](#how-it-is-put-together)
-  - [Build the installer](#build-the-installer) · [The startup screen](#the-startup-screen) · [Performance](#performance)
-- [What it does](#what-it-does)
+  - [Build the installer](#build-the-installer)
+  - [The startup screen](#the-startup-screen)
+  - [Performance](#performance)
+- [What it does](#what-it-does) — the 46 algorithms, 24 palettes and the effects stack
   - [The three structure-aware looks](#the-three-structure-aware-looks)
-- [Exports](#exports) · [Requirements](#requirements)
-- [Repository layout](#repository-layout)
-- [Verification](#verification)
-  - [The engine, in Node](#the-engine-in-node) · [The page, in a real browser](#the-page-in-a-real-browser) · [The desktop app's own checks](#the-desktop-apps-own-checks)
-- [Credits](#credits)
+- [Exports](#exports) — PNG, clipboard, text grid, WebM, recipe
+- [Requirements](#requirements) — a browser; Node only for the tests and the desktop build
+- [Repository layout](#repository-layout) — every folder and file
+- [Verification](#verification) — the checks you can run here
+  - [The engine, in Node](#the-engine-in-node)
+  - [The page, in a real browser](#the-page-in-a-real-browser)
+  - [The desktop app's own checks](#the-desktop-apps-own-checks)
+- [Credits](#credits) — where the ideas and tables come from
 
 ## Three builds, one engine
 
