@@ -8,8 +8,8 @@ build step, no server, no packages, nothing uploaded anywhere.
 
 There are three ways to run it, and they all share one engine. The web demo
 opens in any browser. The launchers put that same page in its own app window.
-The desktop app is a real Windows application with native menus and file
-dialogs — that's the one still being developed.
+The desktop app is a real Windows application with native menus, file
+dialogs and a built-in tutorial — that's the one still being developed.
 
 ![The app window, the desktop build](docs/desktop-app.png)
 
@@ -33,6 +33,7 @@ Every section, in order:
   - [Run it from source](#run-it-from-source)
   - [The window](#the-window)
   - [Keyboard](#keyboard)
+  - [The tutorial](#the-tutorial)
   - [What is genuinely native](#what-is-genuinely-native)
   - [How it is put together](#how-it-is-put-together)
   - [Build the installer](#build-the-installer)
@@ -103,7 +104,9 @@ for `index.html` next to themselves.
 An Electron application with a window of its own: a caption bar it draws
 itself, menus holding the whole catalogue, an options bar, a tool rail,
 tabbed documents and a dock of panels. It opens images, clips and the webcam
-through the operating system's own dialogs and saves proofs to real files.
+through the operating system's own dialogs and saves proofs to real files, and
+it teaches itself: the **Learn** panel runs ten lessons that walk the whole
+press, one station at a time.
 
 **Download:** [the latest release](https://github.com/thijnperd/dither-studio/releases/latest).
 Take `Dither-Studio-Setup-<version>.exe` to install it, or
@@ -127,8 +130,9 @@ after that the app starts in a second or two.
 
 Every catalogue lives in the menus — all 46 algorithms, 24 palettes, 13
 effects, 11 tone maps and 21 recipes, expanded from the app's own tables, so a
-new algorithm can never be missing from a menu. The dock holds the ten panels
-as tabs. The status bar carries the file, its size, the press, the colours and
+new algorithm can never be missing from a menu. The dock holds the eleven
+panels as tabs, opening on **Learn**: the tutorial, and the one station that
+starts open. The status bar carries the file, its size, the press, the colours and
 the last render time. The note on the right of the caption bar is a receipt:
 after a save it names the file, and clicking it opens the file's folder.
 [desktop/GUIDE.md](desktop/GUIDE.md) walks through the window and the menus one
@@ -153,6 +157,31 @@ by one.
 | `+` `−` `0` `R` | zoom, fit, a fresh recipe |
 
 A file dropped on the proof loads it; `Ctrl+V` pastes an image.
+
+### The tutorial
+
+The app teaches itself. **Take the Tour** in the **Learn** panel — or *Help ▸
+Take the Tour* in the menu bar — runs ten short lessons, one per station, from
+the first proof to the last export. Each lesson is five or six steps, and each
+step dims the window, opens the panel it is about, and settles a ring around the
+one control it means. If that control is far down the rail, the rail is scrolled
+to it first, the way a guide turns the page for you.
+
+The learner does the work, not the app. The spotlight never takes a click, so
+every control under it stays live; a step the app can check — an algorithm, a
+palette, a recipe applied, text mode on — ticks itself off the moment the state
+changes, and a step that cannot be checked simply says what to do. **Show me**
+performs that one step for a stuck learner, **Back** and **Next** move, and
+**Escape** leaves. Progress is kept per lesson and per step, so a lesson resumes
+where it was left; **Reset** clears the ticks.
+
+The lessons are data ([src/tour-spec.js](desktop/src/tour-spec.js)): a title, a
+body, a selector for the control, an optional panel to open, an optional command
+and an optional predicate over the app's own state. Nothing in the tutorial
+draws a second copy of a control, which is why a renamed panel or a retired verb
+comes out as a failed test rather than as a lesson pointing at nothing. It also
+costs nothing while idle: the card is placed once per step and once per state
+change, never per frame.
 
 ### What is genuinely native
 
@@ -181,15 +210,18 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
 | [`electron/Splash/`](desktop/electron/Splash/) | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
 | [`src/index.html`](desktop/src/index.html) | the window's markup: caption, menus, options, rail, document tabs, dock, status |
 | [`src/menu-spec.js`](desktop/src/menu-spec.js) | the one menu definition, shared by the native menu and the drawn one |
+| [`src/tour-spec.js`](desktop/src/tour-spec.js) | the tutorial's lessons, as data: a target selector, a body, an optional panel, an optional command and a `when` predicate per step |
 | [`src/renderer/core.js`](desktop/src/renderer/core.js) | the desktop core: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
 | [`src/renderer/dither.js`](desktop/src/renderer/dither.js) | the engine — DOM-free, byte-identical to the web builds |
 | [`src/renderer/video.js`](desktop/src/renderer/video.js) | the video source, clock and recorder |
 | [`src/renderer/app.js`](desktop/src/renderer/app.js) | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
 | [`src/renderer/shell.js`](desktop/src/renderer/shell.js) | the chrome: menus, tool rail, caption, slider fills, window verbs |
+| [`src/renderer/tour.js`](desktop/src/renderer/tour.js) | the tutorial's runner: the Learn panel's list, the coach mark, step navigation and progress |
 | [`src/styles/tokens.css`](desktop/src/styles/tokens.css) | tokens, the page grid, every element-level control |
 | [`src/styles/chrome.css`](desktop/src/styles/chrome.css) | caption, menus, options bar, rail, document tabs, the well, the bars |
 | [`src/styles/panels.css`](desktop/src/styles/panels.css) | the dock: panel tabs, fields, sliders, swatches, the effects stack |
 | [`tools/sync-renderer.js`](desktop/tools/sync-renderer.js) | keeps `src/renderer/{dither,video}.js` byte-identical to the shared engine |
+| [`tools/tour.test.js`](desktop/tools/tour.test.js) | the tutorial data's own suite: real panels, real commands, nothing already done on a fresh app |
 | [`tools/smoke-in-page.js`](desktop/tools/smoke-in-page.js) | the page half of the smoke run |
 
 The desktop shell is its own code. It used to be the web shell with ten
@@ -213,8 +245,8 @@ npm run pack     # dist/win-unpacked/ only, much faster while iterating
 
 You usually don't have to run this by hand: the **build** workflow on GitHub
 builds the Windows installer for every push that touches the app, checks the
-full code first (engine tests, desktop core tests, engine-copy sync, two smoke
-runs) and uploads the executables as artifacts. Push a `v<version>` tag — with
+full code first (engine tests, desktop core tests, tour tests, engine-copy
+sync, two smoke runs) and uploads the executables as artifacts. Push a `v<version>` tag — with
 `version` in `desktop/package.json` bumped to match — and the same workflow
 attaches the executables to that tag's GitHub release.
 
@@ -436,14 +468,16 @@ the app should do when you drive it, and lists every hook.
 
 ```bash
 cd desktop
-npm test                                       # the core's rules: 21 checks, no window
+npm test                                       # the core and the tutorial: 39 checks, no window
 npm run smoke                                  # boot, check, screenshot, exit 0/1
 ```
 
-`npm test` is `node tools/core.test.js`: the colour round trip, the catalogue
-lookups the steppers and the menus share, the settings paths, the station notes
-and the dropdown builder — all of it DOM-free, so it runs in a plain Node job
-rather than behind a window.
+`npm test` runs both Node suites. `tools/core.test.js` covers the colour round
+trip, the catalogue lookups the steppers and the menus share, the settings
+paths, the station notes and the dropdown builder; `tools/tour.test.js` covers
+the tutorial's lesson data, and it reads `app.js` itself for the command names
+and panel ids, so a lesson cannot outlive the verb it drives. Neither suite needs
+a window.
 
 `npm run smoke` is `electron . --smoke --smoke-script tools/smoke-in-page.js`.
 `--smoke` loads the real app and waits for it to signal ready, `--smoke-script`
@@ -455,11 +489,18 @@ itself as its animation reaches the wordmark (it is over in under three
 seconds, so waiting for the page checks to finish would miss it), and the app
 window is shot at the end.
 
-The current run makes 34 checks: the chrome exists, the catalogues fill their
+The current run makes 61 checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw, their submenus expand to the
-full catalogue and stay open while the pointer is on one of their rows, all 32
+full catalogue and stay open while the pointer is on one of their rows, all 33
 command names are wired, the effects stack is the real markup, panels answer to
-their own verbs, and **a key press runs exactly one command**.
+their own verbs, and **a key press runs exactly one command**. The tutorial is
+checked the same way: every one of its lessons points at a control that exists
+and names a command that is wired, starting a lesson puts the ring over the
+named control (measured against that control's own box), Next and Back move one
+step at a time, **Show me** performs the step and the card ticks itself off once
+the app agrees, a row the app is hiding is pointed at through the panel around
+it, the rail is scrolled until that panel is on screen, Escape leaves, and
+finishing a lesson records it and offers the next one.
 
 Environment variables let it exercise the parts a page cannot reach:
 

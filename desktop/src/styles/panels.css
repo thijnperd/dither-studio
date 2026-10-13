@@ -396,3 +396,70 @@
   padding: 0 4px;
   font-size: var(--fs-small);
 }
+
+/* -------------------------------------------------------------------- the tour */
+
+/* The Learn panel: the lessons the Tutorial can run. A row is the same weight
+   as an effect in the stack, and the box in front of it ticks when the lesson
+   is finished; the theme headings keep eleven rows readable as five groups. */
+.tour-list {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.tour-theme {
+  margin: 5px 2px 1px;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.tour-theme:first-child { margin-top: 0; }
+
+.tour-row {
+  display: grid;
+  grid-template-columns: 13px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 7px;
+  padding: 5px 6px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+  transition: background var(--fast), border-color var(--fast);
+}
+
+.tour-row:hover { border-color: var(--edge-soft); background: var(--hover); }
+
+.tour-row-mark { color: var(--muted); font-size: var(--fs-small); line-height: 1.5; }
+
+.tour-row-text { display: block; min-width: 0; }
+.tour-row-text b { display: block; font-weight: 600; }
+.tour-row-text em {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.tour-row-when {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* A finished lesson: its box is ticked and its title steps back, so the rows
+   still to do are the ones that read first. */
+.tour-row.is-done .tour-row-mark { color: var(--accent); }
+.tour-row.is-done .tour-row-text b { color: var(--muted); }

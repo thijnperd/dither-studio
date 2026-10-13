@@ -59,7 +59,7 @@ The **Source** panel shows what is loaded and offers the generated demo scene
 again (`Ctrl+D`). The caption bar and the document tab both name the proof.
 
 **Clips and webcams** live in the **Motion** panel, and in *File ▸ Open Clip…*
-(`Ctrl+Shift+O`). The transport appears under the proof; see §7.
+(`Ctrl+Shift+O`). The transport appears under the proof; see §8.
 
 ## 4. Reading the window
 
@@ -117,7 +117,37 @@ proof more room; *View ▸ Panels on the Right* hides the dock entirely.
 **Help** — the repository guide, the keyboard list, the engine's sources
 document, the project page, and About.
 
-## 5. Making a proof
+## 5. The tutorial
+
+The app can teach itself. Open the **Learn** panel — first in the dock, and the
+only station that starts open — and press **Take the Tour**, or use *Help ▸ Take
+the Tour* from the menu bar.
+
+Ten lessons, one per station, in the order the work happens: the first proof, the
+press itself, the grade, ink and paper, the effects stack, text mode, the three
+structure-aware looks, motion, recipes and exports, and finding your way around
+the window. Each lesson is five or six steps, and each step has one job.
+
+A step dims the window, opens the panel it is about and draws a ring around the
+one control it means — scrolling the rail to it if it is further down than the
+screen. It never takes your click: you use the real control while the card waits.
+A step the app can see — a chosen algorithm, a palette, a recipe applied, text
+mode switched on — ticks itself off the moment the state changes, so the card
+agrees with the proof rather than with your memory of it.
+
+Three buttons do the rest. **Show me** performs the current step's own setting
+for you, **Back** and **Next** move one step at a time, and the last *Next*
+records the lesson as finished and offers the next one by name. **Reset**, beside
+*Take the Tour*, clears every tick and starts the count again. *Exit* or
+`Escape` leaves at any point, and whatever you set while following a lesson
+stays set: the tour changes settings, never files.
+
+Two notes. The tour describes the *desktop* panels; the web console has the same
+controls in its own layout, and its [GUIDE.md](../GUIDE.md) is the tour for that
+one. And nothing about it runs in the background: the card reads the app's state
+when the app says it changed, and is otherwise asleep.
+
+## 6. Making a proof
 
 Nothing changes from the web versions: pick an algorithm and a palette, set the
 pixel size, threshold and strength, tune the tone, ink, detail, effects and
@@ -132,7 +162,7 @@ because they are what the app is for:
 - The proof is deterministic: the seed in the Press panel drives every random
   stage, and the same recipe always produces the same image.
 
-## 6. Getting it out
+## 7. Getting it out
 
 - **File ▸ Save Proof as PNG…** (`Ctrl+S`) writes what is on screen, at the
   export scale you chose (1×, 2×, 4×, 8×, nearest-neighbour, so pixels stay
@@ -153,7 +183,7 @@ Where the file goes is the operating system's business: the dialog starts in the
 last folder Windows used, and you can type a path. The app never writes anywhere
 you did not point it at.
 
-## 7. Clips, webcams and recording
+## 8. Clips, webcams and recording
 
 **Motion** panel, or *File ▸ Open Clip…*:
 
@@ -173,7 +203,7 @@ you did not point it at.
   captures the playback to a WebM — the recording pulses in the accent colour
   while it runs, and the file lands through the same system save dialog.
 
-## 8. Panels, and how they remember themselves
+## 9. Panels, and how they remember themselves
 
 Panels collapse by clicking their header and open by clicking their tab in the
 dock strip. Which ones are open is remembered between sessions, exactly as in
@@ -183,7 +213,7 @@ a future version that adds a panel does not leave a stale one behind.
 The rest of your recipe is not silently persisted. Presets are files, on purpose:
 a `.json` you can read, diff and keep.
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 **The window is white or empty.** Almost always a failed load of the renderer.
 Press `F5`; if it persists, start the app from a terminal (`npm start` in
@@ -219,7 +249,7 @@ comfortable.
 `%LOCALAPPDATA%\Programs\Dither Studio`; the portable build is wherever you put
 it. Neither writes into Documents; proofs go only where you saved them.
 
-## 10. For the curious: how the three builds relate
+## 11. For the curious: how the three builds relate
 
 There is one dithering engine — `dither.js`, DOM-free, shared byte-for-byte by
 the web demo, the launcher app and this one. Everything around it differs on

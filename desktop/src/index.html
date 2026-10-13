@@ -157,6 +157,24 @@
       <div class="dock-body">
         <div class="rail-scroll" id="rail">
 
+          <!-- the tutorial, first in the rail because it is the way in -->
+          <section class="group" id="g-learn" data-group="learn" data-open="true">
+            <button class="group-head" type="button" aria-expanded="true">
+              <span class="caret" aria-hidden="true">▾</span>
+              <span class="group-name">Learn</span>
+              <span class="group-note" id="note-learn">10 lessons</span>
+            </button>
+            <div class="group-body">
+              <div class="buttons">
+                <button id="tour-start" class="btn btn-primary">Take the Tour</button>
+                <button id="tour-reset" class="btn">Reset</button>
+              </div>
+              <div class="tour-list" id="tour-list"></div>
+              <p class="hint">Ten short lessons, one per station. The tour points at the
+                control and waits while you use it.</p>
+            </div>
+          </section>
+
           <section class="group" id="g-source" data-group="source" data-open="true">
             <button class="group-head" type="button" aria-expanded="true">
               <span class="caret" aria-hidden="true">▾</span>
@@ -432,6 +450,32 @@
     </aside>
   </div>
 
+  <!-- the tutorial: a dimmed backdrop with a hole over the control the current
+       lesson is about, and the step card beside it. The layer never takes a
+       click meant for the app - the learner uses the real control, and the card
+       follows the state the app reports about itself. -->
+  <div class="tour" id="tour" hidden>
+    <div class="tour-hole" id="tour-hole" aria-hidden="true"></div>
+    <section class="tour-card" id="tour-card" role="dialog" aria-live="polite" aria-labelledby="tour-title">
+      <div class="tour-meta">
+        <span id="tour-lesson">Lesson</span>
+        <span class="tour-grow"></span>
+        <span id="tour-count">1 / 1</span>
+      </div>
+      <h2 class="tour-title" id="tour-title">—</h2>
+      <p class="tour-body" id="tour-body"></p>
+      <p class="tour-why" id="tour-why" hidden></p>
+      <div class="tour-track" aria-hidden="true"><span class="tour-fill" id="tour-fill"></span></div>
+      <div class="tour-actions">
+        <button class="btn" id="tour-exit" type="button">Exit</button>
+        <span class="tour-grow"></span>
+        <button class="btn" id="tour-show" type="button" hidden>Show me</button>
+        <button class="btn" id="tour-back" type="button">Back</button>
+        <button class="btn btn-primary" id="tour-next" type="button">Next</button>
+      </div>
+    </section>
+  </div>
+
   <!-- status bar -->
   <footer class="statusbar">
     <span class="readout">File <b id="stat-file">demo</b></span>
@@ -445,10 +489,12 @@
   </footer>
 
   <script src="menu-spec.js"></script>
+  <script src="tour-spec.js"></script>
   <script src="renderer/dither.js"></script>
   <script src="renderer/video.js"></script>
   <script src="renderer/core.js"></script>
   <script src="renderer/app.js"></script>
   <script src="renderer/shell.js"></script>
+  <script src="renderer/tour.js"></script>
 </body>
 </html>

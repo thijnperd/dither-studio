@@ -560,6 +560,118 @@
   .is-recording { animation: none; }
 }
 
+/* ================================ the tutorial =========================== */
+
+/* The coach mark. The layer is fixed and transparent to the pointer - every
+   control under the spotlight stays usable while the card talks about it - and
+   the dimmed backdrop is one 9999px shadow around the hole, which is why the
+   hole snaps from control to control instead of gliding: a shadow that size in
+   motion repaints the whole window every frame. */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.tour-hole {
+  position: fixed;
+  border-radius: var(--radius);
+  /* The ring comes first because the first shadow is the one on top:
+     listed after the veil it is painted underneath it and disappears. */
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 9999px rgba(6, 7, 10, 0.5);
+}
+
+/* Nothing to point at: the whole window is the backdrop and there is no edge. */
+.tour-hole.is-solid { border-radius: 0; box-shadow: 0 0 0 9999px rgba(6, 7, 10, 0.5); }
+
+.tour-card {
+  position: fixed;
+  width: min(322px, calc(100vw - 28px));
+  padding: 12px 13px 11px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  pointer-events: auto;
+  animation: tour-in var(--med);
+}
+
+@keyframes tour-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tour-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tour-grow { flex: 1 1 auto; }
+
+.tour-title {
+  margin: 7px 0 0;
+  color: var(--text);
+  font: 600 var(--fs-app)/1.35 var(--font);
+}
+
+.tour-body {
+  margin: 6px 0 0;
+  color: var(--text);
+  font: var(--fs-app)/1.5 var(--font);
+}
+
+/* The reason it is worth doing, behind a hairline so it reads as an aside
+   rather than as more instruction. */
+.tour-why {
+  margin: 8px 0 0;
+  padding-left: 9px;
+  border-left: 2px solid var(--edge);
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.tour-track {
+  height: 2px;
+  margin: 11px 0 0;
+  border-radius: 999px;
+  background: var(--edge-soft);
+  overflow: hidden;
+}
+
+.tour-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--fast);
+}
+
+.tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.tour-actions .btn { height: 24px; padding: 0 10px; }
+
+/* A step the app can see has been done says so by itself: a tick on the title,
+   in the one accent, and nothing else moves. */
+.tour-card.is-done .tour-title::after { content: ' ✓'; color: var(--accent); }
+.tour-card.is-complete { border-color: color-mix(in srgb, var(--accent) 45%, var(--edge)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-card { animation: none; }
+  .tour-fill { transition: none; }
+}
+
 /* ============================ shell.js contract ===========================
  * Three rules the chrome needs that are not part of a component: the side of a
  * submenu, and the work area when the dock is hidden (View > Panels on the

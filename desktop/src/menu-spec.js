@@ -138,6 +138,7 @@
       {
         id: 'help', label: 'Help',
         items: [
+          { label: 'Take the Tour', command: 'help-tour' },
           { label: 'Dither Studio Guide', command: 'help-guide', accel: 'F1' },
           { label: 'Keyboard Shortcuts', command: 'help-shortcuts' },
           { type: 'sep' },

@@ -32,7 +32,7 @@
   function catalogue(name) {
     const lists = DS.catalogues || {};
     if (name === 'PANELS') {
-      const names = { source: 'Source', press: 'Press', tone: 'Tone', ink: 'Ink', detail: 'Detail',
+      const names = { learn: 'Learn', source: 'Source', press: 'Press', tone: 'Tone', ink: 'Ink', detail: 'Detail',
         effects: 'Effects', glow: 'Glow', motion: 'Motion', type: 'Type', preset: 'Presets' };
       return DS.groups.map(function (id) { return { id: id, name: names[id] || id }; });
     }
@@ -383,6 +383,14 @@
       desktop.openGuide().then(function (out) {
         note(out && out.error ? out.error : 'The guide opened in your editor');
       });
+    },
+    // The tutorial is the renderer's own tour.js, which loads after this file
+    // and hangs itself off the window: the lookup happens when the menu item is
+    // clicked, so the order of the two files never matters.
+    'help-tour': function () {
+      const tour = window.DitherTour;
+      if (!tour) return;
+      tour.start(tour.nextUnfinished(), 0);
     },
     'help-shortcuts': function () { desktop.shortcuts(); },
     'help-about': function () { desktop.about(); },

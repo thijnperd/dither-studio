@@ -110,6 +110,7 @@
     panel: $('panel'), consoleToggle: $('console-toggle'), consoleToggleNote: $('console-toggle-note'),
     quality: $('quality'), qualityNote: $('quality-note'),
     transport: $('transport'), videoReadout: $('video-readout'),
+    noteLearn: $('note-learn'),
     noteSource: $('note-source'), notePress: $('note-press'), noteTone: $('note-tone'),
     noteInk: $('note-ink'), noteDetail: $('note-detail'), noteEffects: $('note-effects'),
     noteGlow: $('note-glow'), noteMotion: $('note-motion'), noteType: $('note-type'),
@@ -122,6 +123,9 @@
   // The rail's stations: every panel group is collapsible, and the chips above
   // the rail scroll to one. Order here is the order of the jump strip.
   const GROUPS = [
+    // The tutorial is first because it is the way in: every panel below
+    // explains itself once you know what the station is for.
+    { id: 'learn', name: 'Learn' },
     { id: 'source', name: 'Source' },
     { id: 'press', name: 'Press' },
     { id: 'tone', name: 'Tone' },
@@ -399,7 +403,7 @@
   let currentStationId = GROUPS.length ? GROUPS[0].id : null;
 
   const STATION_NOTES = {
-    source: el.noteSource, press: el.notePress, tone: el.noteTone, ink: el.noteInk,
+    learn: el.noteLearn, source: el.noteSource, press: el.notePress, tone: el.noteTone, ink: el.noteInk,
     detail: el.noteDetail, effects: el.noteEffects, glow: el.noteGlow,
     motion: el.noteMotion, type: el.noteType, preset: el.notePreset,
   };
@@ -2183,6 +2187,14 @@
     'view-zoom-fit': function () { state.zoom = null; applyZoom(); },
     'view-quality': function (arg) { setQuality(arg); },
     'view-compare': function (arg) { setCompare(arg === undefined ? !state.compareOn : !!arg); },
+    // Opening a station and toggling one are different verbs: the tutorial asks
+    // for a panel to be open and must not close it if it already is. The menus
+    // keep the toggle, because toggling is what clicking a menu item means.
+    'window-panel-open': function (id) {
+      if (!id) return;
+      setGroup(id, true);
+      revealGroup(id);
+    },
     'window-panel': function (id) {
       if (!id) return;
       const toOpen = !groupOpen(id);

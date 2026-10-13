@@ -31,6 +31,10 @@ jobs:
       - name: Desktop core tests
         run: node desktop/tools/core.test.js
 
+      # The tutorial's lesson data is DOM-free too, so it runs here beside it.
+      - name: Desktop tour tests
+        run: node desktop/tools/tour.test.js
+
   desktop:
     name: desktop (windows)
     runs-on: windows-latest

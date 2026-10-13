@@ -46,6 +46,11 @@ jobs:
       - name: Desktop core tests
         run: node desktop/tools/core.test.js
 
+      # The tutorial's lesson data, held to its own rules: real panels, real
+      # commands, and no step that is already done before the learner starts.
+      - name: Desktop tour tests
+        run: node desktop/tools/tour.test.js
+
       - name: Install
         working-directory: desktop
         run: npm ci

@@ -43,9 +43,9 @@
     document.querySelectorAll('.menubar .menu').length);
   check('the tool rail has its eight tools', document.querySelectorAll('.toolrail .tool').length === 8,
     document.querySelectorAll('.toolrail .tool').length);
-  check('the dock holds all ten panels', document.querySelectorAll('#rail .group').length === 10,
+  check('the dock holds all eleven panels', document.querySelectorAll('#rail .group').length === 11,
     document.querySelectorAll('#rail .group').length);
-  check('and a tab for each of them', document.querySelectorAll('#jump .jump-chip').length === 10,
+  check('and a tab for each of them', document.querySelectorAll('#jump .jump-chip').length === 11,
     document.querySelectorAll('#jump .jump-chip').length);
   check('the document tab names the open proof', /demo/.test(document.getElementById('doc-name').textContent),
     document.getElementById('doc-name').textContent);
@@ -235,11 +235,167 @@
 
   DS.command('window-panels-open');
   await wait(60);
-  check('opening every panel opens every panel', window.DS.state().openGroups.length === 10,
+  check('opening every panel opens every panel', window.DS.state().openGroups.length === 11,
     window.DS.state().openGroups.length);
   DS.command('effects-clear');
   await wait(60);
   check('clearing the stack empties it', window.DS.state().effects.length === 0);
+
+  /* ---- the tutorial: the data, the coach mark, the runner ---------- */
+
+  const tour = window.DitherTour;
+  const spec = window.DitherTourSpec;
+  check('the tutorial published its surface', !!tour && !!spec && Array.isArray(tour.lessons),
+    !!tour + '/' + !!spec);
+  check('the Learn panel lists every lesson', !!tour && tour.rows() === spec.lessons.length,
+    tour ? tour.rows() + ' of ' + spec.lessons.length : 0);
+  check('the Learn panel says where the learner is',
+    /lessons|done/.test(document.getElementById('note-learn').textContent),
+    document.getElementById('note-learn').textContent);
+
+  // Every step points at a control that exists and every Show me names a wired
+  // command: an id renamed in index.html or a verb renamed in app.js cannot
+  // survive this.
+  const allSteps = spec.lessons.reduce(function (all, lesson) { return all.concat(lesson.steps); }, []);
+  const missingTargets = allSteps.filter(function (step) {
+    return !document.querySelector(step.target);
+  }).map(function (step) { return step.target; });
+  const missingCommands = [];
+  allSteps.forEach(function (step) {
+    (step.show || []).forEach(function (pair) {
+      if (DS.commands.indexOf(pair[0]) < 0) missingCommands.push(pair[0]);
+    });
+  });
+  check('every step points at a control that exists', missingTargets.length === 0, missingTargets.join(', '));
+  check('every Show me names a command the app is wired for', missingCommands.length === 0,
+    missingCommands.join(', '));
+  report.notes.tour = {
+    lessons: spec.lessons.length, steps: allSteps.length,
+    themes: spec.lessons.map(function (lesson) { return lesson.theme; })
+      .filter(function (theme, at, all) { return all.indexOf(theme) === at; }),
+  };
+
+  // A started lesson: the card, the coach mark, and the mark over the right
+  // control - the only way to prove a selector really lands where it claims.
+  DS.command('window-panel-open', 'source');
+  await wait(60);
+  const firstStep = spec.lessons[0].steps[0];
+  const started = tour.start(spec.lessons[0].id, 0);
+  await wait(140);
+  const hole = tour.hole();
+  const targetNode = document.querySelector(firstStep.target);
+  const targetBox = targetNode ? targetNode.getBoundingClientRect() : null;
+  check('a lesson opens the card and the coach mark',
+    !!started && tour.status().running && !!hole && hole.visible === true,
+    JSON.stringify(tour.status()));
+  check('the hole is over the control the step names',
+    !!hole && !!targetBox &&
+      Math.abs((hole.left + hole.width / 2) - (targetBox.left + targetBox.width / 2)) < 14 &&
+      Math.abs((hole.top + hole.height / 2) - (targetBox.top + targetBox.height / 2)) < 14,
+    JSON.stringify({ hole: hole, target: targetBox ? {
+      left: targetBox.left, top: targetBox.top, width: targetBox.width, height: targetBox.height } : null }));
+  check('the card is on the first step of the lesson',
+    tour.status().step === 0 && tour.status().lesson === spec.lessons[0].id,
+    JSON.stringify(tour.status()));
+
+  // Next and Back move one step at a time, both ways.
+  tour.next();
+  await wait(90);
+  check('Next moves on one step', tour.status().step === 1, tour.status().step);
+  tour.back();
+  await wait(90);
+  check('Back moves back one step', tour.status().step === 0, tour.status().step);
+
+  // A step the app can check: Show me runs its own commands, and the card ticks
+  // itself off when the app agrees - the whole point of the design.
+  const pressStep = spec.lessons[0].steps[1];
+  tour.next();
+  await wait(80);
+  tour.showMe();
+  await wait(360);
+  check('Show me performs the step it is standing on',
+    DS.state().algorithm === 'bayer8', DS.state().algorithm);
+  check('and the card ticks itself off once the app agrees',
+    tour.status().satisfied === true &&
+      document.getElementById('tour-card').classList.contains('is-done'),
+    JSON.stringify(tour.status()));
+  report.notes.tourShowMe = { step: pressStep.title, algorithm: DS.state().algorithm };
+
+  // A panel that is already open stays open when a step asks for it, and a
+  // panel a step is about is opened for it - the reason the tour has its own
+  // verb for opening rather than reusing the menus' toggle.
+  DS.command('window-panel-open', 'tone');
+  await wait(60);
+  DS.command('window-panel-open', 'tone');
+  await wait(60);
+  check('opening a station that is already open leaves it open',
+    DS.state().openGroups.indexOf('tone') >= 0, DS.state().openGroups.join(','));
+  DS.command('window-panel', 'press');        // the menus' verb: a toggle
+  await wait(70);
+  const pressWasClosed = DS.state().openGroups.indexOf('press') < 0;
+  tour.start('the-press', 0);                // its first step is about that panel
+  await wait(150);
+  check('a step opens the panel it is about',
+    pressWasClosed && DS.state().openGroups.indexOf('press') >= 0,
+    DS.state().openGroups.join(','));
+
+  // A row the app is hiding has no box of its own: the card has to point at the
+  // panel around it rather than at nothing. Type mode is off here, so the ramp
+  // row in that lesson is exactly that case.
+  tour.start('set-in-type', 2);
+  await wait(1200);                 // the rail's own smooth scroll, in full
+  const hiddenRowBox = document.getElementById('text-charset-row').getBoundingClientRect();
+  const typeBody = document.querySelector('#g-type .group-body').getBoundingClientRect();
+  const fallbackHole = tour.hole();
+  check('a row the app is hiding is pointed at through the panel around it',
+    hiddenRowBox.height === 0 && !!fallbackHole && fallbackHole.solid === false &&
+      fallbackHole.width > 40 && fallbackHole.height > 20,
+    JSON.stringify({ row: hiddenRowBox.height, hole: fallbackHole }));
+  check('the rail is scrolled until the panel holding it is on screen',
+    typeBody.top > 0 && typeBody.bottom < window.innerHeight,
+    JSON.stringify({ top: typeBody.top, bottom: typeBody.bottom, window: window.innerHeight }));
+  check('and the hole is over that panel',
+    !!fallbackHole && Math.abs(fallbackHole.top - (typeBody.top - 6)) < 24,
+    JSON.stringify({ hole: fallbackHole, panel: typeBody.top }));
+  tour.exit();
+  await wait(40);
+
+  // Escape leaves, in the capture phase, without stealing the key from the
+  // menu bar's own Escape.
+  press({ key: 'Escape' });
+  await wait(80);
+  check('Escape exits the tutorial', tour.status().running === false, JSON.stringify(tour.status()));
+  check('and the card goes with it', document.getElementById('tour').hidden === true);
+
+  // Finishing a lesson records it, ticks the list and offers the next one.
+  tour.start(spec.lessons[0].id, 0);
+  await wait(60);
+  for (let step = 0; step < spec.lessons[0].steps.length; step++) {
+    tour.next();
+    await wait(40);
+  }
+  check('finishing a lesson records it',
+    tour.status().phase === 'complete' && tour.progress().done.indexOf(spec.lessons[0].id) >= 0,
+    JSON.stringify(tour.progress()));
+  check('the list ticks the finished lesson',
+    !!document.querySelector('.tour-row[data-lesson="' + spec.lessons[0].id + '"].is-done'));
+  check('and offers the lesson after it',
+    /Next lesson/.test(document.getElementById('tour-next').textContent),
+    document.getElementById('tour-next').textContent);
+  check('the finished count reaches the panel note',
+    /1 of \d+ done/.test(document.getElementById('note-learn').textContent),
+    document.getElementById('note-learn').textContent);
+
+  tour.exit();
+  await wait(40);
+  check('exiting leaves nothing running', tour.status().running === false);
+  tour.reset();
+  await wait(40);
+  check('Reset clears the progress', tour.progress().done.length === 0,
+    JSON.stringify(tour.progress()));
+  check('and the note goes back to counting lessons',
+    /lessons/.test(document.getElementById('note-learn').textContent),
+    document.getElementById('note-learn').textContent);
 
   /* ---- the caption and the status line follow the app -------------- */
 
