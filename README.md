@@ -328,10 +328,12 @@ dependencies.
 | [`launcher/Dither Studio.cmd`](launcher/Dither%20Studio.cmd), [`launcher/Dither Studio.command`](launcher/Dither%20Studio.command), [`launcher/dither-studio.sh`](launcher/dither-studio.sh) | the app-mode launchers (Windows / macOS / Linux) |
 | [`launcher/manifest.webmanifest`](launcher/manifest.webmanifest), [`launcher/icons/`](launcher/icons/) | installable-app metadata and the generated mark |
 | [`tools/make-icons.js`](tools/make-icons.js) | regenerates `launcher/icons/` through the app's own core |
+| [`tools/inbox.js`](tools/inbox.js) | lists what is waiting in `inbox/`, with each capture's format, bytes and pixel size |
 | [`tools/`](tools/) | optional browser-check harness (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency |
 | [`demo/`](demo/) | the **frozen** web demo published to GitHub Pages, favicon and icons included |
 | [`desktop/`](desktop/) | the **active** Electron build, in its own folder with its own dependencies |
 | [`docs/`](docs/) | the screenshots in this file and the guides |
+| [`inbox/`](inbox/) | where a new capture waits to be developed into `docs/`; the folder ignores its own contents, so nothing dropped in it can reach a commit |
 | [`.github/workflows/`](.github/workflows/) | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and publishes releases; `pages.yml` publishes `demo/` |
 | [`README.md`](README.md) | this file — the front door for the whole repository |
 | [`GUIDE.md`](GUIDE.md) | the tour: the console, the catalogue, video, exports, troubleshooting |
