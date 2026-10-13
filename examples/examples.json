@@ -160,7 +160,6 @@
       "effects": [],
       "textMode": false,
       "colors": 2,
-      "ms": 204,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -187,7 +186,6 @@
       "effects": [],
       "textMode": false,
       "colors": 2,
-      "ms": 152,
       "grid": {
         "cols": 90,
         "rows": 37,
@@ -214,7 +212,6 @@
       "effects": [],
       "textMode": false,
       "colors": 14,
-      "ms": 102,
       "grid": {
         "cols": 90,
         "rows": 37,
@@ -241,7 +238,6 @@
       "effects": [],
       "textMode": false,
       "colors": 4,
-      "ms": 521,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -272,7 +268,6 @@
       ],
       "textMode": false,
       "colors": 90730,
-      "ms": 462,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -302,7 +297,6 @@
       ],
       "textMode": false,
       "colors": 18,
-      "ms": 330,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -329,7 +323,6 @@
       "effects": [],
       "textMode": false,
       "colors": 16,
-      "ms": 318,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -356,7 +349,6 @@
       "effects": [],
       "textMode": false,
       "colors": 2,
-      "ms": 170,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -387,7 +379,6 @@
       "effects": [],
       "textMode": false,
       "colors": 16,
-      "ms": 127,
       "grid": {
         "cols": 90,
         "rows": 37,
@@ -418,7 +409,6 @@
       "effects": [],
       "textMode": false,
       "colors": 4,
-      "ms": 105,
       "grid": {
         "cols": 90,
         "rows": 131,
@@ -457,7 +447,6 @@
       ],
       "textMode": false,
       "colors": 1906,
-      "ms": 339,
       "grid": {
         "cols": 90,
         "rows": 60,
@@ -492,7 +481,6 @@
       "effects": [],
       "textMode": true,
       "colors": 95,
-      "ms": 138,
       "grid": {
         "cols": 75,
         "rows": 50,

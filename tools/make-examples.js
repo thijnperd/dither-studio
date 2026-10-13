@@ -609,7 +609,7 @@ ${cards}
       source: source.w + '\u00d7' + source.h, px: size, bytes: bytes,
       algorithm: shot.stats.algorithm, palette: shot.stats.palette, pixelSize: shot.stats.pixelSize,
       toneMap: shot.stats.toneMap, effects: shot.stats.glitches, textMode: shot.stats.textMode,
-      colors: shot.colors, ms: shot.stats.ms, grid: shot.grid,
+      colors: shot.colors, grid: shot.grid,
     });
     console.log(job.id.padEnd(10) + job.out.padEnd(34) + String(shot.stats.algorithm).padEnd(18) +
       String(shot.stats.palette).padEnd(16) + size.padEnd(11) +

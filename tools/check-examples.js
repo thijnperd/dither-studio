@@ -93,13 +93,14 @@ test('each picture really is the size the manifest claims', function () {
 });
 
 test('every recipe records what was asked for and what came out', function () {
+  // No render times here: the manifest is checked in, and a stopwatch reading
+  // would make every rerun a diff. The generator prints them instead.
   const thin = [];
   for (const item of pictures) {
     const asked = item.preset || item.recipe;
     if (!asked) thin.push(item.out + ' has no recipe');
     else if (!item.algorithm || !item.palette) thin.push(item.out + ' has no algorithm or palette');
     else if (!(item.colors > 0)) thin.push(item.out + ' records no colour count');
-    else if (!(item.ms > 0)) thin.push(item.out + ' records no render time');
   }
   if (thin.length) throw new Error(thin.join('; '));
 });
