@@ -13,12 +13,41 @@ dialogs — that's the one still being developed.
 
 ![The app window, the desktop build](docs/desktop-app.png)
 
+## Contents
+
+| Start here | |
+|---|---|
+| **Use it now** | [the web demo](https://thijnperd.github.io/dither-studio/) — nothing to install |
+| **Install the desktop app** | [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) — the Setup or the portable `.exe` |
+| **Run it from this folder** | [Run it](#run-it) — the launchers and the browser they use |
+| **Learn the console** | [GUIDE.md](GUIDE.md) — the tour, station by station |
+| **Learn the desktop window** | [desktop/GUIDE.md](desktop/GUIDE.md) |
+| **Read the code** | [How it is put together](#how-it-is-put-together) · [Repository layout](#repository-layout) |
+| **Check it** | [Verification](#verification) — the engine tests, the browser harness, the desktop smoke run |
+
+Every section:
+
+- [Three builds, one engine](#three-builds-one-engine) — what is shared and what is frozen
+- [Run it](#run-it)
+- [The desktop app](#the-desktop-app)
+  - [Run it from source](#run-it-from-source) · [The window](#the-window) · [Keyboard](#keyboard)
+  - [What is genuinely native](#what-is-genuinely-native)
+  - [How it is put together](#how-it-is-put-together)
+  - [Build the installer](#build-the-installer) · [The startup screen](#the-startup-screen) · [Performance](#performance)
+- [What it does](#what-it-does)
+  - [The three structure-aware looks](#the-three-structure-aware-looks)
+- [Exports](#exports) · [Requirements](#requirements)
+- [Repository layout](#repository-layout)
+- [Verification](#verification)
+  - [The engine, in Node](#the-engine-in-node) · [The page, in a real browser](#the-page-in-a-real-browser) · [The desktop app's own checks](#the-desktop-apps-own-checks)
+- [Credits](#credits)
+
 ## Three builds, one engine
 
 | Build | Where | State | How you get it |
 |---|---|---|---|
-| **Web demo** | `demo/` | frozen | <https://thijnperd.github.io/dither-studio/> — published to GitHub Pages from `demo/` |
-| **Launcher app** | `launcher/` | frozen | the launchers: the page in an app-mode window with its own profile |
+| **Web demo** | [`demo/`](demo/) | frozen | <https://thijnperd.github.io/dither-studio/> — published to GitHub Pages from `demo/` |
+| **Launcher app** | [`launcher/`](launcher/) | frozen | the launchers: the page in an app-mode window with its own profile |
 | **Desktop app** | [`desktop/`](desktop/) | **active** | `Dither-Studio-Setup-<version>.exe` from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
 What they share is `dither.js`, the dithering engine. It has no DOM
@@ -40,11 +69,11 @@ its own tour in [desktop/GUIDE.md](desktop/GUIDE.md).
 
 | | |
 |---|---|
-| **Windows** | double-click **`launcher/Dither Studio.cmd`** |
-| **macOS** | double-click **`launcher/Dither Studio.command`** (right-click → Open the first time, if Gatekeeper asks) |
-| **Linux** | `./launcher/dither-studio.sh` (make it executable once: `chmod +x launcher/dither-studio.sh`) |
-| **Any browser** | open **`launcher/index.html`** |
-| **Installed app** | open `launcher/index.html`, then use the browser's *Install* / *Create shortcut* command (`manifest.webmanifest` makes this work) |
+| **Windows** | double-click **[`launcher/Dither Studio.cmd`](launcher/Dither%20Studio.cmd)** |
+| **macOS** | double-click **[`launcher/Dither Studio.command`](launcher/Dither%20Studio.command)** (right-click → Open the first time, if Gatekeeper asks) |
+| **Linux** | [`./launcher/dither-studio.sh`](launcher/dither-studio.sh) (make it executable once: `chmod +x launcher/dither-studio.sh`) |
+| **Any browser** | open **[`launcher/index.html`](launcher/index.html)** |
+| **Installed app** | open [`launcher/index.html`](launcher/index.html), then use the browser's *Install* / *Create shortcut* command (`manifest.webmanifest` makes this work) |
 | **Desktop app** | [`desktop/`](desktop/), or the installer from [the latest release](https://github.com/thijnperd/dither-studio/releases/latest) |
 
 The launchers look for Chrome, Edge, Brave or Chromium and open `index.html`
@@ -136,22 +165,22 @@ A file dropped on the proof loads it; `Ctrl+V` pastes an image.
 
 | File | |
 |---|---|
-| `electron/main.js` | the window, the splash, the native dialogs, the clipboard, the application menu, and the smoke harness |
-| `electron/preload.js` | the only bridge to the OS — `window.ditherDesktop`, context-isolated, no Node in the renderer |
-| `electron/splash.html` | the startup animation: **this is the file to replace** (see below) |
-| `electron/Splash/` | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
-| `src/index.html` | the window's markup: caption, menus, options, rail, document tabs, dock, status |
-| `src/menu-spec.js` | the one menu definition, shared by the native menu and the drawn one |
-| `src/renderer/core.js` | the desktop core: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
-| `src/renderer/dither.js` | the engine — DOM-free, byte-identical to the web builds |
-| `src/renderer/video.js` | the video source, clock and recorder |
-| `src/renderer/app.js` | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
-| `src/renderer/shell.js` | the chrome: menus, tool rail, caption, slider fills, window verbs |
-| `src/styles/tokens.css` | tokens, the page grid, every element-level control |
-| `src/styles/chrome.css` | caption, menus, options bar, rail, document tabs, the well, the bars |
-| `src/styles/panels.css` | the dock: panel tabs, fields, sliders, swatches, the effects stack |
-| `tools/sync-renderer.js` | keeps `src/renderer/{dither,video}.js` byte-identical to the shared engine |
-| `tools/smoke-in-page.js` | the page half of the smoke run |
+| [`electron/main.js`](desktop/electron/main.js) | the window, the splash, the native dialogs, the clipboard, the application menu, and the smoke harness |
+| [`electron/preload.js`](desktop/electron/preload.js) | the only bridge to the OS — `window.ditherDesktop`, context-isolated, no Node in the renderer |
+| [`electron/splash.html`](desktop/electron/splash.html) | the startup animation: **this is the file to replace** (see below) |
+| [`electron/Splash/`](desktop/electron/Splash/) | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
+| [`src/index.html`](desktop/src/index.html) | the window's markup: caption, menus, options, rail, document tabs, dock, status |
+| [`src/menu-spec.js`](desktop/src/menu-spec.js) | the one menu definition, shared by the native menu and the drawn one |
+| [`src/renderer/core.js`](desktop/src/renderer/core.js) | the desktop core: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
+| [`src/renderer/dither.js`](desktop/src/renderer/dither.js) | the engine — DOM-free, byte-identical to the web builds |
+| [`src/renderer/video.js`](desktop/src/renderer/video.js) | the video source, clock and recorder |
+| [`src/renderer/app.js`](desktop/src/renderer/app.js) | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
+| [`src/renderer/shell.js`](desktop/src/renderer/shell.js) | the chrome: menus, tool rail, caption, slider fills, window verbs |
+| [`src/styles/tokens.css`](desktop/src/styles/tokens.css) | tokens, the page grid, every element-level control |
+| [`src/styles/chrome.css`](desktop/src/styles/chrome.css) | caption, menus, options bar, rail, document tabs, the well, the bars |
+| [`src/styles/panels.css`](desktop/src/styles/panels.css) | the dock: panel tabs, fields, sliders, swatches, the effects stack |
+| [`tools/sync-renderer.js`](desktop/tools/sync-renderer.js) | keeps `src/renderer/{dither,video}.js` byte-identical to the shared engine |
+| [`tools/smoke-in-page.js`](desktop/tools/smoke-in-page.js) | the page half of the smoke run |
 
 The desktop shell is its own code. It used to be the web shell with ten
 patches applied, which meant every helper existed twice, so the desktop now
@@ -293,21 +322,21 @@ dependencies.
 
 | Path | What it is |
 |---|---|
-| `launcher/` | the **launcher** build, self-contained: the page (`index.html`, `style.css`, `app.js`, `video.js`), the engine master (`dither.js`) and its tests (`test.js`), the three launchers, `manifest.webmanifest` and `icons/` |
-| `launcher/dither.js` | the engine: screens and masks, 46 algorithms, palettes, mixing plans, adjustments, tone maps, alpha, effects, glow, video temporal rules, `process()`. DOM-free, shared by all three builds |
-| `launcher/test.js` | the engine's Node tests |
-| `launcher/Dither Studio.cmd`, `launcher/Dither Studio.command`, `launcher/dither-studio.sh` | the app-mode launchers (Windows / macOS / Linux) |
-| `launcher/manifest.webmanifest`, `launcher/icons/` | installable-app metadata and the generated mark |
-| `tools/make-icons.js` | regenerates `launcher/icons/` through the app's own core |
-| `tools/` | optional browser-check harness (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency |
-| `demo/` | the **frozen** web demo published to GitHub Pages, favicon and icons included |
-| `desktop/` | the **active** Electron build, in its own folder with its own dependencies |
-| `docs/` | the screenshots in this file and the guides |
-| `.github/workflows/` | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and publishes releases; `pages.yml` publishes `demo/` |
-| `README.md` | this file — the front door for the whole repository |
-| `GUIDE.md` | the tour: the console, the catalogue, video, exports, troubleshooting |
-| `desktop/GUIDE.md` | the tour of the desktop window |
-| `SOURCES.md` | where every feature, table and palette came from |
+| [`launcher/`](launcher/) | the **launcher** build, self-contained: the page (`index.html`, `style.css`, `app.js`, `video.js`), the engine master (`dither.js`) and its tests (`test.js`), the three launchers, `manifest.webmanifest` and `icons/` |
+| [`launcher/dither.js`](launcher/dither.js) | the engine: screens and masks, 46 algorithms, palettes, mixing plans, adjustments, tone maps, alpha, effects, glow, video temporal rules, `process()`. DOM-free, shared by all three builds |
+| [`launcher/test.js`](launcher/test.js) | the engine's Node tests |
+| [`launcher/Dither Studio.cmd`](launcher/Dither%20Studio.cmd), [`launcher/Dither Studio.command`](launcher/Dither%20Studio.command), [`launcher/dither-studio.sh`](launcher/dither-studio.sh) | the app-mode launchers (Windows / macOS / Linux) |
+| [`launcher/manifest.webmanifest`](launcher/manifest.webmanifest), [`launcher/icons/`](launcher/icons/) | installable-app metadata and the generated mark |
+| [`tools/make-icons.js`](tools/make-icons.js) | regenerates `launcher/icons/` through the app's own core |
+| [`tools/`](tools/) | optional browser-check harness (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency |
+| [`demo/`](demo/) | the **frozen** web demo published to GitHub Pages, favicon and icons included |
+| [`desktop/`](desktop/) | the **active** Electron build, in its own folder with its own dependencies |
+| [`docs/`](docs/) | the screenshots in this file and the guides |
+| [`.github/workflows/`](.github/workflows/) | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and publishes releases; `pages.yml` publishes `demo/` |
+| [`README.md`](README.md) | this file — the front door for the whole repository |
+| [`GUIDE.md`](GUIDE.md) | the tour: the console, the catalogue, video, exports, troubleshooting |
+| [`desktop/GUIDE.md`](desktop/GUIDE.md) | the tour of the desktop window |
+| [`SOURCES.md`](SOURCES.md) | where every feature, table and palette came from |
 
 ## Verification
 
@@ -390,7 +419,7 @@ harness takes only the last `--eval` — chain multi-step checks inside one
 page errors and every `--expect` matched. [GUIDE.md](GUIDE.md) describes what
 the app should do when you drive it, and lists every hook.
 
-### The desktop app
+### The desktop app's own checks
 
 ```bash
 cd desktop
@@ -464,3 +493,7 @@ explicit. No code was copied from any of these projects: the algorithms are the
 published classics, the palettes are hardware facts, and this implementation is
 original JavaScript. See [`SOURCES.md`](SOURCES.md) for the provenance of every
 feature and constant. Not affiliated with any project named here.
+
+---
+
+[↑ Back to the contents](#contents)
