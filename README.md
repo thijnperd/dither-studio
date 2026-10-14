@@ -79,8 +79,7 @@ node tools/make-examples.js
 ```
 
 and land on the same files, byte for byte. [`examples/index.html`](examples/index.html)
-shows the set as a contact sheet you can open straight from a clone — no server,
-no network — and [`examples/README.md`](examples/README.md) lists it as a table
+shows the set as a contact sheet you can open straight from a clone, no server needed, and [`examples/README.md`](examples/README.md) lists it as a table
 with every setting behind it.
 
 ![Winge's Thor's Fight with the Giants, diffused into a single ink](examples/thor-zine-1bit.png)
