@@ -16,6 +16,17 @@ operating system's own dialogs and makes no network request at all.
 
 ![The Dither Studio desktop app: a dithered proof on the stage, the eleven-panel dock down the right, the catalogue menus across the top](docs/desktop-app.png)
 
+## The launch film
+
+[![The launch film: the words "Let there be pixels." in serif on an obsidian stage](docs/launch-poster.png)](publicity/out/dither-studio-launch.mp4)
+
+Forty seconds at 1920 x 1080, 24 fps: classical paintings go in and the app's
+own proofs come out. Every frame is drawn by code, from the real window and from
+exports the engine made, so nothing on screen is a mock-up. The source is
+[`publicity/launch.html`](publicity/launch.html) and `node publicity/render.js`
+re-renders the MP4 from it.
+
+
 ## What it does
 
 - **46 algorithms.** Classic ordered screens (Bayer 2–16, clustered-dot,

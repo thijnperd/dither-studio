@@ -1,0 +1,540 @@
+<!--
+  launch.html - the Dither Studio publicity film.
+
+  1920 x 1080, 24fps, 40 seconds, no audio. Every frame is a function of time:
+  window.seek(t) draws that exact moment, which is what lets render.js capture
+  frames instead of screen-recording a player. Nothing is loaded from the
+  internet, so the file plays from disk in any Chromium.
+
+  Three voices, and they do not borrow each other's clothes:
+    display   Georgia, ivory, the mythological register
+    verse     Georgia italic, the same register, spoken quietly
+    labels    Consolas, lapis, and only ever data: a name, a count, a format
+
+  Deslopped against the impeccable craft floor: no kicker above a heading (it
+  is a ban, not a default), no section numerals, no repeating-gradient stripes
+  standing in as texture. A rule here is one 1px hairline or it is not drawn.
+  The dithering is in the artwork, where it is the subject, not in the furniture.
+
+  The accent is lapis, not gold: ultramarine is the pigment the old paintings
+  gave to the divine, and a yellow accent on a dark console reads as software
+  chrome.
+
+  The interface screenshots are the real window (publicity/tools/shot-*.js).
+  The paintings and the mark are the project's own assets. No control, no proof
+  and no number is drawn by this file: if it is on screen, it exists in the app.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dither Studio — launch film</title>
+<style>
+  :root {
+    --void: #0B0D12;
+    --panel: #121722;
+    --edge: #293244;
+    --ivory: #EFEADF;
+    --muted: #A1A9B8;
+    --lapis: #7E93BE;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: Consolas, "Cascadia Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+  }
+
+  #stage {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: var(--void);
+    color: var(--ivory);
+    font-family: var(--sans);
+    /* The film is reviewed at its own size; scaling is for watching in a
+       normal window, and never changes a frame. */
+    transform-origin: center center;
+  }
+
+  .scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+
+  /* ---- the three voices ---- */
+
+  .head {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 84px;
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+    color: var(--ivory);
+  }
+
+  .verse {
+    margin: 26px 0 0;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 33px;
+    line-height: 1.4;
+    color: var(--lapis);
+  }
+
+  .body {
+    margin: 26px 0 0;
+    max-width: 30ch;
+    font-size: 28px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .meta {
+    margin: 0;
+    color: var(--muted);
+    font: 500 15px/1.7 var(--mono);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .cap {
+    position: absolute;
+    left: 132px;
+    width: 460px;
+  }
+
+  /* One hairline. It draws itself; it is not a pattern. */
+  .hair {
+    height: 1px;
+    margin: 32px 0 0;
+    background: var(--lapis);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  /* ---- product frame ---- */
+
+  .frame {
+    position: absolute;
+    overflow: hidden;
+    border: 1px solid var(--edge);
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: 0 44px 90px rgba(0, 0, 0, 0.55);
+    transform-origin: center center;
+  }
+
+  .frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top left;
+  }
+
+  /* ---- 1. the hook ---- */
+
+  #hook .inner {
+    position: absolute;
+    left: 132px;
+    top: 372px;
+    width: 1660px;
+  }
+
+  #hook h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 136px;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--ivory);
+  }
+
+  /* The rule clears the descenders of "pixels": line-height 1 puts them below
+     the h1's box, and a tighter margin had the line cutting through them. */
+  #hook .rule {
+    width: 138px;
+    height: 1px;
+    margin-top: 76px;
+    background: var(--lapis);
+    transform-origin: left center;
+  }
+
+  #hook .meta { margin-top: 34px; }
+
+  /* ---- 2. the source ---- */
+
+  #source .portrait {
+    position: absolute;
+    left: 1096px;
+    top: 128px;
+    width: 640px;
+    height: 824px;
+  }
+
+  #source .cap { top: 268px; }
+
+  /* ---- 3. the press ---- */
+
+  #press .frame {
+    left: 620px;
+    top: 146px;
+    width: 1250px;
+    height: 821px;
+  }
+
+  #press .cap { top: 268px; }
+
+  .stat {
+    margin-top: 30px;
+  }
+
+  .stat .bar {
+    width: 46px;
+    height: 1px;
+    background: var(--lapis);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .stat p {
+    margin: 14px 0 0;
+    font: 500 16px/1.5 var(--mono);
+    letter-spacing: 0.14em;
+    color: var(--ivory);
+    text-transform: uppercase;
+  }
+
+  .stat p span {
+    color: var(--muted);
+    letter-spacing: 0.18em;
+  }
+
+  /* ---- 4. the type case ---- */
+
+  #type .frame {
+    left: 132px;
+    top: 152px;
+    width: 1180px;
+    height: 775px;
+  }
+
+  #type .cap { left: 1408px; top: 330px; width: 400px; }
+
+  /* ---- 5. the proofs ---- */
+
+  #many .card {
+    position: absolute;
+    top: 300px;
+    width: 372px;
+    height: 508px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--edge);
+    background: var(--panel);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  }
+
+  #many .card img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* The third card is a crop of the real window's proof, not a screenshot of a
+     panel: at this size the interface would be unreadable, the marks are the
+     point. Framed on the canvas, clear of the dock. */
+  #many .c3 img {
+    object-position: 46% 52%;
+    transform: scale(2.2);
+    transform-origin: 46% 50%;
+  }
+
+  #many .c1 { left: 132px; }
+  #many .c2 { left: 534px; top: 340px; }
+  #many .c3 { left: 936px; top: 280px; }
+
+  #many .cap { left: 1396px; top: 286px; width: 400px; }
+
+  /* ---- 6. the close ---- */
+
+  #close .inner {
+    position: absolute;
+    left: 0;
+    top: 262px;
+    width: 1920px;
+    text-align: center;
+  }
+
+  /* The icon is a maskable tile with its own ground, so it is shown as one:
+     a rounded tile, not a rectangle floating on the stage. */
+  #close .mark {
+    width: 196px;
+    height: 196px;
+    display: block;
+    margin: 0 auto;
+    border-radius: 46px;
+    border: 1px solid var(--edge);
+  }
+
+  #close .wordmark {
+    margin: 54px 0 0;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 104px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  #close .tagline {
+    margin: 32px 0 0;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 42px;
+    color: var(--ivory);
+  }
+
+  #close .foot {
+    margin: 74px 0 0;
+    font: 500 15px/1.8 var(--mono);
+    letter-spacing: 0.28em;
+    color: var(--lapis);
+    text-transform: uppercase;
+  }
+
+  #close .foot span { color: var(--edge); padding: 0 10px; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1. hook -->
+  <section class="scene" id="hook">
+    <div class="inner">
+      <h1 id="hook-title">Let there be pixels.</h1>
+      <div class="rule" id="hook-rule"></div>
+      <p class="meta" id="hook-meta">Mythology, reconstructed <span>·</span> Windows &amp; macOS</p>
+    </div>
+  </section>
+
+  <!-- 2. source -->
+  <section class="scene" id="source">
+    <figure class="frame portrait" id="src-frame">
+      <img src="assets/showcase-spectrum-thor.png" alt="">
+    </figure>
+    <div class="cap">
+      <h2 class="head" id="src-head">Gods,<br>rebuilt.</h2>
+      <div class="hair" id="src-hair"></div>
+      <p class="verse" id="src-verse">A hand, a spark, a screen of marks.</p>
+      <p class="body" id="src-body">Classical paintings enter as light and leave as structure. Every mark is placed by an algorithm.</p>
+      <p class="meta" id="src-names" style="margin-top:26px">The Creation of Adam · Tor’s Fight with the Giants · Oedipus and the Sphinx</p>
+    </div>
+  </section>
+
+  <!-- 3. press -->
+  <section class="scene" id="press">
+    <figure class="frame" id="press-frame">
+      <img src="assets/app-hero.png" alt="">
+    </figure>
+    <div class="cap">
+      <h2 class="head" id="press-head">One touch.<br>Forty-six<br>creations.</h2>
+      <div class="stat" id="press-s1">
+        <div class="bar"></div>
+        <p>46 algorithms <span>— Bayer to blue noise</span></p>
+      </div>
+      <div class="stat" id="press-s2">
+        <div class="bar"></div>
+        <p>24 palettes <span>— Game Boy to ice</span></p>
+      </div>
+      <div class="stat" id="press-s3">
+        <div class="bar"></div>
+        <p>13 effects <span>— grain to pixel sort</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. type case -->
+  <section class="scene" id="type">
+    <figure class="frame" id="type-frame">
+      <img src="assets/app-text.png" alt="">
+    </figure>
+    <div class="cap">
+      <h2 class="head" id="type-head">The proof,<br>inscribed.</h2>
+      <div class="hair" id="type-hair"></div>
+      <p class="body" id="type-body">Print the image as characters instead of pixels, then carry the grid away as plain text.</p>
+      <p class="meta" id="type-meta" style="margin-top:26px">Character ramp · Export as .txt</p>
+    </div>
+  </section>
+
+  <!-- 5. proofs -->
+  <section class="scene" id="many">
+    <figure class="card c1" id="many-c1"><img src="assets/showcase-spectrum-thor.png" alt=""></figure>
+    <figure class="card c2" id="many-c2"><img src="assets/showcase-void-bloom.png" alt=""></figure>
+    <figure class="card c3" id="many-c3"><img src="assets/app-mono.png" alt=""></figure>
+    <div class="cap">
+      <h2 class="head" id="many-head">One image,<br>many<br>readings.</h2>
+      <div class="hair" id="many-hair"></div>
+      <p class="body" id="many-body">Ordered screens, noise, error diffusion, a hand-picked palette. Each is a different account of the same painting.</p>
+    </div>
+  </section>
+
+  <!-- 6. close -->
+  <section class="scene" id="close">
+    <div class="inner">
+      <img class="mark" id="close-mark" src="assets/mark.png" alt="">
+      <p class="wordmark" id="close-word">Dither Studio</p>
+      <p class="tagline" id="close-tagline">Let there be pixels.</p>
+      <p class="foot" id="close-foot">Free<span>·</span>Offline<span>·</span>Windows &amp; macOS</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = function (id) { return document.getElementById(id); };
+
+  /* ---- time ---- */
+
+  const T = { hook: 0, source: 5.0, press: 11.0, type: 20.0, many: 26.6, close: 33.4, end: 40 };
+  const DURATION = T.end;
+
+  const clamp = function (v) { return v < 0 ? 0 : v > 1 ? 1 : v; };
+  const span = function (t, a, b) { return b <= a ? (t >= b ? 1 : 0) : clamp((t - a) / (b - a)); };
+  const out = function (x) { return 1 - Math.pow(1 - x, 3); };
+  const io = function (x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+
+  // 24fps, and every move is held for two frames: hand-cranked, not smoothed.
+  const onTwos = function (t) { return Math.round(t * 12) / 12; };
+
+  function show(el, alpha) {
+    el.style.opacity = alpha.toFixed(4);
+    el.style.visibility = alpha < 0.002 ? 'hidden' : 'visible';
+  }
+
+  function rise(el, t, at, dur) {
+    const k = out(span(t, at, at + (dur || 0.5)));
+    el.style.opacity = k.toFixed(4);
+    el.style.transform = 'translateY(' + ((1 - k) * 16).toFixed(2) + 'px)';
+  }
+
+  /* ---- the scenes ---- */
+
+  const hook = $('hook');
+  const source = $('source');
+  const press = $('press');
+  const type = $('type');
+  const many = $('many');
+  const close = $('close');
+
+  function seek(seconds) {
+    const t = Math.max(0, Math.min(DURATION, Number(seconds) || 0));
+    const m = onTwos(t);
+
+    /* 1. hook: the words of creation, a rule, then what the studio is. */
+    show(hook, t < 4.55 ? 1 : 1 - out(span(t, 4.55, 5.0)));
+    rise($('hook-title'), t, 0.12, 0.85);
+    $('hook-rule').style.transform = 'scaleX(' + out(span(t, 0.55, 1.35)).toFixed(4) + ')';
+    $('hook-meta').style.opacity = out(span(t, 1.15, 1.75)).toFixed(4);
+
+    /* 2. source: a portrait proof, a slow push, the argument in three voices. */
+    show(source, out(span(t, 4.8, 5.35)) * (1 - out(span(t, 10.6, 11.0))));
+    const sp = io(span(m, 5.0, 11.0));
+    $('src-frame').style.transform = 'scale(' + (1.02 + sp * 0.05).toFixed(4) + ')';
+    rise($('src-head'), t, 5.15);
+    $('src-hair').style.transform = 'scaleX(' + out(span(t, 5.7, 6.4)).toFixed(4) + ')';
+    rise($('src-verse'), t, 5.95, 0.6);
+    rise($('src-body'), t, 6.45, 0.6);
+    $('src-names').style.opacity = out(span(t, 7.1, 7.6)).toFixed(4);
+
+    /* 3. press: the real window, pushing in, and three counts from it. */
+    show(press, out(span(t, 10.8, 11.35)) * (1 - out(span(t, 19.5, 20.0))));
+    const pp = io(span(m, 11.0, 20.0));
+    $('press-frame').style.transform =
+      'translate(' + (-8 * pp).toFixed(2) + 'px,' + (-10 * pp).toFixed(2) + 'px) scale(' + (1 + pp * 0.055).toFixed(4) + ')';
+    rise($('press-head'), t, 11.15);
+    [['press-s1', 12.3], ['press-s2', 13.5], ['press-s3', 14.7]].forEach(function (pair) {
+      const el = $(pair[0]);
+      const k = out(span(t, pair[1], pair[1] + 0.5));
+      el.style.opacity = k.toFixed(4);
+      el.style.transform = 'translateY(' + ((1 - k) * 14).toFixed(2) + 'px)';
+      el.querySelector('.bar').style.transform = 'scaleX(' + out(span(t, pair[1] + 0.1, pair[1] + 0.7)).toFixed(4) + ')';
+    });
+
+    /* 4. type case: the same press, with the characters showing. */
+    show(type, out(span(t, 19.8, 20.4)) * (1 - out(span(t, 26.2, 26.65))));
+    const tp = io(span(m, 20.0, 26.6));
+    $('type-frame').style.transform = 'translateY(' + (-6 * tp).toFixed(2) + 'px) scale(' + (1.01 + tp * 0.045).toFixed(4) + ')';
+    rise($('type-head'), t, 20.15);
+    $('type-hair').style.transform = 'scaleX(' + out(span(t, 20.7, 21.4)).toFixed(4) + ')';
+    rise($('type-body'), t, 21.05, 0.6);
+    $('type-meta').style.opacity = out(span(t, 21.8, 22.3)).toFixed(4);
+
+    /* 5. proofs: three finished pieces drift at three speeds. */
+    show(many, out(span(t, 26.4, 27.0)) * (1 - out(span(t, 33.1, 33.5))));
+    const mp = io(span(m, 26.6, 33.4));
+    [['many-c1', 26], ['many-c2', -34], ['many-c3', 14]].forEach(function (pair) {
+      $(pair[0]).style.transform = 'translateY(' + (pair[1] * mp).toFixed(2) + 'px)';
+    });
+    rise($('many-head'), t, 26.7);
+    $('many-hair').style.transform = 'scaleX(' + out(span(t, 27.3, 28.0)).toFixed(4) + ')';
+    rise($('many-body'), t, 27.65, 0.6);
+
+    /* 6. close: the mark settles, the name, the offer. Holds to the last frame. */
+    show(close, out(span(t, 33.3, 33.9)));
+    const cp = out(span(m, 33.4, 34.5));
+    $('close-mark').style.opacity = cp.toFixed(4);
+    $('close-mark').style.transform = 'scale(' + (0.94 + cp * 0.06).toFixed(4) + ')';
+    rise($('close-word'), t, 33.9, 0.7);
+    rise($('close-tagline'), t, 34.6, 0.7);
+    rise($('close-foot'), t, 35.5, 0.7);
+  }
+
+  window.seek = seek;
+  window.DURATION = DURATION;
+
+  const params = new URLSearchParams(location.search);
+  if (params.has('render')) {
+    seek(Number(params.get('t')) || 0);
+    return;
+  }
+
+  // Watching it: loop, and scale to whatever window it is opened in.
+  const stage = $('stage');
+  function fit() {
+    const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = 'scale(' + k + ')';
+  }
+  addEventListener('resize', fit);
+  fit();
+
+  let start = null;
+  function tick(now) {
+    if (start === null) start = now;
+    seek(((now - start) / 1000) % DURATION);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
