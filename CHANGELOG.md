@@ -29,6 +29,26 @@ refuses to draw a setting the app does not have;
 [`tools/check-examples.js`](tools/check-examples.js) then checks the four against
 each other in Node, which is what `test.yml` runs.
 
+## 0.2.5 — 2026-11-04
+
+**The window is navigable now.** Eleven panels used to wrap onto three rows of
+tabs and push the proof down the stage; they are one row that scrolls, with a
+filter beside it, and a station's header stays pinned while its body moves.
+`Ctrl+K` opens a palette over everything the console can do — algorithms,
+palettes, recipes, panels, exports — so a setting can be reached by typing its
+name instead of hunting for the knob.
+
+**The source row has a picker of its own.** The one button that stepped to the
+next built-in painting is now a preview strip with previous and next, which is
+what the three paintings always needed.
+
+Also in this version: tooltips on every rail control, and two geometry faults
+fixed — a dock column that would not shrink its last track, and `overflow: clip`
+letting the panel list scroll the whole stage. The launch film is in the
+repository ([`publicity/`](publicity/)) but not in the package: every frame of it
+is either the real window, captured through the app's own harness, or the
+engine's own output.
+
 ## 0.2.4 — 2026-10-13
 
 **The release job attaches the installers again.** The job that fills a tag's
