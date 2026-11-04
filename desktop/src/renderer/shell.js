@@ -379,6 +379,11 @@
       note(hidden ? 'Panels hidden' : 'Panels back');
       refresh();
     },
+    // The palette is the renderer's own module, like the tour: looked up when
+    // the key is pressed, so the order the two files load never matters.
+    'view-palette': function () {
+      if (window.DitherPalette) window.DitherPalette.toggle();
+    },
     'help-guide': function () {
       desktop.openGuide().then(function (out) {
         note(out && out.error ? out.error : 'The guide opened in your editor');
@@ -485,7 +490,10 @@
 
   const TOOLS = {
     open: function () { run('file-open'); },
-    demo: function () { run('file-demo'); },
+    // The rail's picture button is a way *into* the picker, not a second way to
+    // shuffle it: the Source station holds the dropdown and the thumbnails.
+    // Ctrl+D still steps through the table, for hands that live on the keys.
+    demo: function () { run('window-panel-open', 'source'); },
     random: function () { run('edit-random'); },
     webcam: function () { if ($('video-webcam')) $('video-webcam').click(); },
     video: function () { run('file-open-clip'); },
@@ -517,6 +525,49 @@
     }
     button.addEventListener('click', function () { if (TOOLS[name]) TOOLS[name](); });
   });
+
+  // The rail is icon-only, which is fast for the hand and slow for the eye. A
+  // tooltip names the tool on hover (after a beat, so sweeping past does not
+  // flash labels) and instantly on keyboard focus. It replaces the platform
+  // title, whose one-second delay makes an unfamiliar icon feel like a guess.
+  const tip = document.createElement('div');
+  tip.className = 'tip';
+  tip.hidden = true;
+  document.body.appendChild(tip);
+  let tipTimer = 0;
+
+  function hideTip() {
+    clearTimeout(tipTimer);
+    tip.hidden = true;
+  }
+
+  function showTip(button) {
+    const label = button.getAttribute('data-label');
+    if (!label) return;
+    tip.textContent = label;
+    tip.hidden = false;
+    const rect = button.getBoundingClientRect();
+    tip.style.left = Math.round(rect.right + 8) + 'px';
+    tip.style.top = Math.round(rect.top + rect.height / 2 - tip.offsetHeight / 2) + 'px';
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.toolrail .tool'), function (button) {
+    const label = button.getAttribute('title');
+    if (label) {
+      button.setAttribute('data-label', label);
+      button.removeAttribute('title');
+    }
+    button.addEventListener('mouseenter', function () {
+      clearTimeout(tipTimer);
+      tipTimer = setTimeout(function () { showTip(button); }, 380);
+    });
+    button.addEventListener('mouseleave', hideTip);
+    button.addEventListener('click', hideTip);
+    button.addEventListener('focus', function () { showTip(button); });
+    button.addEventListener('blur', hideTip);
+  });
+
+  window.addEventListener('blur', hideTip);
 
   // ---- drop veil, recording pulse, slider fills ----
 
@@ -592,7 +643,7 @@
     }
   });
 
-  window.addEventListener('resize', paintRanges);
+  window.addEventListener('resize', function () { paintRanges(); hideTip(); });
 
   // ---- boot ----
 

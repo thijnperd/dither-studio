@@ -64,10 +64,11 @@ Four ways in, all of them native:
   Windows; double-clicking one opens it here. A second launch focuses the window
   that is already running instead of starting another.
 
-The **Source** panel shows what is loaded, and its own control offers the built-in
-sources again: `Ctrl+D` steps on to the next painting, and after the third it
-comes round to the first. The caption bar and the
-document tab both name whatever is on the stage.
+The **Source** panel shows what is loaded and offers the built-in sources as a
+picker: a dropdown with all three names, a thumbnail of each painting underneath,
+and the arrows beside the dropdown to step through them. `Ctrl+D` still steps on
+to the next painting from anywhere, and after the third it comes round to the
+first. The caption bar and the document tab both name whatever is on the stage.
 
 **Clips and webcams** live in the **Motion** panel, and in *File ▸ Open Clip…*
 (`Ctrl+Shift+O`). The transport appears under the proof; see §8.
@@ -84,18 +85,27 @@ web page:
 - **Options bar** — how you are *looking*: zoom controls and the zoom readout,
   the update mode (Full / Live / Still), Compare, Random, Copy PNG, the export
   scale and Export PNG.
-- **Tool rail** — the verbs worth a button: open, demo, compare (hold to see the
-  source), random, webcam, clip, record, presets. A tool that is engaged lights
-  up in the accent colour.
+- **Tool rail** — the verbs worth a button: open, the built-in sources, compare
+  (hold to see the source), random, webcam, clip, record, presets. Hover or tab
+  to an icon and a tooltip names it; a tool that is engaged lights up in the
+  accent colour.
 - **Document tabs** — the proof's name, its pixel size and the zoom it is at.
 - **The well** — the proof on a checkerboard. Drag to pan once it is bigger than
   the well; `+` / `−` / `0` zoom.
-- **Dock** — ten panel tabs over one scrolling column of collapsible panels.
-  Click a tab to jump to its panel. Every slider draws the part it has travelled
-  in the accent colour, and every value can be read at a glance on the right.
-- **Two status lines** — the viewport bar (update mode, video transport) and the
-  status bar (file, size, algorithm, palette, colours, last render time, and the
-  app's own message, e.g. `Saved proof.png`).
+- **Dock** — eleven panel tabs over one scrolling column of collapsible panels.
+  The strip is a single row that scrolls sideways and keeps the panel you are in
+  visible; station headers stay pinned at the top of the column while you scroll
+  it. Click a tab to jump to its panel, or press `Ctrl+K` and type what you want.
+  Every slider draws the part it has travelled in the accent colour.
+- **Find anything** — `Ctrl+K`, or the magnifier at the right of the panel tabs,
+  opens one field over the whole app: the stations, all 46 algorithms, the
+  palettes, tone maps, effects, recipes and the common verbs. ↑ ↓ move, Enter
+  runs, Escape closes. It is the fastest way to an algorithm whose name you only
+  half remember.
+- **Two status lines** — the status bar (file, size, algorithm, palette, colours,
+  last render time, and the app's own message, e.g. `Saved proof.png`), and the
+  viewport bar under the proof, which appears only while a clip is loaded and
+  carries the transport.
 
 ### Menu by menu
 

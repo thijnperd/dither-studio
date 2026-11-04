@@ -59,7 +59,9 @@
   }
 
   const el = {
-    open: $('open'), demo: $('demo'), file: $('file'),
+    open: $('open'), file: $('file'),
+    sample: $('sample'), samplePrev: $('sample-prev'), sampleNext: $('sample-next'),
+    sampleStrip: $('sample-strip'),
     algorithm: $('algorithm'), palette: $('palette'),
     algorithmPrev: $('algorithm-prev'), algorithmNext: $('algorithm-next'),
     palettePrev: $('palette-prev'), paletteNext: $('palette-next'),
@@ -327,6 +329,7 @@
   // may not be able to scroll a late station all the way up). The pin drops as
   // soon as the user scrolls the rail themselves.
   let jumpPinned = null;
+  let lastStationChip = null;
 
   function unpinJump() { jumpPinned = null; markJump(); }
 
@@ -366,9 +369,23 @@
         if (group && group.getBoundingClientRect().top <= railTop) current = g.id;
       });
     }
+    let currentChip = null;
     Array.prototype.forEach.call(el.jump.children, function (chip) {
-      chip.setAttribute('aria-current', chip.getAttribute('data-target') === current ? 'true' : 'false');
+      const on = chip.getAttribute('data-target') === current;
+      chip.setAttribute('aria-current', on ? 'true' : 'false');
+      if (on) currentChip = chip;
     });
+    // The strip is one scrolling row (see panels.css), so the station you are
+    // in has to be brought into view rather than assumed visible. This scrolls
+    // the strip itself by a measured amount: scrollIntoView() walks up every
+    // scrollable ancestor, and it took the whole window sideways with it.
+    if (currentChip && current !== lastStationChip) {
+      lastStationChip = current;
+      const box = currentChip.getBoundingClientRect();
+      const strip = el.jump.getBoundingClientRect();
+      if (box.left < strip.left) el.jump.scrollLeft -= strip.left - box.left + 4;
+      else if (box.right > strip.right) el.jump.scrollLeft += box.right - strip.right + 4;
+    }
     currentStationId = current;
     syncConsoleNote();
   }
@@ -1227,22 +1244,92 @@
   // getImageData throws.
   const SAMPLES = window.DitherSamples || [];
   let sampleStep = 0;
+  let sampleIndex = 0;
 
-  function loadSample() {
+  // Which painting is on the table. The dropdown, the strip of thumbnails and
+  // the station's summary all read this one number, so they cannot disagree.
+  function markSample(at) {
+    sampleIndex = at;
+    if (el.sample) el.sample.value = String(at);
+    if (el.sampleStrip) {
+      Array.prototype.forEach.call(el.sampleStrip.children, function (tile, index) {
+        const on = index === at;
+        tile.classList.toggle('is-on', on);
+        tile.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    setNote(el.noteSource, SAMPLES[at] ? SAMPLES[at].name : '—');
+  }
+
+  // `at` is an index when the picker chose one; a bare call steps to the next
+  // sample, which is what Ctrl+D and File > Built-in Source mean. The step is
+  // kept apart from the choice so the shortcut still cycles.
+  function loadSample(at) {
     if (!SAMPLES.length) {
       // Only reachable if samples.js was left out of a build: say so instead
       // of drawing something the app no longer has.
       el.statStatus.textContent = 'No built-in sources are installed';
       return;
     }
-    const sample = SAMPLES[sampleStep];
-    sampleStep = (sampleStep + 1) % SAMPLES.length;
+    const index = typeof at === 'number' && SAMPLES[at] ? at : sampleStep;
+    const sample = SAMPLES[index];
+    sampleStep = (index + 1) % SAMPLES.length;
     const img = new Image();
-    img.onload = function () { loadBitmap(img, sample.name); };
+    img.onload = function () {
+      loadBitmap(img, sample.name);
+      markSample(index);
+    };
     img.onerror = function () {
       el.statStatus.textContent = 'Could not read the built-in sample';
     };
     img.src = sample.data;
+  }
+
+  function stepSample(delta) {
+    if (!SAMPLES.length) return;
+    loadSample((sampleIndex + delta + SAMPLES.length) % SAMPLES.length);
+  }
+
+  // The Source panel's picker: a dropdown for the name, and the paintings
+  // themselves underneath it. Three names ask the reader to remember what
+  // "Oedipus and the Sphinx" looks like; the strip answers in one look.
+  function buildSamplePicker() {
+    // A build without samples.js keeps Open image… and drops the picker
+    // entirely, rather than offering an empty list to choose from.
+    if (!SAMPLES.length) {
+      const pick = $('sample-pick');
+      if (pick) pick.hidden = true;
+      return;
+    }
+    if (el.sample) {
+      SAMPLES.forEach(function (sample, index) {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = sample.name;
+        el.sample.appendChild(option);
+      });
+      el.sample.addEventListener('change', function () {
+        loadSample(parseInt(el.sample.value, 10) || 0);
+      });
+    }
+    if (el.samplePrev) el.samplePrev.addEventListener('click', function () { stepSample(-1); });
+    if (el.sampleNext) el.sampleNext.addEventListener('click', function () { stepSample(1); });
+    if (!el.sampleStrip) return;
+    SAMPLES.forEach(function (sample, index) {
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'sample-tile';
+      tile.setAttribute('aria-pressed', 'false');
+      tile.setAttribute('aria-label', 'Use ' + sample.name);
+      tile.title = sample.name;
+      const img = document.createElement('img');
+      img.src = sample.data;
+      img.alt = '';
+      img.decoding = 'async';
+      tile.appendChild(img);
+      tile.addEventListener('click', function () { loadSample(index); });
+      el.sampleStrip.appendChild(tile);
+    });
   }
 
   // ---- export ----
@@ -1389,6 +1476,7 @@
     buildEffectList();
     syncEffectChoices();
     buildPresetSelect();
+    buildSamplePicker();
 
     BINDINGS.forEach(function (binding) {
       binding.input.addEventListener('input', function () {
@@ -1490,8 +1578,6 @@
     el.copy.addEventListener('click', copyPNG);
     el.random.addEventListener('click', randomize);
 
-    el.demo.addEventListener('click', loadSample);
-    el.demo.title = 'Built-in source';
     el.open.addEventListener('click', openImageDialog);
     el.file.addEventListener('change', function () {
       loadFile(el.file.files && el.file.files[0]);
@@ -1660,7 +1746,7 @@
     setQuality(state.quality);
     syncUI();
     bindVideo();
-    loadSample();
+    loadSample(0);
   }
 
   // ---- video mode ----

@@ -463,6 +463,72 @@
   tour.reset();
   await wait(50);
 
+  /* ---- the command palette ---------------------------------------- */
+
+  const palette = window.DitherPalette;
+  check('the command palette is there', !!palette && typeof palette.open === 'function');
+  if (palette) palette.open();
+  await wait(60);
+  check('the palette opens, with the field ready to type', palette.isOpen() === true &&
+    document.activeElement === document.getElementById('cmdk-input'));
+  const names = palette.search('bayer');
+  report.notes.palette = palette.diagnose('bayer');
+  check('the palette finds an algorithm by name', names.length > 0 && /Bayer/.test(names[0]),
+    names.slice(0, 3).join(', '));
+  const rooms = palette.search('preset');
+  check('the palette finds a station as well',
+    rooms.some(function (name) { return /Open Presets/.test(name); }), rooms.slice(0, 3).join(', '));
+  palette.close();
+  await wait(40);
+  check('and Escape-grade closing puts the window back', palette.isOpen() === false);
+  check('the palette did not scroll the window sideways',
+    document.scrollingElement.scrollLeft === 0 && document.body.scrollLeft === 0,
+    document.scrollingElement.scrollLeft + ' / ' + document.body.scrollLeft);
+
+  /* ---- the built-in source picker --------------------------------- */
+
+  const sampleSelect = document.getElementById('sample');
+  const sampleTiles = document.querySelectorAll('#sample-strip .sample-tile');
+  check('the Source panel offers a picker for the built-in sources',
+    !!sampleSelect && sampleSelect.options.length === window.DitherSamples.length,
+    sampleSelect ? sampleSelect.options.length : 0);
+  check('and a thumbnail for each of them, with one current',
+    sampleTiles.length === window.DitherSamples.length && !!document.querySelector('#sample-strip .sample-tile.is-on'),
+    sampleTiles.length);
+  sampleSelect.value = '0';
+  sampleSelect.dispatchEvent(new Event('change'));
+
+  /* ---- the dock column holds its width ---------------------------- */
+
+  // The dock is a 336px column. Its tab strip is one scrolling row, and a grid
+  // item's implicit track is sized to min-content: a strip that refused to
+  // shrink silently widened every panel row past the window edge. Measured,
+  // not read off a class.
+  const dockEl = document.querySelector('.dock');
+  const dockBox = dockEl ? dockEl.getBoundingClientRect() : null;
+  const past = [];
+  if (dockBox) {
+    const rows = dockEl.querySelectorAll('.dock-head, .dock-tabs, .dock-body, .rail-scroll, .dock-hint, .group-body');
+    rows.forEach(function (el) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.right > dockBox.right + 1) past.push((el.className || el.id).split(' ')[0]);
+    });
+  }
+  check('nothing in the dock is laid out past its own column',
+    !!dockBox && past.length === 0, past.slice(0, 4).join(', '));
+
+  const strip = document.getElementById('jump');
+  const findBtn = document.getElementById('dock-find');
+  check('the tab strip scrolls sideways and the find button stays inside the window',
+    !!strip && !!findBtn && !!dockBox &&
+      strip.scrollWidth > strip.clientWidth + 1 &&
+      findBtn.getBoundingClientRect().right <= window.innerWidth + 1 &&
+      findBtn.getBoundingClientRect().left >= dockBox.left - 1,
+    strip && findBtn ? strip.scrollWidth + 'px in ' + strip.clientWidth + 'px' : null);
+  await wait(240);
+  check('choosing one loads exactly that painting',
+    DS.state().name === window.DitherSamples[0].name, DS.state().name);
+
   /* ---- the caption and the status line follow the app -------------- */
 
   const beforeStep = DS.state().name;

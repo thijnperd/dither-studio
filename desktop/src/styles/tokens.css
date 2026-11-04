@@ -11,6 +11,10 @@
  */
 
 :root {
+  /* Native widgets (scrollbars, date/colour pickers, the caret) follow the
+     app's ground rather than the OS light theme. */
+  color-scheme: dark;
+
   /* ---- the house palette (frozen web versions use these exact values) ---- */
   --bg: #0e0f13;
   --panel: #15171d;
@@ -52,11 +56,17 @@
   --font-ui: "Segoe UI", -apple-system, "SF Pro Text", system-ui, Roboto, sans-serif;
   --fs-app: 12.5px;
   --fs-label: 11.5px;
-  --fs-small: 10.5px;
+  /* The smallest step carries hints, station notes and the status bar. 10.5px
+     mono on a dark ground is legible only if you lean in; 11px is the floor. */
+  --fs-small: 11px;
 
   /* ---- motion: quick, ease-out, never showy ---- */
-  --fast: 120ms ease;
-  --med: 160ms ease;
+  /* The built-in easings are too weak to read as deliberate at these
+     durations, so the two curves are authored once and used everywhere. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --fast: 120ms var(--ease-out);
+  --med: 180ms var(--ease-out);
 
   /* ---- a control that reads as a physical thing ---- */
   --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -71,6 +81,30 @@ html, body { height: 100%; }
 /* An author `display` must never defeat the `hidden` attribute. */
 [hidden] { display: none !important; }
 
+/* Browser surfaces that belong to no design system until one claims them. */
+::selection {
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  color: #ffffff;
+}
+
+/* A search hit and a keycap both appear inside the app's own chrome. */
+mark {
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--edge);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--raised);
+  color: var(--text);
+  font: var(--fs-small)/1.3 var(--font);
+  white-space: nowrap;
+}
+
 body {
   margin: 0;
   display: grid;
@@ -78,7 +112,11 @@ body {
   background: var(--bg);
   color: var(--text);
   font: var(--fs-app)/1.45 var(--font);
-  overflow: hidden;
+  /* clip, not hidden: both hide the overflow, but only hidden leaves the body
+     scrollable, and a stray scrollIntoView was taking the whole window
+     sideways by a couple of hundred pixels (the dock ended up sliced off the
+     right edge). An application window never scrolls. */
+  overflow: clip;
   /* An application, not a page: no text selection, no rubber-banding, no
      accidental drags leaving the window. Fields opt back in below. */
   user-select: none;
@@ -87,6 +125,10 @@ body {
 }
 
 input, textarea, select { user-select: text; -webkit-user-select: text; }
+
+/* The caret is a browser surface too: it takes the accent rather than the OS
+   highlight, so typing into the seed field looks like part of this app. */
+input, textarea { caret-color: var(--accent); }
 
 /* Frameless window: the caption bar is the drag handle, its buttons are not. */
 .titlebar { -webkit-app-region: drag; }
@@ -129,8 +171,32 @@ button {
 
 .btn:active, .obtn:active, .seg-btn:active, .btn-step:active { background: var(--pressed); }
 
+/* A press has to be felt, not only seen: the control gives a hair under the
+   pointer. 90 ms, so holding a click does not look like drift. */
+.btn, .obtn, .seg-btn, .btn-step, .jump-chip, .dock-find, .icon-btn, .sample-tile {
+  transition: transform 90ms var(--ease-out), background var(--fast),
+    border-color var(--fast), color var(--fast);
+}
+
+.btn:active, .obtn:active, .seg-btn:active, .btn-step:active,
+.jump-chip:active, .dock-find:active, .icon-btn:active, .sample-tile:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .obtn, .seg-btn, .btn-step, .jump-chip, .dock-find, .icon-btn, .sample-tile {
+    transition: none;
+  }
+  .btn:active, .obtn:active, .seg-btn:active, .btn-step:active,
+  .jump-chip:active, .dock-find:active, .icon-btn:active, .sample-tile:active {
+    transform: none;
+  }
+}
+
 .btn:focus-visible, .obtn:focus-visible, .wbtn:focus-visible, .tool:focus-visible,
-.menu:focus-visible, .seg-btn:focus-visible, .btn-step:focus-visible, .jump-chip:focus-visible {
+.menu:focus-visible, .seg-btn:focus-visible, .btn-step:focus-visible,
+.jump-chip:focus-visible, .dock-find:focus-visible, .menu-item:focus-visible,
+.sample-tile:focus-visible {
   outline: none;
   box-shadow: var(--focus);
 }
@@ -254,6 +320,8 @@ input[type="range"]::-moz-range-thumb {
   color: var(--muted);
   font-size: var(--fs-small);
   white-space: nowrap;
+  /* Readouts are numbers: they must not reflow as a value gains a digit. */
+  font-variant-numeric: tabular-nums;
 }
 
 .readout b { color: var(--text); font-weight: 600; }

@@ -13,6 +13,13 @@
 
 .dock {
   display: grid;
+  /* An implicit column is sized to its items' min-content, and the tab strip's
+     min-content is every chip plus the find button: the column quietly grew to
+     ~370px inside a 336px dock and every panel row was laid out past the right
+     edge (the magnifier and half of "Effects" fell outside the window). The
+     track is pinned to the dock's own width instead, so the strip scrolls and
+     the panels keep their column. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
   border-left: 1px solid var(--edge-soft);
@@ -21,21 +28,54 @@
 
 /* ---------------------------------------------------------------- panel tabs */
 
-/* A group of stacked panel tabs, the way an editor groups its panels: the
-   selected one is lifted out of the strip and reads as the front panel. */
-.dock-tabs {
+/* One row, always. Eleven chips at 336px used to wrap onto a second line,
+   which pushed the panels down and read as a layout fault; the strip scrolls
+   sideways instead, and the find button stays pinned at its right. */
+.dock-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  padding: 5px 6px 0;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 4px 6px 0;
   border-bottom: 1px solid var(--edge-soft);
   background: var(--chrome-2);
 }
 
+.dock-tabs {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.dock-tabs::-webkit-scrollbar { height: 0; }
+
+.dock-find {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--dock-tab);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.dock-find:hover { background: var(--hover); color: var(--accent); }
+.dock-find svg { display: block; }
+
 .jump-chip {
   flex: 0 0 auto;
-  height: 22px;
-  padding: 0 9px;
+  height: 23px;
+  padding: 0 8px;
   border: 1px solid transparent;
   border-bottom: none;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
@@ -67,6 +107,7 @@
 
 .dock-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
 }
@@ -76,25 +117,37 @@
   overflow-y: auto;
   padding: 0 10px 10px;
   scroll-behavior: smooth;
+  /* A panel list that hands its scroll to the page turns one extra wheel tick
+     into a jump; the list keeps it. The padding is the sticky header's own
+     height, so a station scrolled to the top lands below its header. */
+  overscroll-behavior: contain;
+  scroll-padding-top: 30px;
 }
 
-/* The hint line at the foot of the dock carries four shortcuts. As a single
- * clipped line it was unreadable at 336px wide, so it wraps instead. */
+/* The hint line at the foot of the dock carries four shortcuts on one line at
+ * 336px, with an ellipsis as the safety net if a translation runs long. */
 .dock-hint {
   margin: 0;
-  padding: 7px 10px;
+  padding: 6px 10px;
   border-top: 1px solid var(--edge-soft);
+  overflow: hidden;
   color: var(--muted);
   font-size: var(--fs-small);
-  line-height: 1.55;
-  white-space: normal;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .dock-hint b { color: var(--text); font-weight: 600; }
 
 /* --------------------------------------------------------------------- panels */
 
-.group { border-bottom: 1px solid var(--edge-soft); }
+.group {
+  border-bottom: 1px solid var(--edge-soft);
+  /* The header is sticky, so "bring this station into view" must leave room
+     for it or the heading arrives under its own bar. */
+  scroll-margin-top: 30px;
+}
 
 .group:first-child { border-top: 1px solid var(--edge-soft); }
 
@@ -102,22 +155,34 @@
 
 /* The panel header. Caret, uppercase name, then the note pushed right: the
    note is the panel's state readout while it is collapsed. */
+/* The header stays at the top of the scroll port while its station is open:
+   ten stations in one column, and a slider halfway down it used to leave no
+   way to tell which station the thumb belonged to. */
 .group-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 7px;
-  width: 100%;
-  height: 28px;
-  padding: 0 2px;
+  width: calc(100% + 20px);
+  height: 30px;
+  margin: 0 -10px;
+  padding: 0 12px;
   border: none;
-  background: none;
+  background: var(--dock);
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: default;
 }
 
-.group-head:hover .group-name { color: var(--accent); }
+/* Open stations name themselves at full strength; closed ones step back to the
+   muted ink, so a scan of the column shows what is unfolded. */
+.group[data-open="true"] > .group-head .group-name { color: var(--text); }
+.group[data-open="false"] > .group-head .group-name { color: var(--muted); }
+
+.group > .group-head:hover .group-name { color: var(--accent); }
 
 .group-head:hover .caret { color: var(--text); }
 
@@ -199,6 +264,7 @@
   color: var(--muted);
   font-size: var(--fs-small);
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .hint b { color: var(--text); font-weight: 600; }
@@ -254,6 +320,58 @@
   border-radius: 3px;
   /* Light inks need an edge of their own against the dock's dark ground. */
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* ------------------------------------------------------- the built-in sources */
+
+/* A name list asks the reader to remember what a painting looks like; the
+   strip answers in one look. The dropdown stays for a known target and for
+   the keyboard, and both write the same index. */
+.sample-pick {
+  display: grid;
+  gap: 6px;
+}
+
+.sample-label {
+  color: var(--muted);
+  font-size: var(--fs-label);
+}
+
+.row-stepper-tight { grid-template-columns: minmax(0, 1fr) 24px 24px; }
+
+.samples {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.sample-tile {
+  height: 52px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  box-shadow: none;
+}
+
+.sample-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.75;
+  filter: saturate(0.65);
+  transition: opacity var(--fast), filter var(--fast);
+}
+
+.sample-tile:hover { border-color: color-mix(in srgb, var(--muted) 55%, var(--edge)); }
+.sample-tile:hover img,
+.sample-tile.is-on img { opacity: 1; filter: none; }
+
+.sample-tile.is-on {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--edge));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 /* ------------------------------------------------------------------ the stack */

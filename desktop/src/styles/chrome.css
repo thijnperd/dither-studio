@@ -295,7 +295,10 @@
   display: grid;
   grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--dock-w);
   min-height: 0;
-  overflow: hidden;
+  /* Same reason as body: a scrollable work area can be scrolled by
+     scrollIntoView() from anywhere inside it, and the proof then sits off the
+     left edge with the dock cut off. */
+  overflow: clip;
 }
 
 /* -------------------------------------------------------------- tool rail */
@@ -507,6 +510,12 @@
 
 .transport { display: inline-flex; align-items: center; gap: 6px; }
 
+/* The viewport bar exists for the transport. With no clip loaded it is an
+   empty 28px band of chrome, so it leaves until there is something to drive.
+   The transport's own `hidden` flag is the only switch, so the CSS cannot
+   disagree with the app about whether video is on. */
+.viewport-bar:not(:has(#transport:not([hidden]))) { display: none; }
+
 .viewport-bar .readout { font-size: var(--fs-small); }
 
 .viewport-bar .obtn { height: 20px; padding: 0 9px; }
@@ -537,6 +546,12 @@
 .statusbar .readout:last-child {
   padding-right: 0;
   border-right: none;
+}
+
+/* On a narrow window the least load-bearing readouts step out before anything
+   truncates. The proof's size, press, ink and the status stay. */
+@media (max-width: 1120px) {
+  .statusbar .readout.stat-quiet { display: none; }
 }
 
 .stat-sep {
@@ -700,6 +715,156 @@
 
 body.dock-hidden .dock { display: none; }
 
+/* The dock is a fixed column; nothing inside it may widen the window. */
+.dock { min-width: 0; overflow: hidden; }
+
 body.dock-hidden .workarea {
   grid-template-columns: var(--rail-w) minmax(0, 1fr);
+}
+
+/* ============================== the tooltip ============================== */
+
+/* The rail names its tools on hover and on keyboard focus (shell.js places it).
+   No entrance animation: the label is an answer, and answers should be instant. */
+.tip {
+  position: fixed;
+  z-index: 90;
+  max-width: 260px;
+  padding: 4px 8px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text);
+  font: var(--fs-small)/1.4 var(--font-ui);
+  white-space: nowrap;
+  box-shadow: var(--shadow-pop);
+  pointer-events: none;
+}
+
+/* ============================ command palette ============================ */
+
+/* 120 ms of opacity and a 4px lift, then nothing. This is opened hundreds of
+   times a session: an entrance longer than the time it takes to type a word
+   would be felt as the app thinking. */
+.cmdk {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding: 11vh 16px 16px;
+  background: rgba(6, 7, 10, 0.58);
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out);
+}
+
+.cmdk.is-in { opacity: 1; }
+
+.cmdk-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(560px, 100%);
+  max-height: min(64vh, 620px);
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-lg);
+  background: var(--panel-2);
+  box-shadow: var(--shadow-pop);
+  transform: translateY(-4px);
+  transition: transform 120ms var(--ease-out);
+}
+
+.cmdk.is-in .cmdk-card { transform: none; }
+
+.cmdk-field {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--edge-soft);
+}
+
+.cmdk-field svg { flex: 0 0 auto; color: var(--muted); }
+
+.cmdk-field input {
+  flex: 1 1 auto;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--text);
+  font: var(--fs-app)/1 var(--font);
+}
+
+.cmdk-field input:focus { outline: none; border: none; box-shadow: none; }
+.cmdk-field input::placeholder { color: var(--muted); }
+
+.cmdk-esc { flex: 0 0 auto; }
+
+.cmdk-list {
+  min-height: 0;
+  padding: 5px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cmdk-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 30px;
+  padding: 0 9px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: var(--fs-label)/1 var(--font);
+  text-align: left;
+  box-shadow: none;
+}
+
+.cmdk-row.is-on { background: color-mix(in srgb, var(--accent) 20%, var(--panel-2)); }
+.cmdk-row.is-on .cmdk-name { color: #ffffff; }
+
+.cmdk-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cmdk-tag {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+
+.cmdk-row.is-on .cmdk-tag { color: color-mix(in srgb, var(--accent) 45%, #ffffff); }
+
+.cmdk-empty {
+  margin: 0;
+  padding: 18px 14px;
+  color: var(--muted);
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.cmdk-foot {
+  display: flex;
+  gap: 14px;
+  padding: 7px 12px;
+  border-top: 1px solid var(--edge-soft);
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+
+.cmdk-foot kbd { margin-right: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cmdk, .cmdk-card { transition: none; }
 }

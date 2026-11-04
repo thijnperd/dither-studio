@@ -106,6 +106,8 @@
       {
         id: 'view', label: 'View',
         items: [
+          { label: 'Find Anything…', command: 'view-palette', accel: 'CmdOrCtrl+K' },
+          { type: 'sep' },
           { label: 'Zoom In', command: 'view-zoom-in', accel: 'CmdOrCtrl+=' },
           { label: 'Zoom Out', command: 'view-zoom-out', accel: 'CmdOrCtrl+-' },
           { label: 'Fit in Window', command: 'view-zoom-fit', accel: 'CmdOrCtrl+0' },
