@@ -1,0 +1,500 @@
+<!--
+  mograph.html - the second Dither Studio film: tradition becoming technology.
+
+  1920 x 1080, 40 seconds, no audio. Every frame is a function of time:
+  window.seek(t) draws it, so render-mograph.js captures frames instead of
+  recording a player.
+
+  The argument, in shots:
+    0.0  gods        the Creation of Adam, the two hands, the gap
+    5.2  the spark   one pixel, then a block of them
+    9.0  the turn    a dither screen spreads from the spark across the painting
+   15.0  the gods    three paintings, three algorithms, all inked
+   22.2  the press   the real console, then the same proof as characters
+   30.0  many        one painting, two screens (the only colour in the film)
+   35.0  the mark    the close card
+
+  The dither is not a picture of a dither: this page loads the app's own engine
+  (../launcher/dither.js) and runs process() on the frame's chunk grid, 480 x 270,
+  then scales it up NEAREST by four. That is the app's pixelSize 4, exactly.
+  Nothing is loaded from the internet, so it plays from disk in any Chromium
+  launched with --allow-file-access-from-files (that flag is what lets a
+  file:// page read its own pixels; over http it is not needed).
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dither Studio — the mograph</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body { display: grid; place-items: center; }
+  canvas { width: min(100vw, 177.78vh); height: auto; display: block; }
+</style>
+</head>
+<body>
+<canvas id="film" width="1920" height="1080"></canvas>
+<script src="../launcher/dither.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var W = 1920, H = 1080;
+  var DURATION = 40;
+  var canvas = document.getElementById('film');
+  var ctx = canvas.getContext('2d');
+  var Lib = window.DitherLib;
+
+  /* the film's two inks, and the accent it is allowed once */
+  var IVORY = '#EFEADF', LAPIS = '#7E93BE', VOID = '#0B0D12';
+  var SERIF = 'Georgia, "Times New Roman", serif';
+  var MONO = 'Consolas, "Cascadia Mono", ui-monospace, monospace';
+
+  /* ================= art ================= */
+
+  var FILES = {
+    adam: 'assets/gods/adam.jpg',
+    thor: 'assets/gods/thor.jpg',
+    oedipus: 'assets/gods/oedipus.jpg',
+    council: 'assets/gods/council.jpg',
+    god: 'assets/gods/godhand.png',
+    hand: 'assets/gods/adamhand.png',
+    hero: 'assets/app-hero.png',
+    mono: 'assets/app-mono.png',
+    text: 'assets/app-text.png',
+    mark: 'assets/mark.png',
+    spectrum: 'assets/showcase-spectrum-thor.png',
+    bloom: 'assets/showcase-void-bloom.png'
+  };
+  var art = {};
+
+  /* ================= helpers ================= */
+
+  function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function span(t, a, b) { return clamp01((t - a) / (b - a)); }
+  function out(x) { return 1 - Math.pow(1 - x, 3); }
+  function inOut(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+
+  /* cover-fit with a focal point and a zoom, the only camera move in the film */
+  function cover(c, el, o) {
+    var cw = c.canvas.width, ch = c.canvas.height;
+    var zoom = o.zoom || 1;
+    var fx = o.fx === undefined ? 0.5 : o.fx;
+    var fy = o.fy === undefined ? 0.5 : o.fy;
+    var s = Math.max(cw / el.width, ch / el.height) * zoom;
+    var w = el.width * s, h = el.height * s;
+    c.drawImage(el, (cw - w) * fx, (ch - h) * fy, w, h);
+  }
+
+  /* ================= the dither, from the app's own engine ================= */
+
+  /* Two grids, both integer divisions of 1920 x 1080, so a mark is always a
+     whole number of screen pixels: 480 x 270 (4 px marks) and 120 x 68 (16 px
+     marks). pixelSize stays at 1 inside the engine, because the grid IS the
+     pixel size: ask for both and process() downsamples twice, which is how the
+     first cut ended up with 16 px marks where it wanted 4. */
+  var GRIDS = { fine: [480, 270], coarse: [120, 68] };
+  var cache = {};
+
+  function inked(key, el, framing, settings, grid) {
+    if (cache[key]) return cache[key];
+    var dims = GRIDS[grid || 'fine'];
+    var work = document.createElement('canvas');
+    work.width = dims[0]; work.height = dims[1];
+    var workCtx = work.getContext('2d', { willReadFrequently: true });
+    coverAt(workCtx, el, (framing && framing.zoom) || 1);
+    var source = workCtx.getImageData(0, 0, dims[0], dims[1]);
+    var res = Lib.process(source, settings);
+    var data = res.data;
+    var px = new ImageData(new Uint8ClampedArray(data.length === res.width * res.height * 3
+      ? rgbaFromRGB(data, res.width, res.height)
+      : data), res.width, res.height);
+    var made = document.createElement('canvas');
+    made.width = res.width; made.height = res.height;
+    made.getContext('2d').putImageData(px, 0, 0);
+    cache[key] = made;
+    return made;
+  }
+
+  function rgbaFromRGB(rgb, w, h) {
+    var out = new Uint8ClampedArray(w * h * 4);
+    for (var i = 0; i < w * h; i++) {
+      out[i * 4] = rgb[i * 3];
+      out[i * 4 + 1] = rgb[i * 3 + 1];
+      out[i * 4 + 2] = rgb[i * 3 + 2];
+      out[i * 4 + 3] = 255;
+    }
+    return out;
+  }
+
+  /* the tone map re-inks the dither as ink + (paper - ink) * luma, so the ink is
+     where the light is not. Get this pair round the wrong way and every painting
+     comes out as a negative. */
+  var ONES = { palette: 'bw', toneMap: 'custom', toneInk: [11, 13, 18], tonePaper: [239, 234, 223],
+               pixelSize: 1, threshold: 128, seed: 7, ditherStrength: 100 };
+
+  function settings(extra) {
+    var s = {};
+    for (var k in ONES) s[k] = ONES[k];
+    for (var j in extra) s[j] = extra[j];
+    return s;
+  }
+
+  /* the chunk canvas, drawn full frame with crisp pixels */
+  var layer = document.createElement('canvas');
+  layer.width = W; layer.height = H;
+  var layerCtx = layer.getContext('2d');
+
+  function blit(c, source, alpha) {
+    c.save();
+    c.globalAlpha = alpha === undefined ? 1 : alpha;
+    c.imageSmoothingEnabled = false;
+    c.drawImage(source, 0, 0, W, H);
+    c.restore();
+  }
+
+  /* the dither arrives through a mask: a circle from a point, or a wipe */
+  var mask = document.createElement('canvas');
+  mask.width = W; mask.height = H;
+  var maskCtx = mask.getContext('2d');
+
+  function masked(source, paint, alpha) {
+    maskCtx.setTransform(1, 0, 0, 1, 0, 0);
+    maskCtx.globalCompositeOperation = 'source-over';
+    maskCtx.clearRect(0, 0, W, H);
+    maskCtx.imageSmoothingEnabled = false;
+    maskCtx.drawImage(source, 0, 0, W, H);
+    maskCtx.globalCompositeOperation = 'destination-in';
+    paint(maskCtx);
+    maskCtx.globalCompositeOperation = 'source-over';
+    blit(ctx, mask, alpha);
+  }
+
+  function radial(c, x, y, r) {
+    if (r <= 0) return;
+    var g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(0.86, 'rgba(0,0,0,1)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g;
+    c.fillRect(0, 0, W, H);
+  }
+
+  function wipe(c, x) {
+    var g = c.createLinearGradient(x - 90, 0, x + 90, 0);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g;
+    c.fillRect(0, 0, W, H);
+  }
+
+  /* ================= type ================= */
+
+  function caption(t, a, b, head, meta) {
+    var o = Math.min(out(span(t, a, a + 0.5)), 1 - span(t, b - 0.5, b));
+    if (o <= 0.001) return;
+    var rise = (1 - out(span(t, a, a + 0.5))) * 16;
+    ctx.save();
+    ctx.globalAlpha = o;
+
+    /* a caption never sits directly on a screen of marks: an ordered dither is
+       the worst possible backing for type, so the bottom of the frame goes dark */
+    var scrim = ctx.createLinearGradient(0, H - 460, 0, H);
+    scrim.addColorStop(0, 'rgba(9,11,16,0)');
+    scrim.addColorStop(0.45, 'rgba(9,11,16,0.70)');
+    scrim.addColorStop(1, 'rgba(9,11,16,0.93)');
+    ctx.fillStyle = scrim;
+    ctx.fillRect(0, H - 460, W, 460);
+
+    ctx.textBaseline = 'alphabetic';
+    if (head) {
+      ctx.fillStyle = IVORY;
+      ctx.font = '400 76px ' + SERIF;
+      ctx.fillText(head, 120, H - 176 + rise);
+    }
+    if (meta) {
+      ctx.fillStyle = LAPIS;
+      ctx.font = '400 25px ' + MONO;
+      ctx.letterSpacing = '1px';
+      ctx.fillText(meta, 122, H - 120 + rise);
+    }
+    ctx.restore();
+  }
+
+  function centreText(text, y, font, colour, tracking) {
+    ctx.save();
+    ctx.fillStyle = colour;
+    ctx.font = font;
+    if (tracking) ctx.letterSpacing = tracking;
+    ctx.textAlign = 'center';
+    ctx.fillText(text, W / 2, y);
+    ctx.restore();
+  }
+
+  /* ================= shots ================= */
+
+  /* the gap between the two fingers, in the painting's own coordinates: the
+     camera centres it, so the spark sits at the middle of the frame and the
+     pool of dither grows from exactly where the film is looking */
+  var CAM = { px: 0.444, py: 0.402 };
+  var SPARK = { x: W / 2, y: H / 2 };
+
+  function coverAt(c, el, zoom) {
+    var cw = c.canvas.width, ch = c.canvas.height;
+    var s = Math.max(cw / el.width, ch / el.height) * (zoom || 1);
+    var w = el.width * s, h = el.height * s;
+    var x = Math.min(0, Math.max(cw - w, cw / 2 - CAM.px * w));
+    var y = Math.min(0, Math.max(ch - h, ch / 2 - CAM.py * h));
+    c.drawImage(el, x, y, w, h);
+  }
+
+  /* one camera move carries the hook and the spark: a close crop on the two
+     hands, easing back to the whole panel as the first pixel lands. The hands
+     are the painting's own, so there is no cut-out edge anywhere in the film. */
+  function camZoom(t) { return 2.62 - 1.56 * out(span(t, 0.35, 9.0)); }
+
+  function shotHook(t) {
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    coverAt(c.getContext('2d'), art.adam, camZoom(t));
+    ctx.drawImage(c, 0, 0);
+    caption(t, 2.05, 5.2, 'Let there be pixels.', 'DITHER STUDIO  ·  WINDOWS & MACOS');
+  }
+
+  function shotSpark(t) {
+    shotHook(t);
+    var p = span(t, 5.2, 9.0);
+    var size = 4 * Math.pow(2, Math.min(4, Math.floor(p * 4.4)));   /* 4, 8, 16, 32, 64 */
+    ctx.save();
+    ctx.globalAlpha = out(span(t, 5.2, 5.7));
+    var half = size / 2;
+    ctx.fillStyle = VOID;
+    ctx.fillRect(Math.round(SPARK.x - half) - 2, Math.round(SPARK.y - half) - 2, size + 4, size + 4);
+    ctx.fillStyle = IVORY;
+    ctx.fillRect(Math.round(SPARK.x - half), Math.round(SPARK.y - half), size, size);
+    ctx.restore();
+    caption(t, 5.5, 8.4, null, 'THE CREATION OF ADAM  ·  MICHELANGELO, 1512');
+  }
+
+  function shotTurn(t) {
+    var p = inOut(span(t, 9.0, 14.2));
+    var framing = { zoom: 1.06 };
+
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    coverAt(c.getContext('2d'), art.adam, framing.zoom);
+    ctx.drawImage(c, 0, 0);
+
+    var coarse = inked('adam-coarse', art.adam, framing,
+      settings({ algorithm: 'bayer8', pixelSize: 1 }), 'coarse');
+    var fine = inked('adam-fine', art.adam, framing,
+      settings({ algorithm: 'bayer8', pixelSize: 1 }), 'fine');
+
+    /* the screen arrives as 16px marks and resolves to 4px ones: the picture is
+       not fading in, the pixels are getting smaller */
+    var radius = 70 + p * 1240;
+    masked(fine, function (cc) { radial(cc, SPARK.x, SPARK.y, radius); });
+    var coarseFade = 1 - out(span(t, 9.5, 12.2));
+    if (coarseFade > 0.01) {
+      masked(coarse, function (cc) { radial(cc, SPARK.x, SPARK.y, radius); }, coarseFade);
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 1 - span(t, 13.6, 14.4);
+    ctx.fillStyle = IVORY;
+    ctx.fillRect(SPARK.x - 2, SPARK.y - 2, 4, 4);
+    ctx.restore();
+
+    caption(t, 10.1, 14.6, 'A screen goes over it.', 'BAYER 8×8  ·  IVORY ON VOID');
+  }
+
+  var GODS = [
+    [15.0, 17.4, 'thor', 'bayer8', "Tor's Fight with the Giants", 'MÅRTEN WINGE, 1872  ·  BAYER 8×8', { fx: 0.5, fy: 0.32 }],
+    [17.4, 19.8, 'oedipus', 'atkinson', 'Oedipus and the Sphinx', 'GUSTAVE MOREAU, 1864  ·  ATKINSON', { fx: 0.5, fy: 0.42 }],
+    [19.8, 22.2, 'council', 'clustered-dot-8', 'The Council of the Gods', 'GIOVANNI LANFRANCO, 1624  ·  CLUSTERED DOT 8×8', { fx: 0.5, fy: 0.45 }]
+  ];
+
+  function shotGods(t) {
+    ctx.fillStyle = VOID;
+    ctx.fillRect(0, 0, W, H);
+    for (var i = 0; i < GODS.length; i++) {
+      var seg = GODS[i];
+      if (t < seg[0] || t >= seg[1]) continue;
+      var p = span(t, seg[0], seg[1]);
+      /* the push is quantised so the engine still only inks a handful of
+         framings per panel instead of one per frame */
+      var zoom = Math.round((1.02 + 0.07 * p) * 50) / 50;
+      var framing = { zoom: zoom, fx: seg[6].fx, fy: seg[6].fy };
+      var dith = inked(seg[2] + '-' + seg[3] + '-' + zoom, art[seg[2]], framing,
+        settings({ algorithm: seg[3], pixelSize: 1 }), 'fine');
+      blit(ctx, dith);
+      var inwipe = span(t, seg[0], seg[0] + 0.42);
+      if (inwipe < 1) masked(dith, function (c) { wipe(c, inwipe * (W + 200) - 100); });
+      caption(t, seg[0] + 0.35, seg[1] - 0.1, seg[4], seg[5]);
+    }
+  }
+
+  function shotPress(t) {
+    ctx.fillStyle = VOID;
+    ctx.fillRect(0, 0, W, H);
+
+    if (t < 26.2) {
+      var p = span(t, 22.2, 26.2);
+      var c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      var cc = c.getContext('2d');
+      cc.imageSmoothingQuality = 'high';
+      cover(cc, art.hero, { zoom: 1.06 + 0.05 * p, fx: 0.5, fy: 0.5 });
+      var open = out(span(t, 22.2, 22.9));
+      ctx.save();
+      ctx.globalAlpha = open;
+      var inset = (1 - open) * 70;
+      ctx.drawImage(c, inset, inset * 0.56, W - inset * 2, H - inset * 1.12);
+      ctx.restore();
+      caption(t, 23.0, 26.2, 'The press.', '46 ALGORITHMS  ·  24 PALETTES  ·  13 EFFECTS');
+    } else {
+      var q = span(t, 26.2, 30.0);
+      var d = document.createElement('canvas');
+      d.width = W; d.height = H;
+      var dc = d.getContext('2d');
+      dc.imageSmoothingQuality = 'high';
+      cover(dc, art.text, { zoom: 1.05 + 0.05 * q, fx: 0.5, fy: 0.5 });
+      blit(ctx, d, out(span(t, 26.2, 26.5)));
+      caption(t, 27.0, 30.0, 'Or as characters.', 'TEXT MODE  ·  CHARACTER RAMP  ·  .TXT EXPORT');
+    }
+  }
+
+  function shotMany(t) {
+    ctx.fillStyle = VOID;
+    ctx.fillRect(0, 0, W, H);
+    var p = span(t, 30.0, 35.0);
+    var ease = out(span(t, 30.0, 30.9));
+    var pad = 84, gut = 40;
+    var cw = (W - pad * 2 - gut) / 2, chh = H - pad * 2 - 130;
+
+    function panel(el, x, zoom) {
+      var c = document.createElement('canvas');
+      c.width = Math.round(cw); c.height = Math.round(chh);
+      var cc = c.getContext('2d');
+      cc.imageSmoothingQuality = 'high';
+      cover(cc, el, { zoom: zoom, fx: 0.5, fy: 0.42 });
+      return c;
+    }
+
+    var left = panel(art.spectrum, 0, 1.03 + 0.05 * p);
+    var right = panel(art.bloom, 0, 1.03 + 0.05 * p);
+
+    ctx.save();
+    ctx.globalAlpha = ease;
+    ctx.drawImage(left, pad + (1 - ease) * -60, pad + 40);
+    ctx.drawImage(right, pad + cw + gut + (1 - ease) * 60, pad + 40);
+    ctx.restore();
+
+    caption(t, 30.4, 35.0, 'One image, many readings.', 'ORDERED SCREEN  ·  THE SAME PAINTING, A COARSER ONE');
+  }
+
+  function shotMark(t) {
+    ctx.fillStyle = VOID;
+    ctx.fillRect(0, 0, W, H);
+    var p = span(t, 35.0, 40.0);
+    var enter = out(span(t, 35.1, 35.8));
+    var size = 232;
+    var x = W / 2 - size / 2, y = H * 0.235;
+
+    ctx.save();
+    ctx.globalAlpha = enter;
+    ctx.translate(W / 2, y + size / 2);
+    ctx.scale(0.94 + 0.06 * enter + 0.012 * p, 0.94 + 0.06 * enter + 0.012 * p);
+    ctx.translate(-W / 2, -(y + size / 2));
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, size, size, size * 0.234);
+    else ctx.rect(x, y, size, size);
+    ctx.save();
+    ctx.clip();
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(art.mark, x, y, size, size);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(41,50,68,0.9)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    centreText('Dither Studio', H * 0.63, '400 112px ' + SERIF, IVORY, '-0.01em');
+    ctx.save();
+    ctx.globalAlpha = out(span(t, 35.7, 36.4));
+    centreText('Let there be pixels.', H * 0.73, 'italic 400 44px ' + SERIF, IVORY, '0');
+    ctx.restore();
+    ctx.save();
+    ctx.globalAlpha = out(span(t, 36.3, 37.1));
+    centreText('FREE  ·  OFFLINE  ·  WINDOWS & MACOS', H * 0.815, '400 19px ' + MONO, LAPIS, '3px');
+    ctx.restore();
+  }
+
+  /* ================= the clock ================= */
+
+  function draw(t) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+
+    if (t < 5.2) shotHook(t);
+    else if (t < 9.0) shotSpark(t);
+    else if (t < 15.0) shotTurn(t);
+    else if (t < 22.2) shotGods(t);
+    else if (t < 30.0) shotPress(t);
+    else if (t < 35.0) shotMany(t);
+    else shotMark(t);
+  }
+
+  function seek(t) {
+    draw(Math.max(0, Math.min(DURATION, t)));
+  }
+
+  /* ================= load, then either play or hand the clock to the renderer ================= */
+
+  var params = new URLSearchParams(location.search);
+  var names = Object.keys(FILES);
+  var loaded = names.map(function (name) {
+    return new Promise(function (resolve) {
+      var el = new Image();
+      el.onload = function () { art[name] = el; resolve(); };
+      el.onerror = function () { resolve(); };
+      el.src = FILES[name];
+    });
+  });
+
+  var ready = Promise.all(loaded).then(function () {
+    seek(params.has('t') ? parseFloat(params.get('t')) || 0 : 0);
+    if (!params.has('t') && !params.has('render')) startPlayer();
+    return true;
+  });
+
+  function startPlayer() {
+    if (!params.has('play')) return;
+    var started = performance.now();
+    (function tick() {
+      var t = ((performance.now() - started) / 1000) % DURATION;
+      seek(t);
+      requestAnimationFrame(tick);
+    })();
+  }
+
+  window.DURATION = DURATION;
+  window.seek = seek;
+  window.mograph = {
+    ready: ready,
+    state: function () {
+      return {
+        duration: DURATION,
+        images: Object.keys(art).length,
+        expected: names.length,
+        inkCache: Object.keys(cache).length
+      };
+    }
+  };
+})();
+</script>
+</body>
+</html>

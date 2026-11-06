@@ -172,3 +172,22 @@ derives from Feather, though none of these eight are on that list.
 
 When a feature, algorithm, palette or numeric table is added from a source,
 add a row here naming the source and what it informed, in the same session.
+
+## The second film (`publicity/mograph.html`)
+
+The mograph opens on the gods and dithers them. Every painting below is public
+domain, downloaded as the original file rather than a thumbnail, then normalised
+to 2400 px on the long edge for the page (`publicity/assets/gods/`). The raw
+drop they came in stays out of the repository.
+
+| Asset | Work and collection | Rights |
+|---|---|---|
+| `gods/adam.jpg` | Michelangelo, *The Creation of Adam*, 1512, Sistine Chapel, Vatican City | Public domain |
+| `gods/oedipus.jpg` | Gustave Moreau, *Oedipus and the Sphinx*, 1864, The Metropolitan Museum of Art (21.134.1), cropped to the picture | Public domain, Met CC0 |
+| `gods/thor.jpg` | Mårten Eskil Winge, *Tors strid med jättarna*, 1872, Nationalmuseum, Stockholm (NM 1250) | Public domain |
+| `gods/council.jpg` | Giovanni Lanfranco, *The Council of the Gods*, Galleria Borghese, Rome | Public domain |
+| `gods/godhand.png`, `gods/adamhand.png` | the two hands cut from the same fresco | Public domain; kept for other cuts, not used by this one |
+
+The film is drawn by `publicity/mograph.html` as a pure function of time and
+dithered by `launcher/dither.js` at the frame's chunk grid, so the screen in the
+middle of it is the engine's own. `publicity/render-mograph.js` captures it.
