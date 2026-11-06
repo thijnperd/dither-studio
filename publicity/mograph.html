@@ -41,6 +41,11 @@
 
   var W = 1920, H = 1080;
   var DURATION = 40;
+  /* ?notext renders the cut with no type in it at all. That is the version the
+     publicity page ships: the page writes its own captions over the film, so
+     two sets of words can never land on each other. The captioned cut is kept
+     for a scored release. */
+  var NOTEXT = /(?:\?|&)notext\b/.test(location.search);
   var canvas = document.getElementById('film');
   var ctx = canvas.getContext('2d');
   var Lib = window.DitherLib;
@@ -192,7 +197,7 @@
 
   function caption(t, a, b, head, meta) {
     var o = Math.min(out(span(t, a, a + 0.5)), 1 - span(t, b - 0.5, b));
-    if (o <= 0.001) return;
+    if (NOTEXT || o <= 0.001) return;
     var rise = (1 - out(span(t, a, a + 0.5))) * 16;
     ctx.save();
     ctx.globalAlpha = o;
@@ -419,15 +424,17 @@
     ctx.stroke();
     ctx.restore();
 
-    centreText('Dither Studio', H * 0.63, '400 112px ' + SERIF, IVORY, '-0.01em');
-    ctx.save();
-    ctx.globalAlpha = out(span(t, 35.7, 36.4));
-    centreText('Let there be pixels.', H * 0.73, 'italic 400 44px ' + SERIF, IVORY, '0');
-    ctx.restore();
-    ctx.save();
-    ctx.globalAlpha = out(span(t, 36.3, 37.1));
-    centreText('FREE  ·  OFFLINE  ·  WINDOWS & MACOS', H * 0.815, '400 19px ' + MONO, LAPIS, '3px');
-    ctx.restore();
+    if (!NOTEXT) {
+      centreText('Dither Studio', H * 0.63, '400 112px ' + SERIF, IVORY, '-0.01em');
+      ctx.save();
+      ctx.globalAlpha = out(span(t, 35.7, 36.4));
+      centreText('Let there be pixels.', H * 0.73, 'italic 400 44px ' + SERIF, IVORY, '0');
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha = out(span(t, 36.3, 37.1));
+      centreText('FREE  ·  OFFLINE  ·  WINDOWS & MACOS', H * 0.815, '400 19px ' + MONO, LAPIS, '3px');
+      ctx.restore();
+    }
   }
 
   /* ================= the clock ================= */
@@ -490,7 +497,8 @@
         duration: DURATION,
         images: Object.keys(art).length,
         expected: names.length,
-        inkCache: Object.keys(cache).length
+        inkCache: Object.keys(cache).length,
+        notext: NOTEXT
       };
     }
   };

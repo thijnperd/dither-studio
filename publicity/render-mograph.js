@@ -16,7 +16,9 @@ const { execFileSync } = require('child_process');
 
 const ROOT = __dirname;
 const OUT = path.join(ROOT, 'out');
-const FRAMES = path.join(OUT, 'mograph-frames');
+const SILENT = process.argv.includes('--notext');
+const SUFFIX = SILENT ? '-silent' : '';
+const FRAMES = path.join(OUT, 'mograph-frames' + SUFFIX);
 const FPS = Number(process.env.RENDER_FPS || 12);
 const OUT_FPS = 24;
 
@@ -52,7 +54,8 @@ function playwright() {
   });
   page.on('console', (msg) => { if (msg.type() === 'error') console.error('page:', msg.text()); });
 
-  const url = 'file:///' + path.join(ROOT, 'mograph.html').replace(/\\/g, '/') + '?render';
+  const url = 'file:///' + path.join(ROOT, 'mograph.html').replace(/\\/g, '/') +
+    '?render' + (SILENT ? '&notext' : '');
   await page.goto(url);
   await page.waitForFunction(() => window.mograph && window.mograph.ready);
   const info = await page.evaluate(() => window.mograph.state());
@@ -63,7 +66,7 @@ function playwright() {
 
   if (stills) {
     for (const at of stills) {
-      const file = path.join(OUT, 'mograph-still-' + at.toFixed(1) + 's.png');
+      const file = path.join(OUT, 'mograph-still-' + at.toFixed(1) + 's' + SUFFIX + '.png');
       await page.evaluate((t) => window.seek(t), at);
       await page.screenshot({ path: file });
       console.log('still', path.relative(process.cwd(), file));
@@ -81,7 +84,7 @@ function playwright() {
   }
   await browser.close();
 
-  const mp4 = path.join(OUT, 'dither-studio-mograph.mp4');
+  const mp4 = path.join(OUT, 'dither-studio-mograph' + SUFFIX + '.mp4');
   execFileSync('ffmpeg', [
     '-y', '-loglevel', 'error',
     '-framerate', String(FPS),
@@ -96,7 +99,7 @@ function playwright() {
   // the poster is the spark, not the end card: it is the one frame that is both
   // a painting and a pixel
   fs.copyFileSync(path.join(FRAMES, String(Math.round(6.4 * FPS)).padStart(5, '0') + '.png'),
-    path.join(OUT, 'mograph-poster.png'));
+    path.join(OUT, 'mograph-poster' + SUFFIX + '.png'));
   console.log('wrote', path.relative(process.cwd(), mp4));
 })().catch(function (err) {
   console.error(err && err.stack || err);
