@@ -58,13 +58,15 @@ re-renders the MP4 from it.
   — applied in one pick, from Newsprint and Halftone Noir to VHS Decay and the
   three structure-aware looks.
 - **Any screen.** The console contracts for a phone or tablet instead of being
-  redesigned: finger-sized controls, pinch-to-zoom on the proof, and a rail that
-  collapses into one bar with a summary of the station in view.
+  redesigned: finger-sized controls, pinch-to-zoom on the proof, a station strip
+  that reads at a glance, and a phone console that opens as a capped sheet so
+  the proof stays in view. In the web demo, a phone held sideways keeps a side
+  rail.
 
 ## Made with Dither Studio
 
 Every picture below came out of the app's own engine, and each caption names the
-recipe that made it. These images are made by users of the app and can be used as an example of what can be made.
+recipe that made it.
 
 ![Gustave Moreau's Oedipus and the Sphinx, dithered and re-inked in cyanotype blue](docs/showcase-void-bloom.png)
 
@@ -140,16 +142,35 @@ honest about it: a frame that overruns its slot is counted as dropped.
 
 | Build | State | What it is for |
 |---|---|---|
-| [**Web demo**](https://thijnperd.github.io/dither-studio/) | frozen | Nothing to install: a static page published from [`demo/`](demo/) by GitHub Pages. The quickest way in. |
+| [**Web demo**](https://thijnperd.github.io/dither-studio/) | **maintained** | Nothing to install: a static page published from [`demo/`](demo/) by GitHub Pages. It has its own shell, tuned for desktop, tablet and phone. |
 | [**Launcher**](launcher/) | frozen | The same console in a Chromium app window with a profile of its own, started by a script in the folder — no install, no registry entry. |
 | [**Desktop app**](desktop/) | **active** | The real application: native menus and dialogs, a built-in tutorial, video and webcam, and proofs saved as files. Windows and macOS. |
 
 All three share one engine, [`dither.js`](launcher/dither.js): DOM-free, copied
 into the desktop build byte for byte, with a CI check that fails if the copy
 drifts. The built-in sources, [`samples.js`](launcher/samples.js), travel the
-same way, so every build opens on the same three paintings. The two web builds
-are frozen on purpose — they are what people have links to — so all new work
-lands in `desktop/`.
+same way, so every build opens on the same three paintings.
+
+```mermaid
+flowchart LR
+  engine["launcher/dither.js<br/>one DOM-free engine"]
+  samples["launcher/samples.js<br/>three built-in paintings"]
+  demo["demo/<br/>public web demo"]
+  launcher["launcher/<br/>app-window build"]
+  desktop["desktop/<br/>Electron app"]
+  engine --> demo
+  engine --> launcher
+  engine --> desktop
+  samples --> demo
+  samples --> launcher
+  samples --> desktop
+```
+
+The launcher is frozen: it is what people install from, and its shell does not
+change. The demo is maintained beside the desktop app: the engine and samples
+are shared, but `demo/` has its own shell, palette and responsive layout. The
+desktop app is still the full application, with native menus, dialogs and the
+tutorial.
 
 ## Quick start
 
@@ -157,12 +178,12 @@ lands in `desktop/`.
 a built-in sample, so there is something on the stage before you load anything:
 three public-domain paintings travel with the app — Gustave Moreau's *Oedipus
 and the Sphinx*, Mårten Eskil Winge's *Tor's Fight with the Giants* and *The
-Council of the Gods* from the Villa Farnesina — and **Built-in source** steps
-through them and comes round again. Drop a picture onto the proof, paste one,
-or use
-**Open image…** to bring your own.
+Council of the Gods* from the Villa Farnesina — and the source button —
+**Try a sample** in the web demo, **Built-in source** in the launcher and
+desktop app — steps through them and comes round again. Drop a picture
+onto the proof, paste one, or use **Open image…** to bring your own.
 
-![The console in a browser, running the Wired Portrait recipe on a photograph](docs/screenshot-console-photo.png)
+![The console in a browser, running the Riso Duotone recipe on Gustave Moreau's Oedipus and the Sphinx](docs/screenshot-console-recipe.png)
 
 **Desktop app.** From [the latest release](https://github.com/thijnperd/dither-studio/releases/latest):
 
@@ -242,8 +263,9 @@ node tools/check-examples.js                                 # examples/ against
 cd desktop && npm test && npm run smoke                       # 39 core and tour checks, then the window
 ```
 
-The smoke run boots the real desktop app on a profile of its own, makes 76
-checks and screenshots both windows. [DEVELOPMENT.md](DEVELOPMENT.md) has the
+The smoke run boots the real desktop app on a profile of its own, runs the
+full in-page check set and screenshots both windows.
+[DEVELOPMENT.md](DEVELOPMENT.md) has the
 rest: the repository layout file by file, how the desktop shell and the startup
 screen are built, how the generated [examples](examples/) set is rebuilt and
 checked, the installer and the release workflow, and what every harness option

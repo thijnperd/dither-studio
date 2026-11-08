@@ -6,11 +6,12 @@ and pull a proof — as pixels, as characters, as a PNG, or as a WebM recording.
 Forty-six dither algorithms, twenty-four palettes, twenty-one presets, thirteen
 effects. No install, no build step, no internet connection, no uploads.
 
-The five-minute path: **double-click the launcher for your system** (or open
-`launcher/index.html`) → drag a photo onto the stage → open the **Presets** station and
-try *Matrix Rain*, *Ice Dot Field* and *Riso Duotone* → push **Smoothness**,
-**Flow** and **Streak** if you landed on a structure-aware screen → hit
-**Export** with `2×` or `4×` selected.
+The five-minute path: **open the web demo** at
+<https://thijnperd.github.io/dither-studio/>, or **double-click the launcher for
+your system** (or open `launcher/index.html`). Drag a photo onto the stage, open
+the **Presets** station and try *Matrix Rain*, *Ice Dot Field* and *Riso
+Duotone*. If you landed on a structure-aware screen, push **Smoothness**,
+**Flow** and **Streak**. Then hit **Export** with `2×` or `4×` selected.
 
 The [README](README.md) is the front door and the feature list. This file is the
 tour: running it as an app, the console station by station, the catalogue, video,
@@ -126,7 +127,7 @@ rail lights up as you scroll, so the strip doubles as a position readout.
 
 | Station | What is in it |
 |---|---|
-| **Source** | **Open image…**, **Built-in source** — which steps through the three built-in paintings and comes round again — and the drop/paste hint. Drag a file onto the stage, or press `Ctrl+V` to paste an image from anywhere. |
+| **Source** | **Open image…**, the sample button — **Built-in source** in the launcher and desktop app, **Try a sample** in the web demo — which steps through the three built-in paintings and comes round again, and the drop/paste hint. Drag a file onto the stage, or press `Ctrl+V` to paste an image from anywhere. |
 | **Press** | **Algorithm** (46, in six groups) and **Palette** (24) with ◀ ▶ steppers to walk each list; the **swatch strip** showing the actual inks; **Pixel size** 1–16; **Threshold** (mono only, 0–255); **Strength** 0–200 %; **Serpentine sweep**; **Seed** with a dice button. |
 | **Tone** | Black point, white point, gamma, brightness, contrast, saturation and hue — applied before dithering, in linear light where it matters. The header note shows the current gamma (`ct 1.20`). |
 | **Ink** | Eleven **tone maps** that re-ink the finished dither (Halftone noir, Amber CRT, Thermal, Matrix green, Ice …), a **custom** entry that takes your own ink and paper colours, and the **Alpha** rule: flatten onto paper, dither the matte to hard edges, or keep a real PNG alpha channel. |
@@ -144,8 +145,9 @@ Above the canvas:
   and **Status** (which also reports `Scaled to 1600px` when a big image was
   reduced on load).
 - **Toolbar** — `−` **Fit** `+` with a zoom readout, **Hold to compare**
-  (press and hold to see the original), **Random** (roll a whole fresh recipe),
-  **Copy PNG**, and **Export** with a `1× / 2× / 4× / 8×` scale picker.
+  (**Compare** in the web demo; press and hold to see the original), **Random**
+  (roll a whole fresh recipe), **Copy PNG**, and **Export** with a
+  `1× / 2× / 4× / 8×` scale picker.
 
 Under the canvas, the **update mode** decides how much work a slider drag does:
 
@@ -239,18 +241,18 @@ inherit that structure.
 
 ## 4. How a proof is made
 
-```
-RGBA source
-  → levels, gamma, brightness, contrast, saturation, hue
-  → blur, sharpen, denoise
-  → box-average down to the pixel size
-  → dither (a screen, or error diffusion)
-  → tone map
-  → effects stack
-  → glow
-  → alpha
-  → nearest-neighbour upscale
-  → RGBA proof
+```mermaid
+flowchart TD
+  A["RGBA source"] --> B["levels · gamma · brightness · contrast · saturation · hue"]
+  B --> C["blur · sharpen · denoise"]
+  C --> D["box-average down to the pixel size"]
+  D --> E["dither: a screen, or error diffusion"]
+  E --> F["tone map"]
+  F --> G["effects stack"]
+  G --> H["glow"]
+  H --> I["alpha"]
+  I --> J["nearest-neighbour upscale"]
+  J --> K["RGBA proof"]
 ```
 
 A few consequences worth knowing, because they explain most of the "why does it
@@ -406,18 +408,22 @@ accidentally rerolls the recipe — click the canvas first if a key seems dead.
 
 ### On a phone or a tablet
 
-Nothing to learn twice — it is the same console, contracted:
+Nothing to learn twice — it is the same console, contracted. The web demo has
+its own shell, so two labels differ: it calls the sample button **Try a sample**
+and the toolbar's **Hold to compare** simply **Compare**.
 
 | Screen | What it does |
 |---|---|
 | Any touch device | Grows every control to a finger (38px targets, an 18px slider thumb, thicker tracks), drops the keyboard hint line, and hands the proof its own gestures: **one finger pans, two pinch to zoom**. |
-| iPad, both ways up | Widens the rail to 272px so touch labels have room, and gives the bars more padding. |
-| Phone (and any short landscape window) | Collapses the rail into one **console bar** at the top: the brand, a Console button, and a live summary of the station in view (`Press · Floyd–Steinberg · B&W · 2c`). Tap it and the rail opens in place, so the proof keeps the lead and nothing is covered by a modal. The chip strip turns into one sideways-scrolling row, the status bar into one scrollable line, and the toolbar wraps to two. |
+| iPad, both ways up | Widens the rail to 272px so touch labels have room, and gives the bars more padding. The status bar stays one line and scrolls sideways instead of stacking. |
+| Phone | Collapses the rail into one **console bar** at the top: the brand, a Console button, and a live summary of the station in view (`Press · Floyd–Steinberg · B&W · 2c`). Tap it and the rail opens in place; the web demo caps the whole panel at 46dvh so the proof below it stays whole. The station strip turns into one sideways-scrolling row, the status bar into one scrollable line, and the toolbar into one scrollable row. |
+| Phone, sideways (web demo) | Keeps a narrow side rail instead of stacking: width is the plentiful axis, so the proof gets the full height. The launcher and desktop app still stack their console bar. |
 
 A collapsed console remembers whether you left it open, and the safe-area insets
-are honoured where the app is installed to a home screen. Pinch runs its own,
-finer zoom ladder than the toolbar buttons, so the readout still reads like a
-value a button could have produced.
+are honoured where the app is installed to a home screen. In the web demo,
+Escape closes the open sheet and the proof refits after the panel moves. Pinch
+runs its own, finer zoom ladder than the toolbar buttons, so the readout still
+reads like a value a button could have produced.
 
 ---
 

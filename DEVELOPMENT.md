@@ -24,7 +24,7 @@ performance budget, and every check that ships with the app.
 | [`tools/make-examples.js`](tools/make-examples.js) | rebuilds [`examples/`](examples/) — the proofs, the contact sheet, the manifest and the README's table — by driving the launcher build in a real browser |
 | [`tools/check-examples.js`](tools/check-examples.js) | checks that folder against its own manifest in Node; `test.yml` runs it |
 | [`tools/`](tools/) | optional browser-check harness (`check.sh`, `browser-check.cjs`); Playwright is a global tool, never a dependency |
-| [`demo/`](demo/) | the **frozen** web demo published to GitHub Pages, favicon, icons and its own startup overlay included |
+| [`demo/`](demo/) | the **maintained** web demo published to GitHub Pages: its own shell, palette, splash, favicon and icons |
 | [`desktop/`](desktop/) | the **active** Electron build, in its own folder with its own dependencies |
 | [`docs/`](docs/) | the screenshots in this file, the README and the guides |
 | [`examples/`](examples/) | twelve generated proofs of the app's own output, with the contact sheet that shows them, the manifest that describes them and the README list that mirrors it |
@@ -37,10 +37,38 @@ performance budget, and every check that ships with the app.
 | [`SOURCES.md`](SOURCES.md) | where every feature, table and palette came from |
 | [`CHANGELOG.md`](CHANGELOG.md) | what changed in each desktop version; `build.yml` reads the release notes out of it |
 
-The two web builds are frozen on purpose: they are what people have links to and
-install from, and `demo/` is kept self-contained so the public Pages site can
-never pick up desktop files. `dither.js` and `samples.js` are the shared files;
-everything else — the shells, the window chrome — belongs to a single build.
+The launcher is frozen on purpose: it is what people install from. The demo is
+maintained beside it, and it stays self-contained so the public Pages site can
+never pick up desktop files. `dither.js`, `video.js` and `samples.js` are the
+shared files; everything else — the demo shell included — belongs to a single
+build.
+
+### The web demo
+
+`demo/` is the public page at <https://thijnperd.github.io/dither-studio/>. It
+has its own shell, not a copy of the launcher's, because it is the build most
+people meet first and it has to read well in a browser, in the publicity site's
+frame and on a phone.
+
+- **Palette.** The console uses the same room as the publicity site: void
+  `#0B0D12`, panel `#121722`, ivory `#EFEADF`, lapis `#7E93BE`. The tokens at
+  the top of `demo/style.css` are the source of truth.
+- **The station strip** is a five-column, two-row grid, so all ten stations are
+  visible without opening the rail. On a phone it becomes one sideways-scrolling
+  row.
+- **The phone console** is a capped sheet (46dvh). The stage refits after the
+  sheet opens or closes; the proof is never clipped. A phone held sideways uses
+  a narrow side rail instead.
+- **The chrome is quieter on touch.** The status bar and toolbar are one
+  scrolling row each, and the keyboard hints give way to a gesture hint.
+- **Embed mode.** `?embed=1` skips the splash, hides the desktop masthead and
+  applies a showcase recipe: Bayer 8×8, Blueprint ink, pixel size 2, with the
+  tone lifted. The publicity site's iframe uses it; opening the page normally is
+  unchanged.
+
+The demo still opens from `file://`, still has no build step, and still shares
+`dither.js`, `video.js` and `samples.js` with the other builds. The rest of
+`demo/` belongs to the demo: change it here, not in `launcher/`.
 
 ### Replacing a built-in sample
 
@@ -301,6 +329,20 @@ harness takes only the last `--eval` — chain multi-step checks inside one
 errors and every `--expect` matched. [GUIDE.md](GUIDE.md) describes what the app
 should do when you drive it, and lists every hook.
 
+The demo has its own shell, so check it as a page:
+
+```bash
+bash tools/check.sh demo/index.html --expect canvas --wait 1200 \
+  --screenshot /tmp/demo.png --eval "JSON.stringify(window.__dither.stats())"
+```
+
+Then open `demo/index.html?embed=1` and confirm three things: the splash never
+runs, the desktop masthead is gone, and the proof starts on Bayer 8×8 with
+Blueprint ink. Resize to a phone, or use a touch-emulating browser, and open the
+console: the proof must stay whole while the panel is open. Check desktop,
+tablet, phone and landscape widths before a publish; the engine tests say
+nothing about the demo's shell.
+
 ### The examples folder
 
 `examples/` is generated rather than maintained — [`tools/make-examples.js`](tools/make-examples.js)
@@ -359,7 +401,7 @@ shot at the end. The run also gets a profile of its own, deleted before it
 starts, so it always meets the app the way a fresh install does — the presets,
 panels and tutorial progress on the machine running it are untouched.
 
-The current run makes 80 checks: the chrome exists, the catalogues fill their
+The current run checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw, their submenus expand to the full
 catalogue and stay open while the pointer is on one of their rows, the 32 command
 names the run exercises are all wired, the effects stack is the real markup,
