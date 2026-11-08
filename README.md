@@ -26,6 +26,10 @@ exports the engine made, so nothing on screen is a mock-up. The source is
 [`publicity/launch.html`](publicity/launch.html) and `node publicity/render.js`
 re-renders the MP4 from it.
 
+The public page built around the film, with the scroll-driven cut, the proof
+shelf and the download links, is
+<https://thijnperd.github.io/Dither-studio_publicity/>.
+
 
 ## What it does
 
