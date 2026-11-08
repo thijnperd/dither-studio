@@ -166,6 +166,8 @@ flowchart LR
   samples --> desktop
 ```
 
+*The shared engine and sample table, and the three shells that use them.*
+
 The launcher is frozen: it is what people install from, and its shell does not
 change. The demo is maintained beside the desktop app: the engine and samples
 are shared, but `demo/` has its own shell, palette and responsive layout. The

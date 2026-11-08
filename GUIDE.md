@@ -255,6 +255,8 @@ flowchart TD
   J --> K["RGBA proof"]
 ```
 
+*The pipeline, from source to proof.*
+
 A few consequences worth knowing, because they explain most of the "why does it
 look like that" moments:
 
