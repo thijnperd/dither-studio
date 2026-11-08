@@ -10,19 +10,22 @@
  */
 
 :root {
-  --bg: #0e0f13;        /* page ground            */
-  --panel: #15171d;     /* rails, headers          */
-  --panel-2: #1b1e26;   /* controls, raised chips  */
-  --line: #262a34;      /* hairlines and borders   */
-  --text: #e8eaf0;      /* primary text            */
-  --muted: #8b91a3;     /* labels, secondary text  */
-  --accent: #7aa2ff;    /* the single accent       */
+  /* The publicity site's own palette: void, press panel, ivory type, lapis
+     ink. The console keeps its dark instrument-panel character, but it is the
+     same room as the page that frames it. */
+  --bg: #0B0D12;        /* page ground            */
+  --panel: #121722;     /* rails, headers          */
+  --panel-2: #1a2030;   /* controls, raised chips  */
+  --line: #2a3346;      /* hairlines and borders   */
+  --text: #EFEADF;      /* primary text            */
+  --muted: #9099AB;     /* labels, secondary text  */
+  --accent: #7E93BE;    /* lapis, the single accent */
   --radius: 8px;
   --font: "SF Mono", "Cascadia Code", Consolas, "JetBrains Mono", Menlo, monospace;
 
   /* Local, non-forked refinements: the well the artifact sits in, and the
      measured heights that keep every control on the same rhythm. */
-  --well: #0b0c10;
+  --well: #080a0f;
   --row: 26px;
   --gap: 7px;
 }
@@ -64,9 +67,19 @@ body {
 .rail-head { padding: 14px 14px 8px; }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 19px;
   letter-spacing: 0.01em;
+}
+
+.brand-mark {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
 }
 
 .brand span { color: var(--accent); }
@@ -120,23 +133,29 @@ body {
 
 /* Section jump strip: the rail is long, so the stations are also a row of
    chips. Click scrolls the station open; the visible one is marked. */
-/* Chips wrap rather than hide: ten stations, all reachable, none truncated. */
+/* Five columns and two rows: every station reachable at a glance, and the
+   strip stays short enough to leave the rail its height. */
 .jump {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px;
   padding: 0 10px 9px;
   border-bottom: 1px solid var(--line);
 }
 
 .jump-chip {
   flex: 0 0 auto;
-  padding: 3px 7px;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 1px;
+  overflow: hidden;
   border: 1px solid transparent;
   border-radius: 999px;
   background: none;
   color: var(--muted);
-  font: 11px/1.4 var(--font);
+  font: 10px/1.4 var(--font);
+  text-align: center;
+  text-overflow: ellipsis;
   cursor: pointer;
   white-space: nowrap;
   transition: color 140ms ease, border-color 140ms ease;
@@ -412,7 +431,7 @@ input[type="color"] {
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0b0c10;
+  color: #0B0D12;
   font-weight: 700;
 }
 
@@ -553,8 +572,16 @@ input[type="color"] {
   position: relative;
   min-height: 0;
   overflow: auto;
-  background: var(--well);
+  background-color: var(--well);
+  /* A press-bed dot grid under the proof, so an empty stage still reads as
+     part of the instrument rather than a hole in the page. */
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--accent) 18%, transparent) 1px, transparent 1.2px);
+  background-size: 18px 18px;
 }
+
+/* The canvas owns touch gestures; this says so once, on the devices where
+   there is no keyboard hint to explain it. */
+.gesture-hint { display: none; }
 
 .canvas-frame {
   display: grid;
@@ -613,7 +640,7 @@ input[type="color"]:focus-visible,
   outline-offset: 2px;
 }
 
-::selection { background: var(--accent); color: #0b0c10; }
+::selection { background: var(--accent); color: #0B0D12; }
 
 /* keep the bar honest on short windows */
 @media (max-height: 620px) {
@@ -644,7 +671,7 @@ input[type="color"]:focus-visible,
   input[type="color"] { width: 34px; height: 30px; }
 
   .group-head { padding: 12px 2px; }
-  .jump-chip { padding: 6px 10px; font-size: 12px; }
+  .jump-chip { min-height: 32px; padding: 4px 1px; font-size: 10.5px; }
 
   /* A slider is a control, not a hairline: thicken the track and grow the
      thumb, or it cannot be caught and dragged. */
@@ -667,6 +694,17 @@ input[type="color"]:focus-visible,
   /* The keyboard hints are a lie on a device with no keyboard; the Compare
      button and the toolbar carry the same verbs. */
   .rail-hint { display: none; }
+
+  /* The statusbar is one signature line on touch, scrolling sideways if it
+     must: stacking it would cost the proof two rows of height. */
+  .statusbar {
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .statusbar::-webkit-scrollbar { display: none; }
+  .statusbar > span { flex: 0 0 auto; }
 
   /* Installed to the home screen, the console runs full-bleed on a notched
      iPad: keep the bottom bar clear of the home indicator. */
@@ -691,15 +729,15 @@ input[type="color"]:focus-visible,
 
 /* Phones: the console collapses to its bar. The proof keeps the lead, and a
          tap on the bar grows the rail in place - the stage shrinks, nothing is
-         covered up and nothing is a modal. A phone on its side is wider than
-         this but has no height to spare, so a short coarse-pointer window
-         takes the same treatment rather than sitting in the tablet layout. */
-@media (max-width: 720px), (pointer: coarse) and (max-height: 520px) {
+         covered up and nothing is a modal. */
+@media (max-width: 720px) {
   body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
 
   .panel {
     order: 1;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    max-height: none;
+    overflow: hidden;
     padding-top: env(safe-area-inset-top);
     border-right: none;
     border-bottom: 1px solid var(--line);
@@ -712,17 +750,23 @@ input[type="color"]:focus-visible,
   .tagline { display: none; }
   .console-toggle { display: flex; }
 
-  /* Closed: the bar is all that is left. Open: the rail scrolls inside a
-     capped sheet, so the proof never disappears off the bottom. */
+  /* Closed: the bar is all that is left. Open: the whole panel is capped and
+     the rail scrolls inside it, so the proof never disappears off the bottom. */
   .panel[data-console="closed"] .jump,
-  .panel[data-console="closed"] .rail-scroll,
-  .panel[data-console="closed"] .rail-hint { display: none; }
+  .panel[data-console="closed"] .rail-scroll { display: none; }
 
-  .panel[data-console="open"] .rail-scroll { max-height: 46dvh; }
+  .rail-hint { display: none; }
+  .panel[data-console="open"] { max-height: 46dvh; }
+  .panel[data-console="open"] .rail-scroll {
+    max-height: none;
+    min-height: 0;
+    overscroll-behavior: contain;
+  }
 
   /* Ten stations in one row: the strip scrolls sideways instead of wrapping. */
-  .jump { flex-wrap: nowrap; overflow-x: auto; padding: 0 12px 10px; scrollbar-width: none; }
+  .jump { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 0 12px 10px; scrollbar-width: none; }
   .jump::-webkit-scrollbar { display: none; }
+  .jump-chip { width: auto; padding: 6px 10px; font-size: 12px; }
 
   /* The statusbar is the house signature, so it stays: as one scrollable
      line rather than four stacked ones. */
@@ -737,16 +781,83 @@ input[type="color"]:focus-visible,
   .statusbar::-webkit-scrollbar { display: none; }
   .statusbar > span { flex: 0 0 auto; }
 
-  .toolbar { flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
-  .viewport-bar { flex-wrap: wrap; row-gap: 6px; padding: 7px 12px; }
+  /* One scrolling row of tools. Two rows of chrome cost more than the
+     less-used buttons on the far right are worth on a phone. */
+  .toolbar {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 8px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+  .toolbar > * { flex: 0 0 auto; }
+  .toolbar .grow { display: none; }
+
+  .viewport-bar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 7px 12px calc(7px + env(safe-area-inset-bottom));
+  }
+  .viewport-label,
+  #quality-note,
+  .viewport-bar .grow { display: none; }
+
   .canvas-frame { padding: 12px; }
+
+  .gesture-hint {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 5px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    color: var(--muted);
+    font-size: 10.5px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+}
+
+/* Embedded in the publicity site: the frame already carries the title, so the
+   console's own masthead comes off on a pointer device. The phone keeps the
+   console bar - it is the only handle on the rail - but drops the wordmark. */
+@media (min-width: 721px) {
+  .is-embed .rail-head { display: none; }
+  .is-embed .panel { grid-template-rows: auto minmax(0, 1fr) auto; }
+}
+
+@media (max-width: 720px) {
+  .is-embed .rail-head { padding: 8px 12px; }
+  .is-embed .rail-head .brand,
+  .is-embed .rail-head .tagline { display: none; }
+  .is-embed .console-toggle { margin-top: 0; }
 }
 
 /* A short viewport gives the sheet more of itself, takes the last of the
    padding out of the proof, and keeps the bar itself thin: on a landscape
    phone every row of chrome is a row the proof does not get. */
+/* A phone on its side: width is the plentiful axis, so the rail moves to the
+   side instead of stacking. Full height for the proof, and the whole rail is
+   still reachable without a sheet. */
+@media (pointer: coarse) and (min-width: 721px) and (max-height: 520px) {
+  body { grid-template-columns: 232px minmax(0, 1fr); }
+  .rail-head { padding: 9px 12px 7px; }
+  .brand { font-size: 16px; }
+  .tagline { display: none; }
+  .jump { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0 8px 8px; }
+  .jump-chip { padding: 4px 2px; font-size: 10.5px; }
+  .statusbar { padding: 5px 12px; gap: 10px; }
+  .toolbar { padding: 6px 12px; }
+  .viewport-bar { padding: 4px 12px; }
+  .canvas-frame { padding: 8px; }
+}
+
 @media (max-height: 520px) {
-  .panel[data-console="open"] .rail-scroll { max-height: 62dvh; }
   .canvas-frame { padding: 6px; }
 }
 

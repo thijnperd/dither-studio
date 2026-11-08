@@ -26,6 +26,9 @@
   // but the readout still has to say a value a button could have produced.
   const PINCH_ZOOM = [0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8];
   const MONO_STACK = '"SF Mono", "Cascadia Code", Consolas, "JetBrains Mono", Menlo, monospace';
+  // The publicity site frames this page with ?embed=1: no splash, no masthead,
+  // and a recipe that shows the press off on the first paint.
+  const EMBED = /[?&]embed=1(?:&|$)/.test(window.location.search);
 
   const $ = function (id) { return document.getElementById(id); };
 
@@ -416,6 +419,9 @@
     // Opening puts the rail back on screen, so the station the bar reports on
     // can finally be measured.
     if (open) markJump();
+    // Opening or closing changes how much of the stage is left; refitting in
+    // the next frame is what keeps the proof from being clipped by the panel.
+    window.requestAnimationFrame(applyZoom);
   }
 
   function syncConsoleNote() {
@@ -440,6 +446,13 @@
     // Growing past the breakpoint must never leave a collapsed bar behind it.
     window.addEventListener('resize', function () {
       if (!consoleLayered() && !consoleIsOpen()) setConsole(true, false);
+    });
+    // Escape closes the phone console. The bar is not a modal, but the rail
+    // covers the proof, so there should be a way out that is not the bar.
+    window.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || !consoleIsOpen() || !consoleLayered()) return;
+      setConsole(false, true);
+      el.consoleToggle.focus();
     });
   }
 
@@ -1623,6 +1636,16 @@
     setQuality(state.quality);
     syncUI();
     bindVideo();
+    if (EMBED) {
+      // The first thing the framed demo shows should be a finished proof, not
+      // the default recipe: a coarse blue screen reads clearly at poster size.
+      applySettings({
+        algorithm: 'bayer8',
+        palette: 'blueprint',
+        pixelSize: 2,
+        adjustments: { contrast: 1.15, brightness: 1.15, gamma: 1.12 },
+      });
+    }
     loadSample();
   }
 

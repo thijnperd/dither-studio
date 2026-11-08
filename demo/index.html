@@ -6,7 +6,16 @@
        indicator; the padding that keeps it clear of them is the safe-area part
        of the responsive section in style.css. -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B0D12" />
   <title>Dither Studio — image dithering</title>
+  <!-- The publicity site loads this page in a frame. Marking the document in
+       the head, before the stylesheet, lets the embedded console drop its own
+       masthead without a flash; the splash reads the same query string. -->
+  <script>
+    if (/[?&]embed=1(?:&|$)/.test(location.search)) {
+      document.documentElement.className += ' is-embed';
+    }
+  </script>
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" href="icon-192.png">
@@ -30,7 +39,7 @@
       position: fixed; inset: 0; z-index: 99;
       display: grid; place-items: center; align-content: center; row-gap: 18px;
       background:
-        radial-gradient(120% 150% at 50% 30%, #14161e 0%, var(--panel) 58%, var(--well) 100%);
+        radial-gradient(120% 150% at 50% 30%, #151b28 0%, var(--panel) 58%, var(--well) 100%);
       transition: opacity 420ms ease 60ms, visibility 0s linear 480ms;
     }
     #splash[data-gone="1"] { opacity: 0; visibility: hidden; }
@@ -48,7 +57,7 @@
     }
     .splash-rule::after {
       content: ""; position: absolute; inset: 0; width: 0; border-radius: 2px;
-      background: linear-gradient(90deg, rgba(122, 162, 255, 0.15), var(--accent));
+      background: linear-gradient(90deg, rgba(126, 147, 190, 0.18), var(--accent));
       transition: width 540ms ease;
     }
     #splash[data-word="1"] .splash-word { opacity: 1; transform: none; }
@@ -64,13 +73,13 @@
     'use strict';
     var el = document.getElementById('splash');
     if (!el) return;
-    var skip = false;
-    try { skip = sessionStorage.getItem('dither-studio.splash') === 'seen'; } catch (e) {}
+    var skip = /[?&]embed=1(?:&|$)/.test(location.search);
+    try { skip = skip || sessionStorage.getItem('dither-studio.splash') === 'seen'; } catch (e) {}
     if (skip) { el.setAttribute('data-gone', '1'); return; }
 
     // The mark: the app's own proof (tools/make-icons.js), 98 dither rects.
     var DOTS = [[16,0,2,1],[16,1,2,1],[12,4,2,1],[16,4,2,1],[20,4,2,1],[12,5,2,1],[16,5,2,1],[20,5,2,1],[10,6,2,1],[14,6,2,1],[18,6,2,1],[22,6,2,1],[10,7,2,1],[14,7,2,1],[18,7,2,1],[22,7,2,1],[4,8,2,1],[8,8,14,1],[24,8,2,1],[4,9,2,1],[8,9,14,1],[24,9,2,1],[6,10,2,1],[10,10,2,1],[14,10,6,1],[22,10,2,1],[26,10,2,1],[6,11,2,1],[10,11,2,1],[14,11,6,1],[22,11,2,1],[26,11,2,1],[4,12,2,1],[8,12,18,1],[28,12,2,1],[4,13,2,1],[8,13,18,1],[28,13,2,1],[6,14,2,1],[10,14,6,1],[18,14,2,1],[22,14,2,1],[6,15,2,1],[10,15,6,1],[18,15,2,1],[22,15,2,1],[0,16,2,1],[4,16,2,1],[8,16,18,1],[28,16,2,1],[0,17,2,1],[4,17,2,1],[8,17,18,1],[28,17,2,1],[6,18,2,1],[10,18,2,1],[14,18,6,1],[22,18,2,1],[26,18,2,1],[6,19,2,1],[10,19,2,1],[14,19,6,1],[22,19,2,1],[26,19,2,1],[4,20,2,1],[8,20,2,1],[12,20,10,1],[24,20,2,1],[4,21,2,1],[8,21,2,1],[12,21,10,1],[24,21,2,1],[6,22,2,1],[10,22,2,1],[14,22,2,1],[18,22,2,1],[22,22,2,1],[6,23,2,1],[10,23,2,1],[14,23,2,1],[18,23,2,1],[22,23,2,1],[8,24,2,1],[12,24,2,1],[16,24,2,1],[20,24,2,1],[24,24,2,1],[8,25,2,1],[12,25,2,1],[16,25,2,1],[20,25,2,1],[24,25,2,1],[10,26,2,1],[18,26,2,1],[10,27,2,1],[18,27,2,1],[12,28,2,1],[12,29,2,1]];
-    var INK = '#7aa2ff';
+    var INK = '#7E93BE';
 
     var cv = document.getElementById('splash-mark');
     var ctx = cv.getContext('2d');
@@ -84,7 +93,7 @@
 
     function paint(count) {
       ctx.clearRect(0, 0, S, S);
-      ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, S, S);
+      ctx.fillStyle = '#0B0D12'; ctx.fillRect(0, 0, S, S);
       ctx.fillStyle = INK;
       for (var i = 0; i < count && i < DOTS.length; i++) {
         var d = DOTS[i];
@@ -127,8 +136,8 @@
        is ignored, so the desktop console is untouched. -->
   <aside class="panel" id="panel" data-console="open">
     <header class="rail-head">
-      <h1 class="brand">Dither <span>Studio</span></h1>
-      <p class="tagline">Offline dithering press — images, video, print</p>
+      <h1 class="brand"><img class="brand-mark" src="icon-192.png" alt="" width="26" height="26" decoding="async">Dither <span>Studio</span></h1>
+      <p class="tagline">Image, video and type, pressed offline</p>
       <button class="console-toggle" id="console-toggle" type="button"
               aria-expanded="true" aria-controls="rail">
         <span class="console-toggle-label">Console</span>
@@ -150,7 +159,7 @@
         <div class="group-body">
           <div class="buttons">
             <button id="open" class="btn btn-primary">Open image…</button>
-            <button id="demo" class="btn">Built-in source</button>
+            <button id="demo" class="btn">Try a sample</button>
           </div>
           <input type="file" id="file" accept="image/*" hidden />
           <p class="hint">Drop an image on the stage, or paste with <b>Ctrl+V</b>.</p>
@@ -430,7 +439,7 @@
       <button id="zoom-fit" class="btn btn-mini" title="Fit (0)">Fit</button>
       <button id="zoom-in" class="btn btn-mini" title="Zoom in (+)">+</button>
       <span class="muted readout">Zoom <b id="stat-zoom">Fit</b></span>
-      <button id="compare" class="btn btn-mini" title="Hold to compare (C)">Hold to compare</button>
+      <button id="compare" class="btn btn-mini" title="Hold to compare (C)">Compare</button>
       <button id="random" class="btn btn-mini" title="Roll a fresh recipe (R)">Random</button>
       <span class="grow"></span>
       <button id="copy" class="btn btn-mini">Copy PNG</button>
@@ -450,10 +459,11 @@
       <div class="canvas-frame">
         <canvas id="canvas" role="img" aria-label="Dithered preview"></canvas>
       </div>
+      <p class="gesture-hint" aria-hidden="true">Drag to pan · two fingers to zoom</p>
     </div>
 
     <footer class="viewport-bar">
-      <span class="readout">Update</span>
+      <span class="readout viewport-label">Update</span>
       <div class="seg" id="quality" role="radiogroup" aria-label="Update mode">
         <button class="seg-btn" type="button" role="radio" data-value="full" aria-checked="false">Full</button>
         <button class="seg-btn is-on" type="button" role="radio" data-value="live" aria-checked="true">Live</button>
