@@ -1,0 +1,15 @@
+%% Source for docs/build-map.png. Rendered locally with Mermaid 11.
+%% One shared source card, then the three shells that copy it.
+flowchart LR
+  shared["launcher/dither.js<br/>launcher/samples.js<br/>one engine · three paintings"]:::core
+  demo["demo/<br/>public web demo"]:::shell
+  launcher["launcher/<br/>app-window build"]:::shell
+  desktop["desktop/<br/>Electron app"]:::shell
+
+  shared --> demo
+  shared --> launcher
+  shared --> desktop
+
+  classDef core fill:#1B1E26,stroke:#D9A441,stroke-width:1.5px,color:#F1E3C2
+  classDef shell fill:#121722,stroke:#293244,stroke-width:1.5px,color:#E8E8E4
+  linkStyle default stroke:#87AAFF,stroke-width:1.5px

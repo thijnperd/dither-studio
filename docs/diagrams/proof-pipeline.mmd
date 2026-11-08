@@ -1,0 +1,35 @@
+%% Source for docs/proof-pipeline.png. Rendered locally with Mermaid 11.
+%% One pass through the press, grouped into the three stages of the work.
+flowchart LR
+  subgraph prepare["PREPARE"]
+    direction TB
+    A["RGBA source"]:::endpoint
+    B["levels · gamma · brightness<br/>contrast · saturation · hue"]:::stage
+    C["blur · sharpen · denoise"]:::stage
+    D["box-average down<br/>to the pixel size"]:::stage
+    A --> B --> C --> D
+  end
+
+  subgraph press["PRESS"]
+    direction TB
+    E["dither<br/>a screen, or error diffusion"]:::stage
+    F["tone map"]:::stage
+    E --> F
+  end
+
+  subgraph finish["FINISH"]
+    direction TB
+    G["effects stack"]:::stage
+    H["glow"]:::stage
+    I["alpha"]:::stage
+    J["nearest-neighbour<br/>upscale"]:::stage
+    K["RGBA proof"]:::endpoint
+    G --> H --> I --> J --> K
+  end
+
+  prepare --> press
+  press --> finish
+
+  classDef endpoint fill:#1B1E26,stroke:#D9A441,stroke-width:1.5px,color:#F1E3C2
+  classDef stage fill:#121722,stroke:#293244,stroke-width:1.5px,color:#E8E8E4
+  linkStyle default stroke:#87AAFF,stroke-width:1.5px

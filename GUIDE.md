@@ -241,19 +241,7 @@ inherit that structure.
 
 ## 4. How a proof is made
 
-```mermaid
-flowchart TD
-  A["RGBA source"] --> B["levels · gamma · brightness · contrast · saturation · hue"]
-  B --> C["blur · sharpen · denoise"]
-  C --> D["box-average down to the pixel size"]
-  D --> E["dither: a screen, or error diffusion"]
-  E --> F["tone map"]
-  F --> G["effects stack"]
-  G --> H["glow"]
-  H --> I["alpha"]
-  I --> J["nearest-neighbour upscale"]
-  J --> K["RGBA proof"]
-```
+![Proof pipeline: prepare the source, press it through a dither and tone map, then finish with effects, glow, alpha and an upscale](docs/proof-pipeline.png)
 
 *The pipeline, from source to proof.*
 

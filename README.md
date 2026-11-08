@@ -151,20 +151,7 @@ into the desktop build byte for byte, with a CI check that fails if the copy
 drifts. The built-in sources, [`samples.js`](launcher/samples.js), travel the
 same way, so every build opens on the same three paintings.
 
-```mermaid
-flowchart LR
-  engine["launcher/dither.js<br/>one DOM-free engine"]
-  samples["launcher/samples.js<br/>three built-in paintings"]
-  demo["demo/<br/>public web demo"]
-  launcher["launcher/<br/>app-window build"]
-  desktop["desktop/<br/>Electron app"]
-  engine --> demo
-  engine --> launcher
-  engine --> desktop
-  samples --> demo
-  samples --> launcher
-  samples --> desktop
-```
+![Build map: one shared engine and sample table feeding the web demo, launcher and desktop app](docs/build-map.png)
 
 *The shared engine and sample table, and the three shells that use them.*
 
