@@ -87,6 +87,9 @@ builds.
 |---|---|
 | [`electron/main.js`](desktop/electron/main.js) | the window, the splash, the native dialogs, the clipboard, the application menu, and the smoke harness (which runs on a profile of its own) |
 | [`electron/preload.js`](desktop/electron/preload.js) | the only bridge to the OS — `window.ditherDesktop`, context-isolated, no Node in the renderer |
+| [`electron/update.js`](desktop/electron/update.js) | checks the public GitHub release, downloads the asset for this machine, installs it after exit, and opens the post-update **What's New** notes |
+| [`electron/update-version.js`](desktop/electron/update-version.js) | the pure update rules: version comparison, asset choice, download-name sanitising and the changelog section parser |
+| [`electron/update-script.js`](desktop/electron/update-script.js) | the Windows helper: a PowerShell script that waits for the app to close, installs silently, relaunches and cleans up |
 | [`electron/splash.html`](desktop/electron/splash.html) | the startup animation: **this is the file to replace** (see below) |
 | [`electron/Splash/`](desktop/electron/Splash/) | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
 | [`src/index.html`](desktop/src/index.html) | the window's markup: caption, menus, options, the rail (its Lucide icons inlined), document tabs, dock, status |
@@ -105,6 +108,7 @@ builds.
 | [`src/styles/panels.css`](desktop/src/styles/panels.css) | the dock: panel tabs, fields, sliders, swatches, the effects stack |
 | [`tools/sync-renderer.js`](desktop/tools/sync-renderer.js) | keeps `src/renderer/{dither,video,samples}.js` byte-identical to the launcher build's copies |
 | [`tools/tour.test.js`](desktop/tools/tour.test.js) | the tutorial data's own suite: real panels, real commands, nothing already done on a fresh app |
+| [`tools/update.test.js`](desktop/tools/update.test.js) | the updater's own suite: semver ordering, platform asset choice, changelog extraction and the Windows helper |
 | [`tools/smoke-in-page.js`](desktop/tools/smoke-in-page.js) | the page half of the smoke run |
 
 The desktop shell is its own code. It used to be the web shell with ten patches
@@ -157,8 +161,12 @@ changes, and a step that cannot be checked simply says what to do. **Show me**
 performs that one step for a stuck learner, **Back** and **Next** move, and
 `Escape` leaves. Progress is kept per lesson and per step, so a lesson resumes
 where it was left; **Reset** clears the ticks and puts the intro back on offer.
-Finishing the last lesson folds the Learn station away and closes the verdict
-card on its own a moment later, so a finished tutorial stops taking up the dock.
+**Hide** beside Reset, or *Help ▸ Hide the Tour Completely*, stores a `hidden`
+flag with the progress, removes the Learn station and its jump chip, and stops
+the intro; *Help ▸ Show the Learn Panel* brings the station back without
+erasing what was learned. Finishing the last lesson folds the Learn station away
+and closes the verdict card on its own a moment later, so a finished tutorial
+stops taking up the dock.
 
 The lessons are data ([`src/tour-spec.js`](desktop/src/tour-spec.js)): a title, a
 body, a selector for the control, an optional panel to open, an optional command
@@ -167,6 +175,24 @@ a second copy of a control, which is why a renamed panel or a retired verb comes
 out as a failed test rather than as a lesson pointing at nothing. It also costs
 nothing while idle: the card is placed once per step and once per state change,
 never per frame.
+
+### The updater
+
+`electron/update.js` checks the public GitHub release for the repository named
+by `updateRepo` in `desktop/package.json`. It compares the tag's numeric version
+with `app.getVersion()`, chooses the asset for this OS and architecture, and
+shows the release notes before a download. The app is unsigned, so this follows
+the W3Plan model rather than `electron-updater`: Windows hands the downloaded
+setup to a hidden PowerShell helper that waits for Dither Studio to exit,
+installs with `/S`, checks the new `ProductVersion` on disk and starts it again;
+macOS unpacks the zip and replaces the `.app` after exit. A missing platform
+asset simply leaves the app current, and a failed startup check is silent.
+
+The release body and the post-update **What's New** dialog both come from
+`CHANGELOG.md`, which is copied into the package as an extra resource. The
+running version is written to `last-version` in the app's userData folder; a
+mismatch on the next launch opens the matching changelog section once. *Help ▸
+Check for Updates…* and *Help ▸ What's New…* expose the same paths by hand.
 
 ## Build the installer
 
@@ -186,7 +212,9 @@ sizes when it is done.
 
 electron-builder writes an NSIS installer (per-user, choose the folder, Start
 menu shortcut) and a portable single-file executable on Windows, and one
-unsigned disk image per Mac architecture on macOS. The packaging icon comes from
+unsigned disk image and one zip per Mac architecture on macOS. The zip is the
+asset the built-in updater uses; the disk images are the first-install download.
+The packaging icon comes from
 `desktop/build/icon.png`, the app's own dithered mark. The web builds' mark is
 made by [`tools/make-icons.js`](tools/make-icons.js), which writes
 `launcher/icons/icon.svg`, `icon-192.png` and `icon-512.png` through the same
@@ -378,16 +406,17 @@ fails the run and names itself.
 
 ```bash
 cd desktop
-npm test                                       # the core and the tutorial: 39 checks, no window
+npm test                                       # core, tour and updater: 44 checks, no window
 npm run smoke                                  # boot, check, screenshot, exit 0/1
 ```
 
-`npm test` runs both Node suites. `tools/core.test.js` covers the colour round
-trip, the catalogue lookups the steppers and the menus share, the settings paths,
-the station notes and the dropdown builder (21 checks); `tools/tour.test.js`
+`npm test` runs the three Node suites. `tools/core.test.js` covers the colour
+round trip, the catalogue lookups the steppers and the menus share, the settings
+paths, the station notes and the dropdown builder (21 checks); `tools/tour.test.js`
 covers the tutorial's lesson data (18 checks), and it reads `app.js` itself for
-the command names and panel ids, so a lesson cannot outlive the verb it drives.
-Neither suite needs a window.
+the command names and panel ids, so a lesson cannot outlive the verb it drives;
+`tools/update.test.js` covers version ordering, platform asset choice, changelog
+extraction and the Windows helper (5 checks). None of them needs a window.
 
 `npm run smoke` is `electron . --smoke --smoke-script tools/smoke-in-page.js`.
 `--smoke` loads the real app and waits for it to signal ready, `--smoke-script`
@@ -415,8 +444,10 @@ panel around it, the rail is scrolled until that panel is on screen, Escape
 leaves, and finishing a lesson records it and offers the next one. The first-run
 behaviour is held to the same bar: an install that has never run the tour is met
 by it with Skip on the card, Skip is remembered and folds the Learn station away
-with it, *Take the Tour* brings that station back, and finishing every lesson
-folds the station away and closes the card without waiting to be dismissed.
+with it, *Take the Tour* brings that station back, **Hide** removes the station
+and its jump chip and stops the intro, **Show** restores them, and finishing
+every lesson folds the station away and closes the card without waiting to be
+dismissed.
 
 Environment variables let it exercise the parts a page cannot reach:
 
@@ -456,15 +487,16 @@ DITHER_SMOKE_REPORT=/tmp/report.json DITHER_SMOKE_SAVE=/tmp/proof.png \
 
 ## CI and releases
 
-- **`test.yml`** runs the engine tests on Node 20 and 22 and the renderer-sync
-  check, so a drifted engine copy fails the build.
+- **`test.yml`** runs the engine tests on Node 20 and 22, the desktop core,
+  tour and updater suites, and the renderer-sync check, so a drifted engine copy
+  fails the build.
 - **`build.yml`** builds both platforms for every push that touches the app — the
   setup and the portable exe on a Windows runner, the x64 and arm64 disk images
-  on a macOS one — and runs the full check set first (engine tests, desktop core
-  tests, tour tests, engine-copy sync, two smoke runs), so a broken commit is
-  never packaged. Push a `v<version>` tag, with `version` in
-  `desktop/package.json` bumped to match, and a third job attaches every artifact
-  to that tag's GitHub release.
+  and zips on a macOS one — and runs the full check set first (engine tests,
+  desktop core tests, tour tests, updater tests, engine-copy sync, two smoke
+  runs), so a broken commit is never packaged. Push a `v<version>` tag, with
+  `version` in `desktop/package.json` bumped to match, and a third job attaches
+  every artifact to that tag's GitHub release.
 - **`pages.yml`** publishes `demo/` to <https://thijnperd.github.io/dither-studio/>,
   after checking the demo is self-contained: no relative path may escape its own
   folder, and there must be no build step and no server.

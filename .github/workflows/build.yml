@@ -3,13 +3,13 @@ name: build
 # Builds the desktop app on GitHub, so no installer has to be built by hand.
 # Every push that touches the app or the shared engine runs the checks and then
 # packages the platform it can: the Windows setup and portable exe, and the
-# macOS disk images - arm64 for Apple silicon, x64 for Intel. Pushing a
+# macOS disk images and zip - arm64 for Apple silicon, x64 for Intel. Pushing a
 # `v<version>` tag also attaches every artifact to that tag's GitHub release.
 #
 # Before anything is built the full code is checked: the engine tests, the
-# desktop core tests, the tutorial's lesson data, the engine-copy sync check,
-# and the smoke run that boots the real window and drives it. A broken commit
-# never gets an installer.
+# desktop core tests, the tutorial's lesson data, the updater's release rules,
+# the engine-copy sync check, and the smoke run that boots the real window and
+# drives it. A broken commit never gets an installer.
 
 on:
   push:
@@ -52,6 +52,11 @@ jobs:
       # commands, and no step that is already done before the learner starts.
       - name: Desktop tour tests
         run: node desktop/tools/tour.test.js
+
+      # Semver ordering, the asset for each platform, and the changelog text
+      # the post-update dialog reads. These are pure Node, no window.
+      - name: Updater release rules
+        run: node desktop/tools/update.test.js
 
       - name: Install
         working-directory: desktop
@@ -149,6 +154,11 @@ jobs:
       - name: Desktop tour tests
         run: node desktop/tools/tour.test.js
 
+      # Semver ordering, the asset for each platform, and the changelog text
+      # the post-update dialog reads. These are pure Node, no window.
+      - name: Updater release rules
+        run: node desktop/tools/update.test.js
+
       - name: Install
         working-directory: desktop
         run: npm ci
@@ -178,7 +188,8 @@ jobs:
 
       # x64 and arm64, unsigned: CI holds no certificate, and `mac.identity` in
       # package.json is null, so electron-builder does not go looking for one.
-      - name: Build the disk images
+      # The zip beside each disk image is what the in-app updater replaces.
+      - name: Build the disk images and zips
         working-directory: desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'

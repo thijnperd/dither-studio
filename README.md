@@ -262,7 +262,7 @@ from *Help ▸ Check for Updates…*, and the press works with no connection.
 node launcher/test.js                                        # 87 engine tests
 bash tools/check.sh launcher/index.html --expect canvas       # a page in a real browser
 node tools/check-examples.js                                 # examples/ against its own manifest
-cd desktop && npm test && npm run smoke                       # 39 core and tour checks, then the window
+cd desktop && npm test && npm run smoke                       # 44 core, tour and updater checks, then the window
 ```
 
 The smoke run boots the real desktop app on a profile of its own, runs the
