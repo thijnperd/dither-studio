@@ -60,11 +60,10 @@ const api = {
   },
 
   /* ---- dialogs owned by the main process ---- */
-  about: function () { return ipcRenderer.invoke('ds:about'); },
-  shortcuts: function () { return ipcRenderer.invoke('ds:shortcuts'); },
   openGuide: function () { return ipcRenderer.invoke('ds:open-guide'); },
   checkUpdates: function () { return ipcRenderer.invoke('ds:updates-check'); },
   installUpdate: function () { return ipcRenderer.invoke('ds:updates-install'); },
+  // The notes for this installed build; the Help window draws them.
   whatsNew: function () { return ipcRenderer.invoke('ds:whats-new'); },
 
   /* ---- talking back ---- */

@@ -563,17 +563,17 @@
   }
 
   function buildPaletteSelect() {
-    buildSelect(el.palette, D.PALETTES, {
+    buildSelect(el.palette, PALETTES_SORTED, {
       label: function (palette) { return palette.name + ' · ' + palette.colors.length + ' colors'; },
     });
   }
 
   function buildToneMapSelect() {
-    buildSelect(el.toneMap, D.TONE_MAPS, { label: function (map) { return map.name; } });
+    buildSelect(el.toneMap, TONE_MAPS_SORTED, { label: function (map) { return map.name; } });
   }
 
   function buildTextSelect() {
-    buildSelect(el.textCharset, TEXT_RAMPS, { label: function (ramp) { return ramp.name; } });
+    buildSelect(el.textCharset, TEXT_RAMPS_SORTED, { label: function (ramp) { return ramp.name; } });
   }
 
   // The effects stack: only what is switched on is on screen, added through
@@ -701,7 +701,7 @@
     placeholder.value = '';
     placeholder.textContent = 'Choose an effect…';
     el.effectAdd.appendChild(placeholder);
-    D.GLITCHES.forEach(function (g) {
+    GLITCHES_SORTED.forEach(function (g) {
       if (glitches.on[g.id]) return;
       const option = document.createElement('option');
       option.value = g.id;
@@ -876,8 +876,29 @@
     } },
   ];
 
+  // The pickers, menus and command palette all read these sorted views, so a
+  // catalogue cannot be alphabetical in one place and authored in another.
+  // Algorithms keep their family grouping: the order is the way the press
+  // groups its screens, not a list to scan for a name. The active effects stack
+  // is never sorted - its order is part of the pipeline and the result.
+  function byName(a, b) {
+    return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
+  }
+
+  const GLITCHES_SORTED = D.GLITCHES.slice().sort(byName);
+  const PALETTES_SORTED = D.PALETTES.slice().sort(byName);
+  const PRESETS_SORTED = PRESETS.slice().sort(byName);
+  const TEXT_RAMPS_SORTED = TEXT_RAMPS.slice().sort(byName);
+  const TONE_MAPS_SORTED = D.TONE_MAPS.slice().sort(function (a, b) {
+    // None is the off switch, so it stays at the top; the maps after it read
+    // alphabetically.
+    if (a.id === 'none') return -1;
+    if (b.id === 'none') return 1;
+    return byName(a, b);
+  });
+
   function buildPresetSelect() {
-    buildSelect(el.preset, PRESETS, {
+    buildSelect(el.preset, PRESETS_SORTED, {
       placeholder: 'Choose a recipe…',
       label: function (preset) { return preset.name; },
     });
@@ -1096,7 +1117,7 @@
   }
 
   function stepPalette(delta) {
-    const next = stepThrough(D.PALETTES, state.settings.palette, delta);
+    const next = stepThrough(PALETTES_SORTED, state.settings.palette, delta);
     setPalette(next.id);
     return next.id;
   }
@@ -2268,11 +2289,11 @@
     groups: GROUPS.map(function (g) { return g.id; }),
     catalogues: {
       ALGORITHMS: D.ALGORITHMS,
-      PALETTES: D.PALETTES,
-      GLITCHES: D.GLITCHES,
-      TONE_MAPS: D.TONE_MAPS,
-      PRESETS: PRESETS,
-      TEXT_RAMPS: TEXT_RAMPS,
+      PALETTES: PALETTES_SORTED,
+      GLITCHES: GLITCHES_SORTED,
+      TONE_MAPS: TONE_MAPS_SORTED,
+      PRESETS: PRESETS_SORTED,
+      TEXT_RAMPS: TEXT_RAMPS_SORTED,
     },
   };
 

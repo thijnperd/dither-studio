@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles/tokens.css" />
   <link rel="stylesheet" href="styles/chrome.css" />
   <link rel="stylesheet" href="styles/panels.css" />
+  <link rel="stylesheet" href="styles/help.css" />
 </head>
 <body class="ps">
 
@@ -15,7 +16,7 @@
   <!-- The window is frameless (see electron/main.js), so this bar *is* the
        caption. The window buttons talk to the main process over preload. -->
   <header class="titlebar" id="titlebar">
-    <button class="sysmark" id="sysmark" type="button" title="Application menu" aria-label="Application menu">
+    <button class="sysmark" id="sysmark" type="button" title="Find anything (Ctrl K)" aria-label="Find anything" aria-keyshortcuts="Control+K">
       <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
         <circle cx="6.9" cy="6.9" r="4.4" fill="none" stroke="currentColor" stroke-width="1.5" />
         <path d="M10.3 10.3L13.5 13.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
@@ -168,7 +169,7 @@
           <!-- the tutorial, first in the rail because it is the way in -->
           <section class="group" id="g-learn" data-group="learn" data-open="true">
             <button class="group-head" type="button" aria-expanded="true">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Learn</span>
               <span class="group-note" id="note-learn">10 lessons</span>
             </button>
@@ -186,7 +187,7 @@
 
           <section class="group" id="g-source" data-group="source" data-open="true">
             <button class="group-head" type="button" aria-expanded="true">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Source</span>
               <span class="group-note" id="note-source">Built-in source</span>
             </button>
@@ -213,7 +214,7 @@
 
           <section class="group" id="g-press" data-group="press" data-open="true">
             <button class="group-head" type="button" aria-expanded="true">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Press</span>
               <span class="group-note" id="note-press">ready</span>
             </button>
@@ -265,7 +266,7 @@
 
           <section class="group" id="g-tone" data-group="tone" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Tone</span>
               <span class="group-note" id="note-tone">neutral</span>
             </button>
@@ -303,7 +304,7 @@
 
           <section class="group" id="g-ink" data-group="ink" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Ink</span>
               <span class="group-note" id="note-ink">none</span>
             </button>
@@ -337,7 +338,7 @@
 
           <section class="group" id="g-detail" data-group="detail" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Detail</span>
               <span class="group-note" id="note-detail">none</span>
             </button>
@@ -356,7 +357,7 @@
 
           <section class="group" id="g-effects" data-group="effects" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Effects</span>
               <span class="group-note" id="note-effects">none</span>
             </button>
@@ -373,7 +374,7 @@
 
           <section class="group" id="g-glow" data-group="glow" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Glow</span>
               <span class="group-note" id="note-glow">off</span>
             </button>
@@ -391,7 +392,7 @@
 
           <section class="group" id="g-motion" data-group="motion" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Motion</span>
               <span class="group-note" id="note-motion">no source</span>
             </button>
@@ -423,7 +424,7 @@
 
           <section class="group" id="g-type" data-group="type" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Type</span>
               <span class="group-note" id="note-type">off</span>
             </button>
@@ -445,7 +446,7 @@
 
           <section class="group" id="g-preset" data-group="preset" data-open="false">
             <button class="group-head" type="button" aria-expanded="false">
-              <span class="caret" aria-hidden="true">▾</span>
+              <svg class="caret" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
               <span class="group-name">Presets</span>
               <span class="group-note" id="note-preset">25 recipes</span>
             </button>
@@ -487,6 +488,62 @@
         <span><kbd>↑</kbd><kbd>↓</kbd> move</span>
         <span><kbd>↵</kbd> run</span>
         <span><kbd id="cmdk-key">Ctrl K</kbd> anywhere</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- the Help window: the reference and release notes in the same instrument
+       panel language as the dock. The grouped sidebar, its search field and the
+       title/description rows are borrowed from W3Plan's Settings window; the
+       other Help commands in the menu bar all open this one window. -->
+  <div class="help" id="help" hidden>
+    <section class="help-window" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <aside class="help-nav">
+        <div class="help-brand">
+          <span class="help-brand-mark" aria-hidden="true">DS</span>
+          <span><b>Dither Studio</b><small>Help &amp; reference</small></span>
+        </div>
+        <div class="help-search" role="search">
+          <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="6.9" cy="6.9" r="4.3"/><path d="M10.2 10.2L13.6 13.6"/>
+          </svg>
+          <input id="help-search" type="text" autocomplete="off" spellcheck="false"
+            placeholder="Find a shortcut or a note…" aria-label="Search help" aria-controls="help-body" />
+          <button class="help-search-clear" id="help-search-clear" type="button"
+            title="Clear the search" aria-label="Clear the search" hidden>✕</button>
+        </div>
+        <div class="help-nav-scroll">
+          <nav id="help-nav" aria-label="Help pages"></nav>
+        </div>
+        <p class="help-nav-foot"><kbd>Esc</kbd> close<span>Dither Studio</span></p>
+      </aside>
+      <div class="help-main">
+        <header class="help-head">
+          <div class="help-head-text">
+            <p class="help-kicker" id="help-kicker">Reference</p>
+            <h2 class="help-title" id="help-title" tabindex="-1">Keyboard shortcuts</h2>
+            <p class="help-sub" id="help-sub"></p>
+          </div>
+          <button class="help-close" id="help-close" type="button" title="Close help (Esc)" aria-label="Close help">
+            <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
+              <path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1.2" />
+            </svg>
+          </button>
+        </header>
+        <div class="help-body" id="help-body"></div>
+        <footer class="help-foot">
+          <span class="help-status" id="help-status" role="status" aria-live="polite"></span>
+          <span class="help-foot-gap"></span>
+          <a class="help-github" id="help-github" href="https://github.com/thijnperd" target="_blank"
+            rel="noopener noreferrer" title="Thijn Köhne on GitHub" aria-label="Thijn Köhne on GitHub">
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+              <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+          </a>
+          <span class="help-foot-keys"><kbd>Esc</kbd> to close</span>
+          <button class="btn btn-primary" id="help-done" type="button">Close</button>
+        </footer>
       </div>
     </section>
   </div>
@@ -539,6 +596,7 @@
   <script src="renderer/core.js"></script>
   <script src="renderer/app.js"></script>
   <script src="renderer/palette.js"></script>
+  <script src="renderer/help.js"></script>
   <script src="renderer/shell.js"></script>
   <script src="renderer/tour.js"></script>
 </body>

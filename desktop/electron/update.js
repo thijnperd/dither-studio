@@ -58,9 +58,13 @@ function plainNotes(text) {
   return String(text || '')
     .replace(/^###\s*/gm, '')
     .replace(/^##\s*/gm, '')
-    .replace(/^[-*]\s*/gm, '• ')
+    // Bold first: a leading `**` is emphasis, not a bullet followed by a star.
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // A bullet is a hyphen or star followed by a space; the star in `**bold**`
+    // has already been removed above.
+    .replace(/^[-*]\s+/gm, '• ')
     .replace(/\r/g, '')
     .trim();
 }
@@ -312,19 +316,28 @@ async function autoCheck() {
   } catch (err) { /* offline is a normal way to use an offline app */ }
 }
 
-async function showWhatsNew(version) {
+// The Help window draws the notes. This returns them; it never opens a native
+// message box. The plain text keeps the changelog's paragraph breaks and
+// bullets so the renderer can build rows from it without a Markdown parser.
+function whatsNew(version) {
   const current = version || app.getVersion();
   const info = found && found.version === current ? found.notes : '';
-  const notes = notesFor(current, info);
-  await dialog.showMessageBox(windowFor(), {
-    type: 'info',
-    title: "What's new in Dither Studio " + current,
-    message: 'Dither Studio ' + current + ' is installed.',
-    detail: truncate(notes, 5000),
-    buttons: ['Close'],
-    noLink: true,
-  });
-  return { status: 'shown', version: current };
+  return { status: 'ready', version: current, notes: notesFor(current, info) };
+}
+
+// Ask the renderer to open its own What's New page. Used once after an update
+// lands, when the window is already up and the renderer owns all popups.
+function showWhatsNew(version) {
+  const current = version || app.getVersion();
+  const win = windowFor();
+  if (!win) return { status: 'unavailable', version: current };
+  try {
+    win.webContents.send('ds:command', { name: 'help-whats-new' });
+    win.focus();
+    return { status: 'opened', version: current };
+  } catch (err) {
+    return { status: 'error', version: current, error: String(err && err.message || err) };
+  }
 }
 
 function rememberLaunch() {
@@ -336,9 +349,11 @@ function rememberLaunch() {
       return;
     }
     if (previous !== app.getVersion()) {
-      // The update has just landed. Let the window settle before the notes
-      // appear; the press should be visible behind the dialog.
-      setTimeout(function () { showWhatsNew().catch(function () {}); }, 1200);
+      // The update has just landed. Let the window settle before the Help
+      // window opens on its release-notes page.
+      setTimeout(function () {
+        try { showWhatsNew(); } catch (err) { /* the notes are not worth a failed start */ }
+      }, 1200);
     }
     fs.writeFileSync(file, app.getVersion(), 'utf8');
   } catch (err) { /* a read-only profile must not break startup */ }
@@ -350,13 +365,14 @@ function wire() {
     if (!found) return { status: 'current', current: app.getVersion() };
     return install({ status: 'available', latest: found.version, asset: found.asset, kind: found.kind });
   });
-  ipcMain.handle('ds:whats-new', function () { return showWhatsNew(); });
+  ipcMain.handle('ds:whats-new', function () { return whatsNew(); });
 }
 
 module.exports = {
   wire: wire,
   autoCheck: autoCheck,
   rememberLaunch: rememberLaunch,
+  whatsNew: whatsNew,
   showWhatsNew: showWhatsNew,
   check: check,
 };

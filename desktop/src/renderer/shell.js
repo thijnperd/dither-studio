@@ -361,6 +361,11 @@
       if (!hit) return;
       // Alt plus a letter belongs to the menu bar, not to an accelerator.
       if (event.altKey && !event.ctrlKey) return;
+      // A modal owns the keyboard while it is open. Ctrl+K is the one global
+      // exception: it closes Help (palette.open does that) and opens Find.
+      const modal = (window.DitherHelp && window.DitherHelp.isOpen()) ||
+        (window.DitherPalette && window.DitherPalette.isOpen());
+      if (modal && hit.name !== 'view-palette') return;
       event.preventDefault();
       event.stopPropagation();
       acceleratorFires += 1;
@@ -369,6 +374,10 @@
   }
 
   // ---- verbs that only exist because there is a window ----
+
+  function openHelp(page) {
+    if (window.DitherHelp) window.DitherHelp.open(page);
+  }
 
   const SHELL_COMMANDS = {
     'view-reload': function () { desktop.win.reload(); },
@@ -406,14 +415,17 @@
       if (tour) tour.show();
     },
     'help-update': function () { desktop.checkUpdates(); },
-    'help-whats-new': function () { desktop.whatsNew(); },
-    'help-shortcuts': function () { desktop.shortcuts(); },
-    'help-about': function () { desktop.about(); },
+    'help-whats-new': function () { openHelp('whats-new'); },
+    'help-shortcuts': function () { openHelp('shortcuts'); },
+    'help-about': function () { openHelp('about'); },
     'help-sources': function () {
       desktop.openExternal('https://github.com/thijnperd/dither-studio/blob/main/SOURCES.md');
     },
     'help-repo': function () {
       desktop.openExternal('https://github.com/thijnperd/dither-studio');
+    },
+    'help-profile': function () {
+      desktop.openExternal('https://github.com/thijnperd');
     },
   };
 
@@ -458,10 +470,15 @@
   });
 
   if ($('sysmark')) {
-    $('sysmark').addEventListener('click', function (event) {
+    const mark = $('sysmark');
+    const key = isMac ? '⌘K' : 'Ctrl K';
+    mark.title = 'Find anything (' + key + ')';
+    mark.setAttribute('aria-label', 'Find anything');
+    mark.setAttribute('aria-keyshortcuts', isMac ? 'Meta+K' : 'Control+K');
+    mark.addEventListener('click', function (event) {
       event.stopPropagation();
-      const file = document.querySelector('.menu[data-menu="file"]');
-      if (file) openMenu(file);
+      closeMenus();
+      if (window.DitherPalette) window.DitherPalette.open();
     });
   }
 

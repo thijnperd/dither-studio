@@ -205,12 +205,19 @@
   font-size: var(--fs-small);
 }
 
+/* The disclosure arrow is its own 10x10 SVG, not the text glyph it used to be:
+   the glyph's font bearings sat off the centre of its box, so closing a station
+   rotated the ink around a point that was not the middle of the arrow. The
+   chevron is centred in the viewBox and the box is square, so this rotation is
+   around the arrow's own centre. */
 .caret {
+  display: block;
   flex: 0 0 auto;
   width: 10px;
-  font-size: 9px;
-  line-height: 1;
+  height: 10px;
   color: var(--muted);
+  transform-box: view-box;
+  transform-origin: 50% 50%;
   transition: transform var(--med), color var(--fast);
 }
 

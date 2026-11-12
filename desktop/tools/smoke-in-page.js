@@ -88,6 +88,40 @@
   check('every slider shows how far it is travelled', painted.length === ranges.length,
     painted.length + ' of ' + ranges.length);
 
+  /* ---- the disclosure arrow turns around its own centre ------------ */
+
+  DS.command('window-panel-open', 'press');
+  await wait(220);
+  const caretSvg = document.querySelector('#g-press .caret');
+  const caretPath = caretSvg && caretSvg.querySelector('path');
+  const caretBox = caretPath ? caretPath.getBBox() : null;
+  const centre = function (rect) {
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  };
+  // Measure the ink against the svg's own box, not the viewport: folding a
+  // station can move the rail's scroll position, which moves both together.
+  const caretOffset = function () {
+    const svg = centre(caretSvg.getBoundingClientRect());
+    const ink = centre(caretPath.getBoundingClientRect());
+    return { x: ink.x - svg.x, y: ink.y - svg.y };
+  };
+  const caretOpen = caretPath ? caretOffset() : null;
+  DS.command('window-panel-close', 'press');
+  await wait(260);
+  const caretClosed = caretPath ? caretOffset() : null;
+  check('the disclosure arrow is drawn and centred in its box',
+    !!caretSvg && !!caretBox &&
+      Math.abs(caretBox.x + caretBox.width / 2 - 5) < 0.01 &&
+      Math.abs(caretBox.y + caretBox.height / 2 - 5) < 0.01,
+    caretBox ? JSON.stringify({ x: caretBox.x, y: caretBox.y, width: caretBox.width, height: caretBox.height }) : null);
+  check('the disclosure arrow rotates about its own centre',
+    !!caretOpen && !!caretClosed &&
+      Math.abs(caretOpen.x) < 0.75 && Math.abs(caretOpen.y) < 0.75 &&
+      Math.abs(caretClosed.x) < 0.75 && Math.abs(caretClosed.y) < 0.75,
+    caretOpen && caretClosed ? JSON.stringify({ open: caretOpen, closed: caretClosed }) : null);
+  DS.command('window-panel-open', 'press');
+  await wait(220);
+
   /* ---- the menu bar draws, and its catalogues expand --------------- */
 
   document.querySelector('.menu[data-menu="press"]').click();
@@ -224,6 +258,22 @@
   check('choosing an algorithm changes the proof', state.algorithm === 'floyd-steinberg', state.algorithm);
   check('choosing a palette changes the proof', state.palette === 'gameboy', state.palette);
   check('the compare view went back off', state.compare === false);
+
+  const effectChoices = Array.prototype.slice.call(document.getElementById('effect-add').options)
+    .filter(function (option) { return !!option.value; })
+    .map(function (option) { return option.textContent; });
+  const sortedEffectChoices = effectChoices.slice().sort(function (a, b) {
+    return a.localeCompare(b, 'en', { sensitivity: 'base' });
+  });
+  check('the effect picker reads alphabetically',
+    effectChoices.join('|') === sortedEffectChoices.join('|'), effectChoices.slice(0, 4).join(', '));
+  const catalogueEffects = DS.catalogues.GLITCHES.map(function (entry) { return entry.name; });
+  const sortedCatalogueEffects = catalogueEffects.slice().sort(function (a, b) {
+    return a.localeCompare(b, 'en', { sensitivity: 'base' });
+  });
+  check('the effect catalogue is alphabetical for the menus and palette too',
+    catalogueEffects.join('|') === sortedCatalogueEffects.join('|'),
+    catalogueEffects.slice(0, 4).join(', '));
 
   DS.command('effects-add', 'grain');
   DS.command('effects-add', 'scanlines');
@@ -504,6 +554,68 @@
   check('the palette did not scroll the window sideways',
     document.scrollingElement.scrollLeft === 0 && document.body.scrollLeft === 0,
     document.scrollingElement.scrollLeft + ' / ' + document.body.scrollLeft);
+
+  /* ---- the spyglass, and the Help window --------------------------- */
+
+  const sysmark = document.getElementById('sysmark');
+  if (sysmark) sysmark.click();
+  await wait(60);
+  check('the title-bar spyglass opens the command palette',
+    !!palette && palette.isOpen() === true);
+  if (palette) palette.close();
+  await wait(30);
+
+  const help = window.DitherHelp;
+  check('the Help window is there', !!help && typeof help.open === 'function');
+  const shortcutsRouted = window.__shell && window.__shell.run('help-shortcuts');
+  await wait(80);
+  check('the Help menu opens the one Help window',
+    shortcutsRouted === true && !!help && help.isOpen() && document.getElementById('help').hidden === false);
+  check('the Help sidebar carries every page',
+    document.querySelectorAll('#help-nav .help-navitem').length === 3,
+    document.querySelectorAll('#help-nav .help-navitem').length);
+  const helpGithub = document.getElementById('help-github');
+  check('the Help footer carries the author’s GitHub profile',
+    !!helpGithub && helpGithub.getAttribute('href') === 'https://github.com/thijnperd' &&
+      !!helpGithub.querySelector('svg path') && helpGithub.getBoundingClientRect().width > 20,
+    helpGithub ? helpGithub.getAttribute('href') : null);
+  check('Help opens on the keyboard reference',
+    document.getElementById('help-title').textContent === 'Keyboard shortcuts',
+    document.getElementById('help-title').textContent);
+  check('the reference is built from rows and keycaps',
+    document.querySelectorAll('#help-body .help-row').length > 10 &&
+      document.querySelectorAll('#help-body .help-keys').length > 8,
+    document.querySelectorAll('#help-body .help-row').length + ' rows');
+
+  const helpSearch = document.getElementById('help-search');
+  helpSearch.value = 'save';
+  helpSearch.dispatchEvent(new Event('input', { bubbles: true }));
+  await wait(40);
+  check('search in Help finds a row on a page',
+    /result/.test(document.getElementById('help-title').textContent) &&
+      document.querySelectorAll('#help-body .help-row').length > 0,
+    document.getElementById('help-title').textContent);
+  helpSearch.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+  await wait(40);
+  check('Escape closes Help and gives the window back',
+    !!help && help.isOpen() === false && document.getElementById('help').hidden === true);
+
+  if (window.__shell) window.__shell.run('help-about');
+  await wait(100);
+  check('About is a page in the same window',
+    !!help && help.isOpen() && document.getElementById('help-title').textContent === 'About Dither Studio',
+    document.getElementById('help-title').textContent);
+  if (help) help.close();
+  await wait(30);
+
+  if (window.__shell) window.__shell.run('help-whats-new');
+  await wait(180);
+  check('What’s New is a page in the same window',
+    !!help && help.isOpen() && document.getElementById('help-title').textContent === 'What’s new' &&
+      document.querySelectorAll('#help-body .help-row-prose').length > 0,
+    document.getElementById('help-title').textContent);
+  if (help) help.close();
+  await wait(30);
 
   /* ---- the built-in source picker --------------------------------- */
 

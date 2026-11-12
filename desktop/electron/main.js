@@ -9,6 +9,9 @@
  *   - reading files off disk and handing the renderer bytes, never a path it
  *     would have to fetch (a file:// image would taint the canvas).
  *
+ * Help, About and What's New are renderer windows, so no native message box
+ * carries the app's reference or release notes.
+ *
  * What does NOT belong here: any dithering, any panel, any algorithm name.
  * The renderer expands the menu tree (src/menu-spec.js plus the app's own
  * catalogues) and sends it over, so this file stays free of the catalogue.
@@ -365,44 +368,6 @@ ipcMain.handle('ds:win', function (event, action) {
   else if (action === 'close') win.close();
   else if (action === 'is-maximized') return win.isMaximized();
   return win.isMaximized();
-});
-
-// Both Help dialogs are the same message box with different words.
-function infoBox(title, message, lines) {
-  return dialog.showMessageBox(mainWindow, {
-    type: 'info',
-    title: title,
-    message: message,
-    detail: lines.join('\n'),
-    buttons: ['Close'],
-    noLink: true,
-  });
-}
-
-ipcMain.handle('ds:about', function () {
-  return infoBox('About Dither Studio', 'Dither Studio ' + app.getVersion(), [
-    'An offline dithering press. 46 algorithms, 24 ink sets, an effects stack,',
-    'text mode and video — in its own window, with no network and no account.',
-    '',
-    'Electron ' + process.versions.electron + ' · Chromium ' + process.versions.chrome + ' · Node ' + process.versions.node,
-    '',
-    'The dithering core is the same dither.js that runs the web and demo versions.',
-  ]);
-});
-
-ipcMain.handle('ds:shortcuts', function () {
-  return infoBox('Keyboard Shortcuts', 'Keyboard shortcuts', [
-    'Ctrl+O        open an image            Ctrl+S    save the proof as PNG',
-    'Ctrl+Shift+O  open a clip              Ctrl+Shift+C  copy the proof',
-    'Ctrl+D        built-in source          Ctrl+Shift+I  developer tools',
-    '',
-    'Ctrl+R        roll a fresh recipe      C         hold to compare',
-    'Ctrl+Shift+R  new seed                 + / −     zoom, 0 fits',
-    'Ctrl+↑ / ↓    previous / next algorithm',
-    'Ctrl+← / →    previous / next palette',
-    '',
-    'Drag a file onto the proof to load it; Ctrl+V pastes an image.',
-  ]);
 });
 
 ipcMain.handle('ds:open-guide', async function () {

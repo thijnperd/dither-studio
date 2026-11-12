@@ -10,6 +10,31 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.3.1 — A clearer reference (2026-11-12)
+
+**Help is a proper window now, and the station arrows turn on their own centres.**
+
+- **One Help window, in the press's own language.** Help ▸ Keyboard Shortcuts,
+  What's New and About now open pages in a single searchable Dither Studio
+  window. A grouped page list, a search field over every row, Escape, a Tab trap
+  and focus restoration replace the native message boxes. The page behind it
+  holds still while the window is up.
+- **What's New reads the shipped changelog.** Release notes are laid out as
+  paragraphs and bullets, and after an update the same page opens once by
+  itself. Markdown emphasis and links no longer leave stray asterisks behind.
+- **The effect catalogue is alphabetical.** The effect picker, the Effects menu
+  and the command palette all read A–Z. The active stack keeps its own order,
+  because the stack order is part of the render. Palettes, recipes, character
+  ramps and tone maps are sorted too; None stays first for tone maps.
+- **The title-bar magnifier opens Find.** It opens the `Ctrl+K` command palette
+  rather than the File menu, with its title and accessibility shortcut matching.
+- **The GitHub mark is on the press.** The web demo's footer and the Help
+  window's footer open the author's GitHub profile, so the build, the site and
+  the source are one click apart.
+- **The station arrows rotate around their centres.** Each header caret is now
+  a 10×10 SVG chevron centred inside its viewBox. Folding a station no longer
+  swings the arrow around an off-centre point in the font's glyph box.
+
 ## 0.3.0 — Keep the press current (2026-11-12)
 
 **The app can update itself now, and the press has more to try.**

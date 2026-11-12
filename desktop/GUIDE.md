@@ -47,8 +47,10 @@ closes and reopens it. The first macOS install still comes from the disk image.
 Neither build is signed, so the usual SmartScreen and Gatekeeper warnings apply.
 
 After an update, the first launch reads the matching section of the repository's
-`CHANGELOG.md` and shows it once as **What's New**. *Help ▸ What's New…* opens the
-notes for the running version whenever you want them again.
+`CHANGELOG.md` and opens its **What's New** page once. *Help ▸ What's New…* shows
+the notes for the running version whenever you want them again. Keyboard
+shortcuts and About live in the same window: one searchable Help surface with a
+grouped page list on the left.
 
 ## 2. Starting it
 
@@ -155,8 +157,8 @@ Panel. Collapsing the panels you are not using is the fastest way to give the
 proof more room; *View ▸ Panels on the Right* hides the dock entirely.
 
 **Help** — the tour (take it, hide it completely, or show the Learn panel), the
-repository guide, the keyboard list, Check for Updates, What's New, the engine's
-sources document, the project page, and About.
+repository guide, Check for Updates, the engine's sources document, the project
+page, and one Help window holding the keyboard list, What's New and About.
 
 ## 5. The tutorial
 

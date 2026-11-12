@@ -60,6 +60,8 @@
     { label: 'Collapse every panel', command: 'window-panels-collapse', keywords: 'fold stations' },
     { label: 'Take the tour', shell: 'help-tour', keywords: 'learn tutorial help' },
     { label: 'Keyboard shortcuts', shell: 'help-shortcuts', keywords: 'keys help' },
+    { label: 'What’s new', shell: 'help-whats-new', keywords: 'release notes changelog updates help' },
+    { label: 'About Dither Studio', shell: 'help-about', keywords: 'version build credits help' },
   ];
 
   function buildItems() {
@@ -323,6 +325,11 @@
   function open() {
     if (!overlay && !build()) return;
     if (!overlay) return;
+    // Ctrl+K is global. If the Help window is up, it gives the keyboard back
+    // rather than letting the two overlays fight over it.
+    if (window.DitherHelp && window.DitherHelp.isOpen && window.DitherHelp.isOpen()) {
+      window.DitherHelp.close();
+    }
     overlay.hidden = false;
     restoreFocus = document.activeElement;
     field.value = '';
