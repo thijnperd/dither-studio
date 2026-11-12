@@ -60,6 +60,9 @@
       "macintosh",
       "teletext",
       "pico8",
+      "sweetie-16",
+      "endesga-16",
+      "nord",
       "gruvbox",
       "apple2",
       "msx",
@@ -86,6 +89,8 @@
       "forest",
       "thermal",
       "gold",
+      "selenium",
+      "oxide",
       "custom"
     ],
     "effects": [
@@ -101,7 +106,9 @@
       "vignette",
       "crt",
       "ripple",
-      "starfield"
+      "starfield",
+      "tracking",
+      "channelroll"
     ],
     "ramps": [
       "ascii",
@@ -147,6 +154,8 @@
       "sample": "Tor's Fight with the Giants",
       "preset": "zine",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -173,6 +182,8 @@
       "sample": "The Council of the Gods",
       "preset": "duo",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -199,6 +210,8 @@
       "sample": "The Council of the Gods",
       "preset": "c64",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -225,6 +238,8 @@
       "sample": "Oedipus and the Sphinx",
       "preset": "terminal",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -251,6 +266,8 @@
       "sample": "Tor's Fight with the Giants",
       "preset": "vhs",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -281,6 +298,8 @@
       "sample": "Oedipus and the Sphinx",
       "preset": "sort",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -310,6 +329,8 @@
       "sample": "Tor's Fight with the Giants",
       "preset": "thermal",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -336,6 +357,8 @@
       "sample": "Oedipus and the Sphinx",
       "preset": "newsprint",
       "recipe": null,
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -366,6 +389,8 @@
         "palette": "ega",
         "pixelSize": 2
       },
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -396,6 +421,8 @@
         "palette": "gameboy-pocket",
         "pixelSize": 6
       },
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": null,
       "effectList": [],
@@ -427,6 +454,8 @@
         "toneMap": "gold",
         "pixelSize": 1
       },
+      "settings": null,
+      "crop": null,
       "glow": {
         "radius": 2,
         "intensity": 40
@@ -464,6 +493,8 @@
         "palette": "bw",
         "pixelSize": 1
       },
+      "settings": null,
+      "crop": null,
       "glow": null,
       "text": {
         "on": true,
@@ -485,6 +516,617 @@
         "cols": 75,
         "rows": 50,
         "cell": 12
+      }
+    },
+    {
+      "id": "sweetie-oedipus",
+      "out": "oedipus-sweetie-16.png",
+      "shows": "Sweetie 16 in a blue-noise proof: pastel skin, cobalt wing, a soft bloom",
+      "sample": "Oedipus and the Sphinx",
+      "preset": null,
+      "recipe": {
+        "algorithm": "blue-noise-32",
+        "palette": "sweetie-16",
+        "pixelSize": 1,
+        "ditherStrength": 130
+      },
+      "settings": {
+        "adjustments.contrast": 1.15,
+        "adjustments.saturation": 1.1
+      },
+      "crop": {
+        "x": 0.25,
+        "y": 0.05,
+        "w": 0.5833,
+        "h": 0.875
+      },
+      "glow": {
+        "radius": 2,
+        "intensity": 20
+      },
+      "text": null,
+      "effectList": [
+        "vignette 32",
+        "grain 8"
+      ],
+      "source": "900×900",
+      "px": "900×900",
+      "bytes": 1780783,
+      "algorithm": "blue-noise-32",
+      "palette": "sweetie-16",
+      "pixelSize": 1,
+      "toneMap": "none",
+      "effects": [
+        "vignette:32",
+        "grain:8:mono"
+      ],
+      "textMode": false,
+      "colors": 18869,
+      "grid": {
+        "cols": 90,
+        "rows": 90,
+        "cell": 10
+      }
+    },
+    {
+      "id": "endesga-thor",
+      "out": "thor-endesga-strike.png",
+      "shows": "Endesga 16 under the hammer: a saturated ordered screen for Thor's strike",
+      "sample": "Tor's Fight with the Giants",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "endesga-16",
+        "pixelSize": 2,
+        "ditherStrength": 125
+      },
+      "settings": {
+        "adjustments.contrast": 1.35,
+        "adjustments.brightness": 0.92,
+        "adjustments.saturation": 1.25
+      },
+      "crop": {
+        "x": 0.277,
+        "y": 0.027,
+        "w": 0.455,
+        "h": 0.383
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "vignette 28",
+        "grain 8"
+      ],
+      "source": "900×1096",
+      "px": "900×1096",
+      "bytes": 786408,
+      "algorithm": "bayer8",
+      "palette": "endesga-16",
+      "pixelSize": 2,
+      "toneMap": "none",
+      "effects": [
+        "vignette:28",
+        "grain:8:mono"
+      ],
+      "textMode": false,
+      "colors": 3100,
+      "grid": {
+        "cols": 90,
+        "rows": 110,
+        "cell": 10
+      }
+    },
+    {
+      "id": "nord-riddle",
+      "out": "oedipus-nord-riddle.png",
+      "shows": "Nord cools the meeting of Oedipus and the Sphinx to marble and teal",
+      "sample": "Oedipus and the Sphinx",
+      "preset": null,
+      "recipe": {
+        "algorithm": "smooth-diffusion",
+        "palette": "nord",
+        "pixelSize": 1,
+        "ditherStrength": 120
+      },
+      "settings": {
+        "adjustments.contrast": 1.22,
+        "adjustments.brightness": 1.04,
+        "adjustments.saturation": 0.85
+      },
+      "crop": {
+        "x": 0.25,
+        "y": 0.1875,
+        "w": 0.5,
+        "h": 0.75
+      },
+      "glow": {
+        "radius": 1,
+        "intensity": 15
+      },
+      "text": null,
+      "effectList": [
+        "vignette 25"
+      ],
+      "source": "900×900",
+      "px": "900×900",
+      "bytes": 850631,
+      "algorithm": "smooth-diffusion",
+      "palette": "nord",
+      "pixelSize": 1,
+      "toneMap": "none",
+      "effects": [
+        "vignette:25"
+      ],
+      "textMode": false,
+      "colors": 6445,
+      "grid": {
+        "cols": 90,
+        "rows": 90,
+        "cell": 10
+      }
+    },
+    {
+      "id": "nord-wing",
+      "out": "oedipus-nord-wing.png",
+      "shows": "the Sphinx's wing in Nord, close enough to count the feathers",
+      "sample": "Oedipus and the Sphinx",
+      "preset": null,
+      "recipe": {
+        "algorithm": "smooth-diffusion",
+        "palette": "nord",
+        "pixelSize": 1,
+        "ditherStrength": 120
+      },
+      "settings": {
+        "adjustments.contrast": 1.25,
+        "adjustments.brightness": 1.05,
+        "adjustments.saturation": 0.85
+      },
+      "crop": {
+        "x": 0.1667,
+        "y": 0.0375,
+        "w": 0.4333,
+        "h": 0.875
+      },
+      "glow": {
+        "radius": 1,
+        "intensity": 15
+      },
+      "text": null,
+      "effectList": [
+        "vignette 25"
+      ],
+      "source": "900×1212",
+      "px": "900×1212",
+      "bytes": 1116421,
+      "algorithm": "smooth-diffusion",
+      "palette": "nord",
+      "pixelSize": 1,
+      "toneMap": "none",
+      "effects": [
+        "vignette:25"
+      ],
+      "textMode": false,
+      "colors": 7978,
+      "grid": {
+        "cols": 90,
+        "rows": 122,
+        "cell": 10
+      }
+    },
+    {
+      "id": "sweetie-council",
+      "out": "council-sweetie-16.png",
+      "shows": "Sweetie 16 turns the Council of the Gods into a pastel postcard",
+      "sample": "The Council of the Gods",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "sweetie-16",
+        "pixelSize": 2,
+        "ditherStrength": 125
+      },
+      "settings": {
+        "adjustments.contrast": 1.3,
+        "adjustments.saturation": 1.15
+      },
+      "crop": {
+        "x": 0.22,
+        "y": 0,
+        "w": 0.56,
+        "h": 1
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "vignette 25"
+      ],
+      "source": "900×653",
+      "px": "900×653",
+      "bytes": 309552,
+      "algorithm": "bayer8",
+      "palette": "sweetie-16",
+      "pixelSize": 2,
+      "toneMap": "none",
+      "effects": [
+        "vignette:25"
+      ],
+      "textMode": false,
+      "colors": 604,
+      "grid": {
+        "cols": 90,
+        "rows": 66,
+        "cell": 10
+      }
+    },
+    {
+      "id": "endesga-court",
+      "out": "council-endesga-court.png",
+      "shows": "Endesga 16 on the right-hand court, with a strip of tape tracking",
+      "sample": "The Council of the Gods",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "endesga-16",
+        "pixelSize": 2,
+        "ditherStrength": 130
+      },
+      "settings": {
+        "adjustments.contrast": 1.25,
+        "adjustments.saturation": 1.15
+      },
+      "crop": {
+        "x": 0.58,
+        "y": 0,
+        "w": 0.42,
+        "h": 1
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "tracking 30",
+        "grain 10"
+      ],
+      "source": "900×870",
+      "px": "900×870",
+      "bytes": 485655,
+      "algorithm": "bayer8",
+      "palette": "endesga-16",
+      "pixelSize": 2,
+      "toneMap": "none",
+      "effects": [
+        "tracking:30",
+        "grain:10:mono"
+      ],
+      "textMode": false,
+      "colors": 179,
+      "grid": {
+        "cols": 90,
+        "rows": 87,
+        "cell": 10
+      }
+    },
+    {
+      "id": "oxide-rust",
+      "out": "thor-oxide-rust.png",
+      "shows": "Oxide re-inks Thor and the giant as a rusted engraving",
+      "sample": "Tor's Fight with the Giants",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "gray-8",
+        "toneMap": "oxide",
+        "pixelSize": 2,
+        "ditherStrength": 125
+      },
+      "settings": {
+        "adjustments.contrast": 1.35
+      },
+      "crop": {
+        "x": 0.2275,
+        "y": 0.0616,
+        "w": 0.6924,
+        "h": 0.4378
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "vignette 30"
+      ],
+      "source": "900×823",
+      "px": "900×823",
+      "bytes": 366583,
+      "algorithm": "bayer8",
+      "palette": "gray-8",
+      "pixelSize": 2,
+      "toneMap": "oxide",
+      "effects": [
+        "vignette:30"
+      ],
+      "textMode": false,
+      "colors": 518,
+      "grid": {
+        "cols": 90,
+        "rows": 83,
+        "cell": 10
+      }
+    },
+    {
+      "id": "kaleido-mask",
+      "out": "thor-kaleido-mask.png",
+      "shows": "Thor's strike mirrored into a kaleidoscope: a golden mask",
+      "sample": "Tor's Fight with the Giants",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "endesga-16",
+        "pixelSize": 2,
+        "ditherStrength": 120
+      },
+      "settings": {
+        "adjustments.contrast": 1.1,
+        "adjustments.brightness": 1.05
+      },
+      "crop": {
+        "x": 0.277,
+        "y": 0.027,
+        "w": 0.455,
+        "h": 0.383
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "kaleidoscope 30 2",
+        "scanlines 8"
+      ],
+      "source": "900×1096",
+      "px": "900×1096",
+      "bytes": 234112,
+      "algorithm": "bayer8",
+      "palette": "endesga-16",
+      "pixelSize": 2,
+      "toneMap": "none",
+      "effects": [
+        "kaleidoscope:30:2",
+        "scanlines:8"
+      ],
+      "textMode": false,
+      "colors": 16,
+      "grid": {
+        "cols": 90,
+        "rows": 110,
+        "cell": 10
+      }
+    },
+    {
+      "id": "starfield",
+      "out": "oedipus-starfield.png",
+      "shows": "ice on black: the Sphinx's wing under a starfield",
+      "sample": "Oedipus and the Sphinx",
+      "preset": null,
+      "recipe": {
+        "algorithm": "blue-noise-32",
+        "palette": "ice",
+        "pixelSize": 1,
+        "ditherStrength": 120
+      },
+      "settings": {
+        "adjustments.contrast": 1.15
+      },
+      "crop": {
+        "x": 0.1667,
+        "y": 0.0375,
+        "w": 0.4333,
+        "h": 0.875
+      },
+      "glow": {
+        "radius": 2,
+        "intensity": 25
+      },
+      "text": null,
+      "effectList": [
+        "starfield 42 stars",
+        "vignette 28"
+      ],
+      "source": "900×1212",
+      "px": "900×1212",
+      "bytes": 596692,
+      "algorithm": "blue-noise-32",
+      "palette": "ice",
+      "pixelSize": 1,
+      "toneMap": "none",
+      "effects": [
+        "starfield:42:stars",
+        "vignette:28"
+      ],
+      "textMode": false,
+      "colors": 2075,
+      "grid": {
+        "cols": 90,
+        "rows": 122,
+        "cell": 10
+      }
+    },
+    {
+      "id": "selenium-wing",
+      "out": "oedipus-selenium-wing.png",
+      "shows": "Selenium gives the wing a platinum-print glow",
+      "sample": "Oedipus and the Sphinx",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "gray-16",
+        "toneMap": "selenium",
+        "pixelSize": 1,
+        "ditherStrength": 125
+      },
+      "settings": {
+        "adjustments.contrast": 1.3
+      },
+      "crop": {
+        "x": 0.1667,
+        "y": 0.0375,
+        "w": 0.4333,
+        "h": 0.875
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "vignette 30"
+      ],
+      "source": "900×1212",
+      "px": "900×1212",
+      "bytes": 1311561,
+      "algorithm": "bayer8",
+      "palette": "gray-16",
+      "pixelSize": 1,
+      "toneMap": "selenium",
+      "effects": [
+        "vignette:30"
+      ],
+      "textMode": false,
+      "colors": 623,
+      "grid": {
+        "cols": 90,
+        "rows": 122,
+        "cell": 10
+      }
+    },
+    {
+      "id": "tape-touch",
+      "out": "oedipus-tape-touch.png",
+      "shows": "tape tracking tears the moment of touch into horizontal bands",
+      "sample": "Oedipus and the Sphinx",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "endesga-16",
+        "pixelSize": 2,
+        "ditherStrength": 125
+      },
+      "settings": {
+        "adjustments.contrast": 1.2,
+        "adjustments.saturation": 1.15
+      },
+      "crop": {
+        "x": 0.25,
+        "y": 0.1875,
+        "w": 0.5,
+        "h": 0.75
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "tracking 32"
+      ],
+      "source": "900×900",
+      "px": "900×900",
+      "bytes": 207354,
+      "algorithm": "bayer8",
+      "palette": "endesga-16",
+      "pixelSize": 2,
+      "toneMap": "none",
+      "effects": [
+        "tracking:32"
+      ],
+      "textMode": false,
+      "colors": 23,
+      "grid": {
+        "cols": 90,
+        "rows": 90,
+        "cell": 10
+      }
+    },
+    {
+      "id": "channel-roll",
+      "out": "oedipus-channel-roll.png",
+      "shows": "channel roll separates the proof into green and magenta histories",
+      "sample": "Oedipus and the Sphinx",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "endesga-16",
+        "pixelSize": 2,
+        "ditherStrength": 125
+      },
+      "settings": {
+        "adjustments.contrast": 1.2,
+        "adjustments.saturation": 1.15
+      },
+      "crop": {
+        "x": 0.25,
+        "y": 0.05,
+        "w": 0.5833,
+        "h": 0.875
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "channelroll 45",
+        "scanlines 8"
+      ],
+      "source": "900×900",
+      "px": "900×900",
+      "bytes": 220389,
+      "algorithm": "bayer8",
+      "palette": "endesga-16",
+      "pixelSize": 2,
+      "toneMap": "none",
+      "effects": [
+        "channelroll:45",
+        "scanlines:8"
+      ],
+      "textMode": false,
+      "colors": 26,
+      "grid": {
+        "cols": 90,
+        "rows": 90,
+        "cell": 10
+      }
+    },
+    {
+      "id": "ripple-council",
+      "out": "council-ripple-swirl.png",
+      "shows": "a slow swirl bends the Council's pastel court out of register",
+      "sample": "The Council of the Gods",
+      "preset": null,
+      "recipe": {
+        "algorithm": "bayer8",
+        "palette": "sweetie-16",
+        "pixelSize": 2,
+        "ditherStrength": 125
+      },
+      "settings": {
+        "adjustments.contrast": 1.2,
+        "adjustments.saturation": 1.1
+      },
+      "crop": {
+        "x": 0.22,
+        "y": 0,
+        "w": 0.56,
+        "h": 1
+      },
+      "glow": null,
+      "text": null,
+      "effectList": [
+        "ripple 24 swirl"
+      ],
+      "source": "900×653",
+      "px": "900×653",
+      "bytes": 161317,
+      "algorithm": "bayer8",
+      "palette": "sweetie-16",
+      "pixelSize": 2,
+      "toneMap": "none",
+      "effects": [
+        "ripple:24:swirl"
+      ],
+      "textMode": false,
+      "colors": 10,
+      "grid": {
+        "cols": 90,
+        "rows": 66,
+        "cell": 10
       }
     }
   ]

@@ -50,9 +50,10 @@ const APP = 'file:///' + path.join(__dirname, '..', 'launcher', 'index.html').re
 const OUT = path.join(__dirname, '..', 'examples');
 
 /* The app renders at whatever resolution it is handed, and this set at the
- * paintings' own size runs to five megabytes. So every source is drawn down to
- * this width before it is loaded - the picture stays the app's own output, only
- * of a smaller source - and `--width 0` rebuilds the folder at native size. */
+ * paintings' own size runs to tens of megabytes. So every source is cropped to
+ * its focal area, then drawn to this width before it is loaded - the picture
+ * stays the app's own output, only of a smaller source - and `--width 0`
+ * rebuilds the folder at the crops' native size. */
 const widthFlag = process.argv.indexOf('--width');
 const WIDTH = widthFlag >= 0 ? Number(process.argv[widthFlag + 1]) : 900;
 
@@ -132,6 +133,116 @@ const EXAMPLES = [
     text: { on: true, ramp: 'ascii', size: 12 },
     shows: 'type mode: the same proof set in characters, the grid the .txt export carries',
   },
+  // 0.3.0's three new palettes, framed on the paintings' strongest faces.
+  {
+    id: 'sweetie-oedipus', out: 'oedipus-sweetie-16.png', sample: 'Oedipus and the Sphinx',
+    crop: { x: 0.25, y: 0.05, w: 0.5833, h: 0.875 },
+    recipe: { algorithm: 'blue-noise-32', palette: 'sweetie-16', pixelSize: 1, ditherStrength: 130 },
+    settings: { 'adjustments.contrast': 1.15, 'adjustments.saturation': 1.1 },
+    effects: [{ id: 'vignette', amount: 32 }, { id: 'grain', amount: 8 }],
+    glow: { radius: 2, intensity: 20 },
+    shows: 'Sweetie 16 in a blue-noise proof: pastel skin, cobalt wing, a soft bloom',
+  },
+  {
+    id: 'endesga-thor', out: 'thor-endesga-strike.png', sample: "Tor's Fight with the Giants",
+    crop: { x: 0.277, y: 0.027, w: 0.455, h: 0.383 },
+    recipe: { algorithm: 'bayer8', palette: 'endesga-16', pixelSize: 2, ditherStrength: 125 },
+    settings: { 'adjustments.contrast': 1.35, 'adjustments.brightness': 0.92, 'adjustments.saturation': 1.25 },
+    effects: [{ id: 'vignette', amount: 28 }, { id: 'grain', amount: 8 }],
+    shows: "Endesga 16 under the hammer: a saturated ordered screen for Thor's strike",
+  },
+  {
+    id: 'nord-riddle', out: 'oedipus-nord-riddle.png', sample: 'Oedipus and the Sphinx',
+    crop: { x: 0.25, y: 0.1875, w: 0.5, h: 0.75 },
+    recipe: { algorithm: 'smooth-diffusion', palette: 'nord', pixelSize: 1, ditherStrength: 120 },
+    settings: { 'adjustments.contrast': 1.22, 'adjustments.brightness': 1.04, 'adjustments.saturation': 0.85 },
+    effects: [{ id: 'vignette', amount: 25 }],
+    glow: { radius: 1, intensity: 15 },
+    shows: 'Nord cools the meeting of Oedipus and the Sphinx to marble and teal',
+  },
+  {
+    id: 'nord-wing', out: 'oedipus-nord-wing.png', sample: 'Oedipus and the Sphinx',
+    crop: { x: 0.1667, y: 0.0375, w: 0.4333, h: 0.875 },
+    recipe: { algorithm: 'smooth-diffusion', palette: 'nord', pixelSize: 1, ditherStrength: 120 },
+    settings: { 'adjustments.contrast': 1.25, 'adjustments.brightness': 1.05, 'adjustments.saturation': 0.85 },
+    effects: [{ id: 'vignette', amount: 25 }],
+    glow: { radius: 1, intensity: 15 },
+    shows: "the Sphinx's wing in Nord, close enough to count the feathers",
+  },
+  {
+    id: 'sweetie-council', out: 'council-sweetie-16.png', sample: 'The Council of the Gods',
+    crop: { x: 0.22, y: 0, w: 0.56, h: 1 },
+    recipe: { algorithm: 'bayer8', palette: 'sweetie-16', pixelSize: 2, ditherStrength: 125 },
+    settings: { 'adjustments.contrast': 1.3, 'adjustments.saturation': 1.15 },
+    effects: [{ id: 'vignette', amount: 25 }],
+    shows: 'Sweetie 16 turns the Council of the Gods into a pastel postcard',
+  },
+  {
+    id: 'endesga-court', out: 'council-endesga-court.png', sample: 'The Council of the Gods',
+    crop: { x: 0.58, y: 0, w: 0.42, h: 1 },
+    recipe: { algorithm: 'bayer8', palette: 'endesga-16', pixelSize: 2, ditherStrength: 130 },
+    settings: { 'adjustments.contrast': 1.25, 'adjustments.saturation': 1.15 },
+    effects: [{ id: 'tracking', amount: 30 }, { id: 'grain', amount: 10 }],
+    shows: 'Endesga 16 on the right-hand court, with a strip of tape tracking',
+  },
+  // A second movement: the new tone maps, effects and focal crops.
+  {
+    id: 'oxide-rust', out: 'thor-oxide-rust.png', sample: "Tor's Fight with the Giants",
+    crop: { x: 0.2275, y: 0.0616, w: 0.6924, h: 0.4378 },
+    recipe: { algorithm: 'bayer8', palette: 'gray-8', toneMap: 'oxide', pixelSize: 2, ditherStrength: 125 },
+    settings: { 'adjustments.contrast': 1.35 },
+    effects: [{ id: 'vignette', amount: 30 }],
+    shows: 'Oxide re-inks Thor and the giant as a rusted engraving',
+  },
+  {
+    id: 'kaleido-mask', out: 'thor-kaleido-mask.png', sample: "Tor's Fight with the Giants",
+    crop: { x: 0.277, y: 0.027, w: 0.455, h: 0.383 },
+    recipe: { algorithm: 'bayer8', palette: 'endesga-16', pixelSize: 2, ditherStrength: 120 },
+    settings: { 'adjustments.contrast': 1.1, 'adjustments.brightness': 1.05 },
+    effects: [{ id: 'kaleidoscope', amount: 30, mode: '2' }, { id: 'scanlines', amount: 8 }],
+    shows: "Thor's strike mirrored into a kaleidoscope: a golden mask",
+  },
+  {
+    id: 'starfield', out: 'oedipus-starfield.png', sample: 'Oedipus and the Sphinx',
+    crop: { x: 0.1667, y: 0.0375, w: 0.4333, h: 0.875 },
+    recipe: { algorithm: 'blue-noise-32', palette: 'ice', pixelSize: 1, ditherStrength: 120 },
+    settings: { 'adjustments.contrast': 1.15 },
+    effects: [{ id: 'starfield', amount: 42, mode: 'stars' }, { id: 'vignette', amount: 28 }],
+    glow: { radius: 2, intensity: 25 },
+    shows: "ice on black: the Sphinx's wing under a starfield",
+  },
+  {
+    id: 'selenium-wing', out: 'oedipus-selenium-wing.png', sample: 'Oedipus and the Sphinx',
+    crop: { x: 0.1667, y: 0.0375, w: 0.4333, h: 0.875 },
+    recipe: { algorithm: 'bayer8', palette: 'gray-16', toneMap: 'selenium', pixelSize: 1, ditherStrength: 125 },
+    settings: { 'adjustments.contrast': 1.3 },
+    effects: [{ id: 'vignette', amount: 30 }],
+    shows: 'Selenium gives the wing a platinum-print glow',
+  },
+  {
+    id: 'tape-touch', out: 'oedipus-tape-touch.png', sample: 'Oedipus and the Sphinx',
+    crop: { x: 0.25, y: 0.1875, w: 0.5, h: 0.75 },
+    recipe: { algorithm: 'bayer8', palette: 'endesga-16', pixelSize: 2, ditherStrength: 125 },
+    settings: { 'adjustments.contrast': 1.2, 'adjustments.saturation': 1.15 },
+    effects: [{ id: 'tracking', amount: 32 }],
+    shows: 'tape tracking tears the moment of touch into horizontal bands',
+  },
+  {
+    id: 'channel-roll', out: 'oedipus-channel-roll.png', sample: 'Oedipus and the Sphinx',
+    crop: { x: 0.25, y: 0.05, w: 0.5833, h: 0.875 },
+    recipe: { algorithm: 'bayer8', palette: 'endesga-16', pixelSize: 2, ditherStrength: 125 },
+    settings: { 'adjustments.contrast': 1.2, 'adjustments.saturation': 1.15 },
+    effects: [{ id: 'channelroll', amount: 45 }, { id: 'scanlines', amount: 8 }],
+    shows: 'channel roll separates the proof into green and magenta histories',
+  },
+  {
+    id: 'ripple-council', out: 'council-ripple-swirl.png', sample: 'The Council of the Gods',
+    crop: { x: 0.22, y: 0, w: 0.56, h: 1 },
+    recipe: { algorithm: 'bayer8', palette: 'sweetie-16', pixelSize: 2, ditherStrength: 125 },
+    settings: { 'adjustments.contrast': 1.2, 'adjustments.saturation': 1.1 },
+    effects: [{ id: 'ripple', amount: 24, mode: 'swirl' }],
+    shows: "a slow swirl bends the Council's pastel court out of register",
+  },
 ];
 
 const only = process.argv.slice(2).filter(function (arg, i, all) {
@@ -177,6 +288,15 @@ function recipeOf(item) {
     if (recipe.pixelSize) parts.push('pixel size ' + recipe.pixelSize);
   }
   if (item.text) parts.push('type mode, `' + item.text.ramp + '` at ' + item.text.size + 'px');
+  if (item.crop) {
+    parts.push('crop ' + [item.crop.x, item.crop.y, item.crop.w, item.crop.h]
+      .map(function (n) { return Math.round(n * 100) + '%'; }).join('/'));
+  }
+  if (item.settings) {
+    Object.keys(item.settings).forEach(function (key) {
+      parts.push(key.replace('adjustments.', '') + ' ' + item.settings[key]);
+    });
+  }
   if (item.effectList && item.effectList.length) parts.push('effects: ' + item.effectList.join(', '));
   if (item.glow) parts.push('glow ' + item.glow.radius + '/' + item.glow.intensity);
   return parts.join(' ' + DOT + ' ');
@@ -490,29 +610,41 @@ ${cards}
     }, job.sample);
     if (!data) throw new Error('the built-in table has no sample called ' + job.sample);
 
-    // Drawn down to the width cap first, so the folder stays light to clone.
+    // Crop to the painting's strongest focal area, then draw down to the width
+    // cap, so the folder stays light to clone. A crop is stored as fractions of
+    // the source, not pixels, so it survives a change of width or a larger scan.
     const source = await page.evaluate(function (arg) {
       return new Promise(function (resolve) {
         const image = new Image();
         image.onload = function () {
-          const scale = arg.width ? Math.min(1, arg.width / image.naturalWidth) : 1;
-          if (scale === 1) {
+          const crop = arg.crop || { x: 0, y: 0, w: 1, h: 1 };
+          const sx = Math.max(0, Math.round(crop.x * image.naturalWidth));
+          const sy = Math.max(0, Math.round(crop.y * image.naturalHeight));
+          const sw = Math.min(image.naturalWidth - sx, Math.round(crop.w * image.naturalWidth));
+          const sh = Math.min(image.naturalHeight - sy, Math.round(crop.h * image.naturalHeight));
+          // A full painting is only ever drawn down; a focal crop is allowed
+          // back up to the folder's width, so every proof on the contact sheet
+          // has the same long edge instead of the crop deciding it.
+          const scale = arg.width ? (arg.crop ? arg.width / sw : Math.min(1, arg.width / sw)) : 1;
+          const w = Math.max(1, Math.round(sw * scale));
+          const h = Math.max(1, Math.round(sh * scale));
+          if (sx === 0 && sy === 0 && sw === image.naturalWidth && sh === image.naturalHeight && scale === 1) {
             resolve({ url: arg.url, w: image.naturalWidth, h: image.naturalHeight, was: image.naturalWidth });
             return;
           }
           const canvas = document.createElement('canvas');
-          canvas.width = Math.round(image.naturalWidth * scale);
-          canvas.height = Math.round(image.naturalHeight * scale);
+          canvas.width = w;
+          canvas.height = h;
           const ctx = canvas.getContext('2d');
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-          resolve({ url: canvas.toDataURL('image/png'), w: canvas.width, h: canvas.height, was: image.naturalWidth });
+          ctx.drawImage(image, sx, sy, sw, sh, 0, 0, w, h);
+          resolve({ url: canvas.toDataURL('image/png'), w: w, h: h, was: image.naturalWidth });
         };
         image.onerror = function () { resolve(null); };
         image.src = arg.url;
       });
-    }, { url: data, width: WIDTH });
+    }, { url: data, width: WIDTH, crop: job.crop || null });
     if (!source) throw new Error('could not read the built-in picture ' + job.sample);
 
     await page.evaluate(function (arg) { window.__dither.loadDataURL(arg.url, arg.name); },
@@ -539,6 +671,10 @@ ${cards}
       await page.evaluate(function (arg) { window.__dither.setSetting('glow.' + arg.key, arg.value); },
         { key: key, value: job.glow[key] });
     }
+    for (const key of Object.keys(job.settings || {})) {
+      await page.evaluate(function (arg) { window.__dither.setSetting(arg.key, arg.value); },
+        { key: key, value: job.settings[key] });
+    }
     // Type mode is a switch rather than a setting.
     if (job.text) {
       await page.evaluate(function (text) { window.__dither.setText(text.on, text.ramp, text.size); }, job.text);
@@ -560,6 +696,17 @@ ${cards}
           return true;
         }, { id: effect.id, amount: effect.amount });
         if (!moved) throw new Error('the effects stack has no ' + effect.id + ' row to set');
+      }
+      if (effect.mode !== undefined) {
+        const chosen = await page.evaluate(function (arg) {
+          const row = document.querySelector('.stack-row[data-effect="' + arg.id + '"]');
+          const select = row && row.querySelector('select');
+          if (!select) return false;
+          select.value = String(arg.mode);
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          return select.value === String(arg.mode);
+        }, { id: effect.id, mode: effect.mode });
+        if (!chosen) throw new Error('the effects stack has no ' + effect.mode + ' mode for ' + effect.id);
       }
     }
 
@@ -602,9 +749,11 @@ ${cards}
     const size = shot.stats.width + '\u00d7' + shot.stats.height;
     done.push({
       id: job.id, out: job.out, shows: job.shows, sample: job.sample,
-      preset: job.preset || null, recipe: job.recipe || null, glow: job.glow || null,
+      preset: job.preset || null, recipe: job.recipe || null, settings: job.settings || null,
+      crop: job.crop || null, glow: job.glow || null,
       text: job.text || null, effectList: (job.effects || []).map(function (fx) {
-        return fx.id + (fx.amount !== undefined ? ' ' + fx.amount : '');
+        return fx.id + (fx.amount !== undefined ? ' ' + fx.amount : '') +
+          (fx.mode !== undefined ? ' ' + fx.mode : '');
       }),
       source: source.w + '\u00d7' + source.h, px: size, bytes: bytes,
       algorithm: shot.stats.algorithm, palette: shot.stats.palette, pixelSize: shot.stats.pixelSize,

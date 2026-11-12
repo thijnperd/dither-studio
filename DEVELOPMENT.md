@@ -27,7 +27,7 @@ performance budget, and every check that ships with the app.
 | [`demo/`](demo/) | the **maintained** web demo published to GitHub Pages: its own shell, palette, splash, favicon and icons |
 | [`desktop/`](desktop/) | the **active** Electron build, in its own folder with its own dependencies |
 | [`docs/`](docs/) | the screenshots in this file, the README and the guides |
-| [`examples/`](examples/) | twelve generated proofs of the app's own output, with the contact sheet that shows them, the manifest that describes them and the README list that mirrors it |
+| [`examples/`](examples/) | twenty-five generated proofs of the app's own output, with the contact sheet that shows them, the manifest that describes them and the README list that mirrors it |
 | [`inbox/`](inbox/) | where a new capture waits to be developed into `docs/`; the folder ignores its own contents, so nothing dropped in it can reach a commit |
 | [`.github/workflows/`](.github/workflows/) | `test.yml` runs the tests and the renderer-sync check; `build.yml` builds the Windows installer and the macOS disk images and publishes releases; `pages.yml` publishes `demo/` |
 | [`README.md`](README.md) | the front door for the whole repository |

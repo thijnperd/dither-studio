@@ -19,13 +19,18 @@ operating system's own dialogs. Its only network request is the update check
 
 ## The launch film
 
-[![The launch film: the words "Let there be pixels." in serif on an obsidian stage](docs/launch-poster.png)](publicity/out/dither-studio-launch.mp4)
+[![The launch film: the words "Let there be pixels." in serif on an obsidian stage](docs/dither-studio-launch.gif)](publicity/out/dither-studio-launch.mp4)
 
 Forty seconds at 1920 x 1080, 24 fps: classical paintings go in and the app's
 own proofs come out. Every frame is drawn by code, from the real window and from
 exports the engine made, so nothing on screen is a mock-up. The source is
 [`publicity/launch.html`](publicity/launch.html) and `node publicity/render.js`
 re-renders the MP4 from it.
+
+The README carries the whole cut as a 640 x 360, 8 fps GIF
+([`docs/dither-studio-launch.gif`](docs/dither-studio-launch.gif), 7.7 MB), because
+GitHub READMEs do not play the MP4 inline. Click the loop for the full-resolution
+film.
 
 The public page built around the film, with the scroll-driven cut, the proof
 shelf and the download links, is
@@ -92,7 +97,7 @@ Spectrum's fifteen inks.*
 
 ## Examples
 
-A set of proofs built to be *rebuilt*: [`examples/`](examples/) holds twelve
+A set of proofs built to be *rebuilt*: [`examples/`](examples/) holds twenty-five
 pictures, each one drawn by the app from the paintings that ship inside it, with
 the recipe recorded beside it. They come from the built-in sources that come pre-installed, so anyone who clones this repository can regenerate every one of
 them with
@@ -119,6 +124,23 @@ Bayer 8 screen on the Commodore 64's sixteen-colour palette.*
 
 *Moreau, **Oedipus and the Sphinx** (1864), four greys under a blue-noise screen,
 re-inked as gold leaf and lit from behind.*
+
+The 0.3.0 set adds **Sweetie 16**, **Endesga 16** and **Nord** to the shelf, the
+**Oxide** and **Selenium** tone maps, and proofs for **tape tracking**, **channel
+roll**, **kaleidoscope**, **starfield** and **ripple**. The new pictures are
+cropped to the paintings' faces, hands and wings instead of showing the whole
+canvas; [`examples/README.md`](examples/README.md) records the crop and every
+other setting. A few of them: [Sweetie 16 on the
+Council](examples/council-sweetie-16.png), [Nord on the
+wing](examples/oedipus-nord-wing.png), [the kaleidoscope
+Thor](examples/thor-kaleido-mask.png), [channel
+roll](examples/oedipus-channel-roll.png) and [the Council in a
+swirl](examples/council-ripple-swirl.png).
+
+![The Council of the Gods in Sweetie 16, a pastel postcard](examples/council-sweetie-16.png)
+
+*Raphael's workshop, **The Council of the Gods** (1517–18), on **Sweetie 16**:
+an ordered screen at pixel size 2, cropped to the central court.*
 
 ## Structure-aware screens
 
