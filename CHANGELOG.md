@@ -10,7 +10,50 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
-## Unreleased
+## 0.3.0 — Keep the press current (2026-11-12)
+
+**The app can update itself now, and the press has more to try.**
+
+- **Updates come from this repository's GitHub releases.** Help ▸ Check for
+  Updates asks GitHub for the latest release, compares it with the version on
+  disk, and downloads the asset built for this machine. On Windows the setup
+  runs silently after the app closes and starts the new version; on macOS the
+  zip replaces the app and reopens it. A failed check is silent on launch, so
+  an offline press is still an offline press.
+- **What's New is part of the app.** Help ▸ What's New, and a one-time dialog
+  after an update, read the matching section of this changelog. The app remembers
+  which version it last opened, so the notes appear when a release lands and
+  not on every start.
+- **The overlapping-save race is fixed.** Two saves that asked for the same
+  path could truncate each other, which is what made the Windows Ctrl+S smoke
+  check see a zero-byte proof. Every save now lands in a sibling temporary file
+  and is renamed into place, so the last finished proof is the whole proof.
+- **The tutorial can be hidden completely.** Learn ▸ Hide (or Help ▸ Hide the
+  Tour Completely) removes the Learn station and its jump chip and stops the
+  intro. The choice is stored with the lesson progress; Help ▸ Show the Learn
+  Panel brings it back. Reset still starts from a clean slate.
+- **More palettes:** Sweetie 16, Endesga 16 and Nord, bringing the catalogue to
+  **27 palettes**. Sources are recorded in `SOURCES.md`.
+- **More effects:** Tape tracking (horizontal bands slip and tear) and Channel
+  roll (red, green and blue rotate through each other), bringing the stack to
+  **15 effects**.
+- **More tone filters:** Selenium and Oxide. There are now **13 tone-map
+  entries**: eleven ready grades, None and Custom.
+- **More recipes:** Sweetie Postcard, Nordic Fog, Tape Deck and Channel Drift,
+  four new presets that use the new palettes and effects. The desktop app and
+  the web demo now offer **25 recipes**; the frozen launcher keeps its 21.
+- **The macOS release also builds a zip** beside the two disk images. The zip is
+  what the built-in updater replaces the `.app` with; the disk images remain the
+  normal first-install download.
+- **Docs and publicity follow the build:** README, GUIDE, the desktop guide,
+  source credits, the project site and its catalogue counts now describe the
+  updater, the hidden tutorial and the larger catalogue.
+
+Neither executable is signed. Windows SmartScreen may warn on a first run
+(More info ▸ Run anyway); macOS Gatekeeper may require right-click ▸ Open, or
+allowing the app in System Settings ▸ Privacy & Security.
+
+### Also in the repository
 
 **A folder of examples you can rebuild.** [`examples/`](examples/) holds twelve
 proofs of the app's own output — a zine's single ink, the Commodore 64's palette,
@@ -28,6 +71,7 @@ list, checks every recipe against the app's own catalogues before it draws, and
 refuses to draw a setting the app does not have;
 [`tools/check-examples.js`](tools/check-examples.js) then checks the four against
 each other in Node, which is what `test.yml` runs.
+
 
 ## 0.2.5 — 2026-11-04
 

@@ -35,6 +35,9 @@ jobs:
       - name: Desktop tour tests
         run: node desktop/tools/tour.test.js
 
+      - name: Updater release rules
+        run: node desktop/tools/update.test.js
+
       # examples/ is generated: the pictures, the contact sheet, the manifest and
       # the README's table are all written by tools/make-examples.js. This is what
       # keeps the four describing the same set, on any machine, without a browser.

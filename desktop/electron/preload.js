@@ -63,6 +63,9 @@ const api = {
   about: function () { return ipcRenderer.invoke('ds:about'); },
   shortcuts: function () { return ipcRenderer.invoke('ds:shortcuts'); },
   openGuide: function () { return ipcRenderer.invoke('ds:open-guide'); },
+  checkUpdates: function () { return ipcRenderer.invoke('ds:updates-check'); },
+  installUpdate: function () { return ipcRenderer.invoke('ds:updates-install'); },
+  whatsNew: function () { return ipcRenderer.invoke('ds:whats-new'); },
 
   /* ---- talking back ---- */
   // Tell main the renderer is alive: it stops the splash and reveals the window.
@@ -86,6 +89,8 @@ const api = {
   onOpenPaths: function (handler) { return subscribe('ds:open-paths', handler); },
   // A pass-through line for the status bar, from main.
   onStatus: function (handler) { return subscribe('ds:status', handler); },
+  // Download progress from the updater: 0..1, or null when it ends.
+  onUpdateProgress: function (handler) { return subscribe('ds:update-progress', handler); },
 };
 
 contextBridge.exposeInMainWorld('ditherDesktop', api);

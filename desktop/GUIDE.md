@@ -11,12 +11,14 @@ catalogue, the palettes, the effects and the video rules, read the repository's
 
 ## 1. Getting it
 
-Two files come out of a release:
+The Windows release has two files; the macOS release has two disk images and a
+zip (the zip is the updater's copy, not the first-install download):
 
 | File | What it is |
 |---|---|
 | `Dither-Studio-Setup-<version>.exe` | an installer. Per-user by default (no administrator prompt), you choose the folder, it adds a Start menu entry and a desktop shortcut if you ask. A newer one removes any older Dither Studio first |
 | `Dither-Studio-<version>-portable.exe` | one file, no install. Put it on a USB stick and it runs from there |
+| `Dither-Studio-<version>-arm64.dmg` / `-x64.dmg` | macOS installers for Apple silicon and Intel |
 
 Both are the same application. The portable build keeps its own settings next
 to nothing — it writes to the standard per-user application data folder, so your
@@ -31,6 +33,22 @@ the version beside it. Presets, panels and tutorial progress live in
 
 Windows may show a SmartScreen notice the first time, because the builds are not
 code-signed. *More info* → *Run anyway*.
+
+### Updating
+
+The app checks the public GitHub release feed quietly on launch. If a newer
+release has a build for this machine, it offers the notes and a download; a
+failed check never interrupts a press that is working offline. You can ask at
+any time with *Help ▸ Check for Updates…*.
+
+On Windows the downloaded setup runs after the app closes, installs silently and
+starts the new version. On macOS the downloaded zip replaces the app after it
+closes and reopens it. The first macOS install still comes from the disk image.
+Neither build is signed, so the usual SmartScreen and Gatekeeper warnings apply.
+
+After an update, the first launch reads the matching section of the repository's
+`CHANGELOG.md` and shows it once as **What's New**. *Help ▸ What's New…* opens the
+notes for the running version whenever you want them again.
 
 ## 2. Starting it
 
@@ -123,7 +141,7 @@ characters, the character ramp, and shortcuts to the Tone and Detail panels.
 
 **Press** — the heart of it: the full algorithm menu (all 46, each with its
 `name` as written in the app), the full palette menu, previous/next for both
-(`Ctrl+↑↓`, `Ctrl+←→`), Serpentine Sweep, and the 21 recipe presets. The item you
+(`Ctrl+↑↓`, `Ctrl+←→`), Serpentine Sweep, and the 25 recipe presets. The item you
 are on is ticked, so the menu doubles as a readout of the current press.
 
 **Effects** — add any effect from the stack catalogue; the stack is ordered and
@@ -136,8 +154,9 @@ dock is shown at all, reload the window, developer tools, full screen.
 Panel. Collapsing the panels you are not using is the fastest way to give the
 proof more room; *View ▸ Panels on the Right* hides the dock entirely.
 
-**Help** — the repository guide, the keyboard list, the engine's sources
-document, the project page, and About.
+**Help** — the tour (take it, hide it completely, or show the Learn panel), the
+repository guide, the keyboard list, Check for Updates, What's New, the engine's
+sources document, the project page, and About.
 
 ## 5. The tutorial
 
@@ -174,6 +193,11 @@ set while following a lesson stays set: the tour changes settings, never files.
 Finish the last lesson and the tutorial takes itself out of the way: the Learn
 station folds and the verdict card closes on its own a moment later. *Help ▸
 Take the Tour* opens the station again with every tick still in place.
+
+If you have learned it and want the station gone, press **Hide** beside *Reset*,
+or use *Help ▸ Hide the Tour Completely*. That removes the Learn station and its
+jump chip and stops the intro; the setting survives a restart. *Help ▸ Show the
+Learn Panel* is the way back.
 
 Two notes. The tour describes the *desktop* panels; the web console has the same
 controls in its own layout, and its [GUIDE.md](../GUIDE.md) is the tour for that

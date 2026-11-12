@@ -27,6 +27,7 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell, clipboard, nativeImage
 const fs = require('fs/promises');
 const fsSync = require('fs');
 const path = require('path');
+const updates = require('./update');
 
 const APP_ROOT = path.join(__dirname, '..');
 // The splash plays a fixed animation and this is what the window waits for
@@ -272,13 +273,23 @@ async function openRoute(options, read) {
 }
 
 // The two "save" routes: ask, write, hand back the name the proof landed under.
+// A save lands in a sibling temporary file and is renamed into place. Two
+// Ctrl+S presses can overlap (the smoke run deliberately does one through the
+// menu and one through the native accelerator); writing the target directly
+// lets the second write truncate the first and leaves a zero-byte proof.
 async function saveRoute(options, write) {
   const target = await answerSave(options);
   if (!target) return null;
+  const temporary = path.join(path.dirname(target),
+    '.' + path.basename(target) + '.' + process.pid + '.' + Date.now() + '.part');
   try {
-    await write(target);
+    await write(temporary);
+    await fs.rename(temporary, target);
     return { path: target, name: path.basename(target) };
-  } catch (err) { return { error: 'Could not write ' + path.basename(target) }; }
+  } catch (err) {
+    try { await fs.unlink(temporary); } catch (cleanupError) { /* already gone */ }
+    return { error: 'Could not write ' + path.basename(target) };
+  }
 }
 
 ipcMain.handle('ds:open-image', function () {
@@ -664,6 +675,7 @@ if (!gotLock) {
   pendingPaths = pendingPaths.concat(pathsFromArgv(process.argv));
 
   app.whenReady().then(function () {
+    updates.wire();
     if (process.platform === 'win32') app.setAppUserModelId('com.thijnperd.ditherstudio');
     // Electron installs a default menu (File > Exit, Edit > Copy...) until
     // one is set. The app draws its own menu bar and sends the tree a moment
@@ -674,6 +686,12 @@ if (!gotLock) {
     if (!process.env.DITHER_NO_SPLASH) createSplash();
     createWindow();
     if (SMOKE) wireSmoke();
+    if (!SMOKE) {
+      // The splash has its own 2.9 s life; leave the first launch's What's New
+      // dialog and the quiet update check until the press is visible.
+      setTimeout(function () { updates.rememberLaunch(); }, 3600);
+      setTimeout(function () { updates.autoCheck(); }, 7000);
+    }
     app.on('activate', function () {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });

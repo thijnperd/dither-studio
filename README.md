@@ -1,18 +1,19 @@
 # Dither Studio
 
 Dither Studio is an offline dithering workbench for images and video. Load a
-picture or a clip, choose one of **46 dither algorithms** and one of **24 ink
+picture or a clip, choose one of **46 dither algorithms** and one of **27 ink
 sets**, grade the tone and detail, stack a few effects on top, and keep what
 comes out — a PNG at up to 8×, the clipboard, a grid of text characters, a WebM
 recording, or the recipe itself as JSON.
 
 Everything runs on your machine. The web demo is a static page: no server, no
 build step, no account. The desktop app reads and writes local files through the
-operating system's own dialogs and makes no network request at all.
+operating system's own dialogs. Its only network request is the update check
+(and the download you approve); the press itself never leaves the machine.
 
 **Try the web demo** — <https://thijnperd.github.io/dither-studio/>, nothing to install.
 **Download the desktop app** — [the latest release](https://github.com/thijnperd/dither-studio/releases/latest).
-**Read the guides** — [GUIDE.md](GUIDE.md) walks the console, [desktop/GUIDE.md](desktop/GUIDE.md) the app window.
+**Read the guides** — [GUIDE.md](GUIDE.md) walks the console, [desktop/GUIDE.md](desktop/GUIDE.md) the app window, and [CHANGELOG.md](CHANGELOG.md) records every release.
 
 ![The Dither Studio desktop app: a dithered proof on the stage, the eleven-panel dock down the right, the catalogue menus across the top](docs/desktop-app.png)
 
@@ -38,19 +39,20 @@ shelf and the download links, is
   IGN, R2, crosshatch, stochastic dithers, three Yliluoma colour-mixing plans,
   fourteen error-diffusion kernels, and three structure-aware screens that read
   the image's own contours instead of tiling over it.
-- **24 ink sets.** 1-bit black and white, Game Boy, Game Boy Pocket, C64, NES,
+- **27 ink sets.** 1-bit black and white, Game Boy, Game Boy Pocket, C64, NES,
   ZX Spectrum, CGA, EGA, Apple II, MSX, Macintosh II, Teletext, Virtual Boy,
-  PICO-8, Gruvbox, three grey ramps, and six single-ink sets (amber, sepia,
-  cyan, blueprint, matrix green, ice). In a colour mode every output pixel is
-  exactly one of the palette's inks.
+  PICO-8, Gruvbox, Sweetie 16, Endesga 16, Nord, three grey ramps, and six
+  single-ink sets (amber, sepia, cyan, blueprint, matrix green, ice). In a
+  colour mode every output pixel is exactly one of the palette's inks.
 - **Tone, detail, ink.** Black and white point, gamma, brightness, contrast,
-  saturation and hue; blur, unsharp mask and median denoise; and **11 tone
+  saturation and hue; blur, unsharp mask and median denoise; and **13 tone
   maps** that re-ink a finished dither — so a 1-bit proof stays exactly two
   inks — including your own ink and paper.
-- **13 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
+- **15 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
   grain, pixel sort, wave, drip, kaleidoscope, dead pixels, vignette, CRT
-  bloom, ripple and starfield, added one at a time, reorderable, each with its
-  own amount and mode — plus a blurred **glow** pass that adds in linear light.
+  bloom, ripple, starfield, tape tracking and channel roll, added one at a time,
+  reorderable, each with its own amount and mode — plus a blurred **glow** pass
+  that adds in linear light.
 - **Chunky pixels.** A pixel size of 1–16 box-averages the picture before
   dithering and upscales it without smoothing, for pixel-art output.
 - **Text mode.** Print the proof as ASCII, blocks, shades, hex or binary, and
@@ -58,14 +60,18 @@ shelf and the download links, is
 - **Video.** A clip or the webcam through the whole press at 1–30 fps, with
   three temporal dither rules and WebM recording; a frame that overruns its
   slot is dropped rather than queued.
-- **21 recipes.** Whole setups — algorithm, palette, grading, effects and glow
-  — applied in one pick, from Newsprint and Halftone Noir to VHS Decay and the
-  three structure-aware looks.
+- **25 recipes.** Whole setups — algorithm, palette, grading, effects and glow
+  — applied in one pick, from Newsprint and Halftone Noir to VHS Decay, Sweetie
+  Postcard, Tape Deck and the three structure-aware looks. (The frozen launcher
+  keeps its 21.)
 - **Any screen.** The console contracts for a phone or tablet instead of being
   redesigned: finger-sized controls, pinch-to-zoom on the proof, a station strip
   that reads at a glance, and a phone console that opens as a capped sheet so
   the proof stays in view. In the web demo, a phone held sideways keeps a side
   rail.
+- **Updates in the app.** *Help ▸ Check for Updates…* reads the public GitHub
+  release and installs the build for this machine when you agree; after an
+  update, *What's New* shows the matching changelog section once.
 
 ## Made with Dither Studio
 
@@ -183,7 +189,7 @@ onto the proof, paste one, or use **Open image…** to bring your own.
 | Platform | Files |
 |---|---|
 | Windows | `Dither-Studio-Setup-<version>.exe` installs it (per user, choose the folder, Start menu entry); `Dither-Studio-<version>-portable.exe` runs from anywhere without installing |
-| macOS | `Dither-Studio-<version>-arm64.dmg` on Apple silicon, `-x64.dmg` on Intel: open the disk image and drag the app to Applications |
+| macOS | `Dither-Studio-<version>-arm64.dmg` on Apple silicon, `-x64.dmg` on Intel: open the disk image and drag the app to Applications. The matching `.zip` is the asset the built-in updater uses; you do not need it for a first install |
 
 Neither build is signed, so each system will ask once — Windows SmartScreen
 wants *More info ▸ Run anyway*, and macOS Gatekeeper wants a right-click ▸
@@ -191,7 +197,9 @@ wants *More info ▸ Run anyway*, and macOS Gatekeeper wants a right-click ▸
 presets, panel layout and tutorial progress in `%APPDATA%\Dither Studio` are
 kept. A fresh install is met by the **tour**: the Learn panel comes forward with
 the first lesson on screen, and **Skip**, **Exit** or `Escape` ends it for good —
-*Help ▸ Take the Tour* brings it back whenever you want it.
+*Help ▸ Take the Tour* brings it back whenever you want it. **Hide** in the Learn
+panel, or *Help ▸ Hide the Tour Completely*, removes the station and its jump
+chip for good; *Help ▸ Show the Learn Panel* restores it.
 
 **From this folder.** The launchers open the console in a Chromium app window
 with a profile of its own, under `%LOCALAPPDATA%\Dither Studio`,
@@ -244,8 +252,9 @@ Nothing leaves the machine. The web builds are static files — one page, one
 stylesheet, three scripts, no analytics and no request to anywhere — so they
 keep working from `file://`, from a share, or from the published site. The
 desktop app reads and writes files only through the system's own dialogs, keeps
-its state in its own profile folder, and talks to no server: no account, no
-telemetry, no update check.
+its state in its own profile folder, and talks to no server except the public
+GitHub release check: no account, no telemetry, no analytics. You can update
+from *Help ▸ Check for Updates…*, and the press works with no connection.
 
 ## Checks
 

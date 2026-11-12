@@ -397,6 +397,16 @@
       if (!tour) return;
       tour.open();
     },
+    'help-tour-hide': function () {
+      const tour = window.DitherTour;
+      if (tour) tour.hide();
+    },
+    'help-tour-show': function () {
+      const tour = window.DitherTour;
+      if (tour) tour.show();
+    },
+    'help-update': function () { desktop.checkUpdates(); },
+    'help-whats-new': function () { desktop.whatsNew(); },
     'help-shortcuts': function () { desktop.shortcuts(); },
     'help-about': function () { desktop.about(); },
     'help-sources': function () {

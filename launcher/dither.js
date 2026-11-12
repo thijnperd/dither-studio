@@ -388,6 +388,19 @@
       [0, 0, 0], [29, 43, 83], [126, 37, 83], [0, 135, 81], [171, 82, 54], [95, 87, 79], [194, 195, 199], [255, 241, 232],
       [255, 0, 77], [255, 163, 0], [255, 236, 39], [0, 228, 54], [41, 173, 255], [131, 118, 156], [255, 119, 168], [255, 204, 170],
     ] },
+    // Three artist palettes, with the Lospec sources recorded in SOURCES.md.
+    { id: 'sweetie-16', name: 'Sweetie 16', colors: [
+      [26, 28, 44], [93, 39, 93], [177, 62, 83], [239, 125, 87], [255, 205, 117], [167, 240, 112], [56, 183, 100], [37, 113, 121],
+      [41, 54, 111], [59, 93, 201], [65, 166, 246], [115, 239, 247], [244, 244, 244], [148, 176, 194], [86, 108, 134], [51, 60, 87],
+    ] },
+    { id: 'endesga-16', name: 'Endesga 16', colors: [
+      [228, 166, 114], [184, 111, 80], [116, 63, 57], [63, 40, 50], [158, 40, 53], [229, 59, 68], [251, 146, 43], [255, 231, 98],
+      [99, 198, 77], [50, 115, 69], [25, 61, 63], [79, 103, 129], [175, 191, 210], [255, 255, 255], [44, 232, 244], [4, 132, 209],
+    ] },
+    { id: 'nord', name: 'Nord', colors: [
+      [46, 52, 64], [59, 66, 82], [67, 76, 94], [76, 86, 106], [216, 222, 233], [229, 233, 240], [236, 239, 244], [143, 188, 187],
+      [136, 192, 208], [129, 161, 193], [94, 129, 172], [191, 97, 106], [208, 135, 112], [235, 203, 139], [163, 190, 140], [180, 142, 173],
+    ] },
     { id: 'gruvbox', name: 'Gruvbox', colors: [
       [40, 40, 40], [60, 56, 54], [80, 73, 69], [102, 92, 84], [189, 174, 147], [213, 196, 161], [235, 219, 178], [251, 241, 199],
       [204, 36, 29], [177, 98, 134], [152, 151, 26], [215, 153, 33], [69, 133, 136], [104, 157, 106], [214, 93, 14], [184, 187, 38],
@@ -538,6 +551,8 @@
     { id: 'forest', name: 'Forest', ink: [10, 28, 14], paper: [214, 240, 200] },
     { id: 'thermal', name: 'Thermal', ink: [12, 0, 40], paper: [255, 240, 120] },
     { id: 'gold', name: 'Gold leaf', ink: [36, 22, 0], paper: [255, 226, 140] },
+    { id: 'selenium', name: 'Selenium', ink: [16, 20, 24], paper: [234, 238, 240] },
+    { id: 'oxide', name: 'Oxide', ink: [40, 18, 10], paper: [238, 210, 180] },
     { id: 'custom', name: 'Custom (ink → paper)' },
   ];
   const TONE_MAP_BY_ID = new Map(TONE_MAPS.map(function (m) { return [m.id, m]; }));
@@ -1401,6 +1416,8 @@
       id: 'starfield', name: 'Starfield', hint: 'sparse glowing dust and stars',
       modes: [{ id: 'stars', name: 'Stars (dark areas)' }, { id: 'dust', name: 'Dust (everywhere)' }],
     },
+    { id: 'tracking', name: 'Tape tracking', hint: 'horizontal bands slip and tear' },
+    { id: 'channelroll', name: 'Channel roll', hint: 'rotates red, green and blue through each other' },
   ];
   const GLITCH_BY_ID = new Map(GLITCHES.map(function (g) { return [g.id, g]; }));
   // The stack position and the effect's own index both fold into each effect's
@@ -1717,6 +1734,49 @@
     }
   }
 
+  // A video head switching between bands: each horizontal strip slips by a
+  // different amount, and the occasional torn band gets a bright seam.
+  function glitchTracking(d, w, h, amount, rng) {
+    const src = d.slice();
+    const maxShift = Math.max(1, Math.round((amount / 100) * w * 0.18));
+    const bands = 5 + Math.floor(rng() * 9);
+    const bandH = Math.max(1, Math.round(h / bands));
+    for (let y0 = 0; y0 < h; y0 += bandH) {
+      const torn = rng() < 0.25 + amount / 300;
+      const reach = torn ? 1 : 0.16;
+      const shift = Math.round((rng() * 2 - 1) * maxShift * reach);
+      const y1 = Math.min(h, y0 + bandH);
+      for (let y = y0; y < y1; y++) {
+        for (let x = 0; x < w; x++) {
+          const sx = (((x + shift) % w) + w) % w;
+          const si = (y * w + sx) * 4, di = (y * w + x) * 4;
+          d[di] = src[si]; d[di + 1] = src[si + 1]; d[di + 2] = src[si + 2];
+        }
+      }
+      if (torn && rng() < 0.55) {
+        const seam = y0 + Math.floor(rng() * (y1 - y0));
+        for (let x = 0; x < w; x++) {
+          const p = (seam * w + x) * 4;
+          d[p] = clamp255(d[p] + 45); d[p + 1] = clamp255(d[p + 1] + 45); d[p + 2] = clamp255(d[p + 2] + 45);
+        }
+      }
+    }
+  }
+
+  // Rotate the channels by `amount`: a colour cast that moves with the slider
+  // and leaves the frame's structure intact.
+  function glitchChannelRoll(d, w, h, amount) {
+    const t = amount / 100;
+    const cells = w * h;
+    for (let i = 0; i < cells; i++) {
+      const p = i * 4;
+      const r = d[p], g = d[p + 1], b = d[p + 2];
+      d[p] = clamp255(r * (1 - t) + g * t);
+      d[p + 1] = clamp255(g * (1 - t) + b * t);
+      d[p + 2] = clamp255(b * (1 - t) + r * t);
+    }
+  }
+
   const GLITCH_FNS = {
     aberration: glitchAberration,
     blocks: glitchBlocks,
@@ -1731,6 +1791,8 @@
     crt: glitchCRT,
     ripple: glitchRipple,
     starfield: glitchStarfield,
+    tracking: glitchTracking,
+    channelroll: glitchChannelRoll,
   };
 
   // ---- glow ----

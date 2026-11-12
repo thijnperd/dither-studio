@@ -39,11 +39,13 @@
 
   // ---- progress ----------------------------------------------------------
 
-  // { done: { lessonId: true }, at: { lessonId: stepIndex }, seen: bool } - the
-  // same shape of key the dock uses for which panels are open, with the same
-  // guard: a disabled or unavailable storage is not worth failing over. `seen`
-  // is the intro question: the tour has had its one free appearance.
-  function blank() { return { done: {}, at: {}, seen: false }; }
+  // { done: { lessonId: true }, at: { lessonId: stepIndex }, seen: bool,
+  // hidden: bool } - the same shape of key the dock uses for which panels are
+  // open, with the same guard: a disabled or unavailable storage is not worth
+  // failing over. `seen` is the intro question: the tour has had its one free
+  // appearance. `hidden` removes the Learn station entirely for someone who
+  // has learned it; Help > Show the Learn Panel brings it back.
+  function blank() { return { done: {}, at: {}, seen: false, hidden: false }; }
 
   function loadProgress() {
     let raw = null;
@@ -56,6 +58,7 @@
         if (parsed.done && typeof parsed.done === 'object') out.done = parsed.done;
         if (parsed.at && typeof parsed.at === 'object') out.at = parsed.at;
         if (parsed.seen === true) out.seen = true;
+        if (parsed.hidden === true) out.hidden = true;
       }
     } catch (err) { /* unreadable progress starts over rather than throwing */ }
     return out;
@@ -75,6 +78,16 @@
   const noteLearn = $('note-learn');
   const startButton = $('tour-start');
   const resetButton = $('tour-reset');
+  const hideButton = $('tour-hide');
+
+  // A hidden tutorial leaves no station behind: not a folded one, not a chip in
+  // the jump strip. The menu item and Show above are the only remains.
+  function applyHidden() {
+    const group = $('g-learn');
+    if (group) group.hidden = !!progress.hidden;
+    const chip = document.querySelector('#jump .jump-chip[data-target="learn"]');
+    if (chip) chip.hidden = !!progress.hidden;
+  }
 
   function lessonById(id) {
     return lessons.find(function (lesson) { return lesson.id === id; }) || null;
@@ -99,7 +112,7 @@
   // finished it. Being declined counts as being met: a tutorial that returns
   // after it has been waved away is an advertisement, not a lesson.
   function shouldIntro() {
-    return !progress.seen && !allDone();
+    return !progress.hidden && !progress.seen && !allDone();
   }
 
   function markSeen() {
@@ -117,6 +130,11 @@
   // finished tour folds it away: Help > Take the Tour must not run a tutorial
   // whose list of lessons is nowhere to be found.
   function revealLearn() {
+    if (progress.hidden) {
+      progress.hidden = false;
+      saveProgress();
+      applyHidden();
+    }
     return DS.command('window-panel-open', 'learn');
   }
 
@@ -488,12 +506,31 @@
     return true;
   }
 
+  function hide() {
+    if (running) exit();
+    progress.hidden = true;
+    progress.seen = true;
+    saveProgress();
+    applyHidden();
+    return true;
+  }
+
+  function show() {
+    progress.hidden = false;
+    progress.seen = true;
+    saveProgress();
+    applyHidden();
+    revealLearn();
+    return true;
+  }
+
   function reset() {
     // Leave first: leaving writes `seen`, and the blank slate has to have the
     // last word or Reset would answer the intro question for the learner.
     if (running) exit();
     progress = blank();
     saveProgress();
+    applyHidden();
     buildList();
     return true;
   }
@@ -507,6 +544,7 @@
   if (btnShow) btnShow.addEventListener('click', showMe);
   if (startButton) startButton.addEventListener('click', function () { start(nextUnfinished(), 0); });
   if (resetButton) resetButton.addEventListener('click', reset);
+  if (hideButton) hideButton.addEventListener('click', hide);
 
   // Escape leaves the tutorial, in the capture phase: whichever else is
   // listening (the menu bar closes its drop-downs) still gets the key.
@@ -527,6 +565,7 @@
   if (rail) rail.addEventListener('scroll', placeSoon, { passive: true });
 
   buildList();
+  applyHidden();
 
   // A build that has never met the tutorial meets it now: the Learn station
   // comes forward - it is the one station that cannot explain itself closed -
@@ -550,11 +589,14 @@
     skip: skip,
     showMe: showMe,
     reset: reset,
+    hide: hide,
+    show: show,
+    hidden: function () { return !!progress.hidden; },
     nextUnfinished: nextUnfinished,
     shouldIntro: shouldIntro,
     rows: function () { return list ? list.querySelectorAll('.tour-row').length : 0; },
     progress: function () {
-      return { done: Object.keys(progress.done), at: progress.at, seen: !!progress.seen };
+      return { done: Object.keys(progress.done), at: progress.at, seen: !!progress.seen, hidden: !!progress.hidden };
     },
     status: function () {
       return {

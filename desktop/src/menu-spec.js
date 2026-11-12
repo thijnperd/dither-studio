@@ -141,8 +141,13 @@
         id: 'help', label: 'Help',
         items: [
           { label: 'Take the Tour', command: 'help-tour' },
+          { label: 'Hide the Tour Completely', command: 'help-tour-hide' },
+          { label: 'Show the Learn Panel', command: 'help-tour-show' },
           { label: 'Dither Studio Guide', command: 'help-guide', accel: 'F1' },
           { label: 'Keyboard Shortcuts', command: 'help-shortcuts' },
+          { type: 'sep' },
+          { label: 'Check for Updates…', command: 'help-update' },
+          { label: 'What’s New…', command: 'help-whats-new' },
           { type: 'sep' },
           { label: 'The Core in one File (SOURCES)', command: 'help-sources' },
           { label: 'Project on GitHub', command: 'help-repo' },

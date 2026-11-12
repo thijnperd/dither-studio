@@ -852,6 +852,28 @@
       adjustments: { contrast: 1.2, gamma: 1.08 },
       glow: { radius: 3, intensity: 55 },
     } },
+    // 0.3.0: the artist palettes and the two new effects, in four recipes.
+    { id: 'sweetie-postcard', name: 'Sweetie Postcard', settings: {
+      algorithm: 'bayer8', palette: 'sweetie-16', pixelSize: 2,
+      adjustments: { contrast: 1.12, saturation: 1.12, sharpen: 0.2 },
+    } },
+    { id: 'nordic-fog', name: 'Nordic Fog', settings: {
+      algorithm: 'smooth-diffusion', palette: 'nord', pixelSize: 1,
+      screen: { smooth: 7, flow: 85, streak: 10 },
+      adjustments: { contrast: 0.94, brightness: 1.08, gamma: 1.04 },
+      glow: { radius: 2, intensity: 20 },
+    } },
+    { id: 'tape-deck', name: 'Tape Deck', settings: {
+      algorithm: 'floyd-steinberg', palette: 'endesga-16', pixelSize: 2,
+      adjustments: { contrast: 1.08, saturation: 1.08 },
+      glitches: [{ id: 'tracking', amount: 55 }, { id: 'scanlines', amount: 25 }, { id: 'grain', amount: 18 }],
+      glow: { radius: 1, intensity: 15 },
+    } },
+    { id: 'channel-drift', name: 'Channel Drift', settings: {
+      algorithm: 'atkinson', palette: 'sweetie-16', pixelSize: 1,
+      adjustments: { contrast: 1.1 },
+      glitches: [{ id: 'channelroll', amount: 45 }, { id: 'aberration', amount: 25 }, { id: 'wave', amount: 15 }],
+    } },
   ];
 
   function buildPresetSelect() {

@@ -188,7 +188,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dither-studio-macos
-          path: desktop/dist/*.dmg
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -234,7 +236,7 @@ jobs:
               "" \
               "**Windows** — Dither-Studio-Setup-*.exe installs it; the portable exe runs it from anywhere with no install." \
               "" \
-              "**macOS** — Dither-Studio-*-arm64.dmg is for Apple silicon, Dither-Studio-*-x64.dmg for Intel. Open the disk image and drag Dither Studio to Applications." \
+              "**macOS** — Dither-Studio-*-arm64.dmg is for Apple silicon, Dither-Studio-*-x64.dmg for Intel. Open the disk image and drag Dither Studio to Applications. The matching .zip is what the app's built-in updater replaces itself with; you do not need to open it by hand." \
               "" \
               "Neither build is signed, so Windows SmartScreen may warn on the first run (choose More info, then Run anyway), and macOS Gatekeeper will refuse a plain double-click of a downloaded app (right-click it and choose Open, or allow it under System Settings then Privacy & Security)."
           } > "$RUNNER_TEMP/notes.md"

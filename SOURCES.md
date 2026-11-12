@@ -114,7 +114,10 @@ feature set navigable — not the paint.
 | Nintendo Virtual Boy (4 reds) | `virtualboy` |
 | [PICO-8](https://www.lexaloffle.com/pico-8.php) official palette | `pico8` |
 | [gruvbox](https://github.com/morhetz/gruvbox) theme colours | `gruvbox` |
-| Constructed inks and levels | `gray-4/8/16` (2/3/4-bit ramps), `amber`, `sepia`, `cyan-ink`, `blueprint`, `ice`, and the tone maps in `TONE_MAPS` |
+| [Sweetie 16](https://lospec.com/palette-list/sweetie-16) by GrafxKid (CC0) | `sweetie-16` |
+| [Endesga 16](https://lospec.com/palette-list/endesga-16) by ENDESGA | `endesga-16` |
+| [Nord](https://www.nordtheme.com/) theme colours, via [Lospec](https://lospec.com/palette-list/nord-theme) | `nord` |
+| Constructed inks and levels | `gray-4/8/16` (2/3/4-bit ramps), `amber`, `sepia`, `cyan-ink`, `blueprint`, `ice`, `selenium`, `oxide`, and the tone maps in `TONE_MAPS` |
 | The digital rain of *The Matrix* (a two-ink green phosphor look, as reproduced across countless shader ports) | `matrix` — constructed here from the look, not copied from any implementation |
 
 ## What is not from anywhere
@@ -161,7 +164,8 @@ for *Open image…*, an image for the built-in sources, an eye for *Compare*, a
 shuffle for a fresh recipe, then webcam, video, record and preset marks. They are
 drawn at a 1.6 stroke because the rail renders them at 18 px, which keeps the
 1.2 px weight the rest of the chrome is drawn at, and they are inlined rather
-than fetched, so the window still needs no network and no asset file.
+than fetched, so the rail needs no asset file. The app's only network use is the
+release check described in the user guides.
 
 Lucide is ISC-licensed. Its notice ships as
 [`desktop/LICENSE-LUCIDE.txt`](desktop/LICENSE-LUCIDE.txt) and is reproduced

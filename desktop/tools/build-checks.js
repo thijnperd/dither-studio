@@ -51,6 +51,12 @@ const CHECKS = [
     args: [],
     cwd: DESKTOP,
   },
+  {
+    label: 'the updater release rules',
+    script: path.join(__dirname, 'update.test.js'),
+    args: [],
+    cwd: DESKTOP,
+  },
 ];
 
 if (!process.argv.includes('--skip-smoke')) {

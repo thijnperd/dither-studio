@@ -3,8 +3,8 @@
 Dither Studio is a print shop for pixels that lives in a folder. You load an
 image or a video, choose a press and an ink set, grade and stack a few effects,
 and pull a proof — as pixels, as characters, as a PNG, or as a WebM recording.
-Forty-six dither algorithms, twenty-four palettes, twenty-one presets, thirteen
-effects. No install, no build step, no internet connection, no uploads.
+Forty-six dither algorithms, twenty-seven palettes, twenty-five presets, fifteen
+effects. No install, no build step, no uploads; the press works offline.
 
 The five-minute path: **open the web demo** at
 <https://thijnperd.github.io/dither-studio/>, or **double-click the launcher for
@@ -30,11 +30,11 @@ Every section, in order:
   - [Installed from the browser instead](#installed-from-the-browser-instead)
   - [Keeping it portable](#keeping-it-portable)
 - [2. The console, station by station](#2-the-console-station-by-station) — the rail, panel by panel
-- [3. The catalogue](#3-the-catalogue) — 46 algorithms, 24 palettes, 11 tone maps, 13 effects, 5 text ramps
+- [3. The catalogue](#3-the-catalogue) — 46 algorithms, 27 palettes, 13 tone maps, 15 effects, 5 text ramps
   - [Algorithms (46)](#algorithms-46)
-  - [Palettes (24)](#palettes-24)
-  - [Tone maps (11 + custom)](#tone-maps-11--custom)
-  - [Effects (13)](#effects-13)
+  - [Palettes (27)](#palettes-27)
+  - [Tone maps (13)](#tone-maps-13)
+  - [Effects (15)](#effects-15)
   - [Text ramps (5)](#text-ramps-5)
 - [4. How a proof is made](#4-how-a-proof-is-made) — the pipeline, in order
 - [5. The three structure-aware looks](#5-the-three-structure-aware-looks) — Matrix Rain, Ice Dot Field, Smooth Diffusion
@@ -128,11 +128,11 @@ rail lights up as you scroll, so the strip doubles as a position readout.
 | Station | What is in it |
 |---|---|
 | **Source** | **Open image…**, the sample button — **Built-in source** in the launcher and desktop app, **Try a sample** in the web demo — which steps through the three built-in paintings and comes round again, and the drop/paste hint. Drag a file onto the stage, or press `Ctrl+V` to paste an image from anywhere. |
-| **Press** | **Algorithm** (46, in six groups) and **Palette** (24) with ◀ ▶ steppers to walk each list; the **swatch strip** showing the actual inks; **Pixel size** 1–16; **Threshold** (mono only, 0–255); **Strength** 0–200 %; **Serpentine sweep**; **Seed** with a dice button. |
+| **Press** | **Algorithm** (46, in six groups) and **Palette** (27) with ◀ ▶ steppers to walk each list; the **swatch strip** showing the actual inks; **Pixel size** 1–16; **Threshold** (mono only, 0–255); **Strength** 0–200 %; **Serpentine sweep**; **Seed** with a dice button. |
 | **Tone** | Black point, white point, gamma, brightness, contrast, saturation and hue — applied before dithering, in linear light where it matters. The header note shows the current gamma (`ct 1.20`). |
 | **Ink** | Eleven **tone maps** that re-ink the finished dither (Halftone noir, Amber CRT, Thermal, Matrix green, Ice …), a **custom** entry that takes your own ink and paper colours, and the **Alpha** rule: flatten onto paper, dither the matte to hard edges, or keep a real PNG alpha channel. |
 | **Detail** | **Blur** (0–4), **Sharpen** (unsharp mask, 0–2) and a 3×3 **median denoise** toggle. |
-| **Effects** | **Add to the stack** — thirteen effects, added one at a time, each row with its amount, its mode where it has one, and ↑ ↓ ✕ to reorder or remove. Effects run top to bottom, after the dither. |
+| **Effects** | **Add to the stack** — fifteen effects, added one at a time, each row with its amount, its mode where it has one, and ↑ ↓ ✕ to reorder or remove. Effects run top to bottom, after the dither. |
 | **Glow** | A blurred screen-blend pass after the effects: **Radius** 0–8 and **Intensity** 0–100, added in linear light. |
 | **Motion** | Video mode: **Webcam** / **Open video…**, then frame rate, temporal rule and **Record WebM**. The transport (Play/Pause and the frame readout) sits under the viewport. |
 | **Type** | **Print with characters**, the character **ramp**, the **cell** size in pixels (6–24), and **Export .txt**. |
@@ -187,7 +187,7 @@ serpentine sweeping removes its worming artifact. Mixing is the only colour fami
 that can dither *between* inks instead of choosing one. Structure-aware screens
 are the ones that read the picture — next section.
 
-### Palettes (24)
+### Palettes (27)
 
 | Palette | Inks | Notes |
 |---|---|---|
@@ -195,7 +195,7 @@ are the ones that read the picture — next section.
 | Game Boy · Game Boy Pocket | 4 · 4 | The two greens of the DMG and the Pocket's greys |
 | CGA Mode 4 · Teletext | 4 · 8 | Four loud CGA colours; eight Teletext bars |
 | ZX Spectrum | 15 | The eight brights, their dark counterparts |
-| Commodore 64 · NES · Macintosh II · PICO-8 · Gruvbox · EGA | 16 each | Hardware and product facts, not inventions |
+| Commodore 64 · NES · Macintosh II · PICO-8 · Gruvbox · Sweetie 16 · Endesga 16 · Nord · EGA | 16 each | Hardware, product and artist palettes. Sweetie 16 (GrafxKid), Endesga 16 (ENDESGA) and Nord are sourced in [SOURCES.md](SOURCES.md) |
 | Apple II | 6 | Low-res colour set |
 | MSX | 15 | |
 | Virtual Boy | 4 | Red on black |
@@ -205,14 +205,14 @@ are the ones that read the picture — next section.
 Every colour output is snapped to the nearest palette ink by squared RGB
 distance, and every pixel of the result is exactly one of the palette's inks.
 
-### Tone maps (11 + custom)
+### Tone maps (13)
 
 The **Ink** station re-inks the finished dither, so a 1-bit dither stays exactly
-two inks even after an effect stack has run over it. Eleven ready maps plus a
-**custom** entry that reads your own ink and paper pickers. This is where the
-Matrix-green and Ice-ink posters come from.
+two inks even after an effect stack has run over it. Thirteen entries: eleven
+ready grades, **None**, and a **custom** entry that reads your own ink and paper
+pickers. This is where the Matrix-green and Ice-ink posters come from.
 
-### Effects (13)
+### Effects (15)
 
 | Effect | What it does |
 |---|---|
@@ -222,6 +222,8 @@ Matrix-green and Ice-ink posters come from.
 | Grain | Seeded noise, mono or per-channel |
 | Pixel sort | Sorts bright runs by luminance, by rows or columns |
 | Wave | Displaces rows or columns by a sine |
+| Tape tracking | Slips seeded horizontal bands sideways; torn bands get a bright seam |
+| Channel roll | Rotates red, green and blue through each other |
 | Drip | Smears pixels downward |
 | Kaleidoscope | Mirrors a quadrant back over the frame (2/4/8-fold) |
 | Dead pixels | Scatters stuck-on and stuck-off pixels |
@@ -343,7 +345,7 @@ Measured here at 720×404, warm, headless Chromium:
 | B&W Floyd–Steinberg | ≈ 28 ms |
 | Bayer 8×8 | ≈ 31 ms |
 | Yliluoma mixing (Game Boy) | ≈ 45 ms |
-| All thirteen effects | ≈ 130 ms |
+| The whole effect stack | heavier than the classic dithers |
 | Structure-aware (screen rebuilt per frame) | ≈ 240 ms |
 
 So 12 fps runs comfortably for the classic algorithms and visibly drops frames on
@@ -446,7 +448,7 @@ case, printed by `node launcher/test.js`):
 | Ordered dithering plus effects | ≈ 190 ms |
 | Structure screen with flow and streak at 100 | ≈ 360 ms |
 | The polished mixing plan | ≈ 615 ms |
-| All thirteen effects | ≈ 1.2 s |
+| All fifteen effects | ≈ 1.0 s |
 
 The default view (960×640 at pixel size 2) renders in roughly 40–90 ms.
 

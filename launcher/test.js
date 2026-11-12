@@ -878,8 +878,8 @@ test('the new inks carry the levels they promise', function () {
   assert.strictEqual(palette('matrix').colors.length, 2);
   assert.strictEqual(palette('ice').colors.length, 2);
   assert.ok(palette('matrix').colors[1][1] > palette('matrix').colors[0][1], 'matrix green brightens green');
-  assert.strictEqual(D.PALETTES.length, 24);
-  assert.strictEqual(D.GLITCHES.length, 13);
+  assert.strictEqual(D.PALETTES.length, 27);
+  assert.strictEqual(D.GLITCHES.length, 15);
   assert.strictEqual(D.ALGORITHMS.length, 46);
 });
 
@@ -995,7 +995,7 @@ function imageOf(w, h, fn) {
 }
 
 test('every glitch names itself and only offers modes it implements', function () {
-  assert.strictEqual(D.GLITCHES.length, 13);
+  assert.strictEqual(D.GLITCHES.length, 15);
   const ids = new Set();
   D.GLITCHES.forEach(function (g) {
     assert.ok(g.id && g.name && g.hint, 'metadata for ' + g.id);
@@ -1159,7 +1159,7 @@ test('new palettes carry the levels they promise', function () {
   });
   assert.deepStrictEqual(gray16[0], [0, 0, 0]);
   assert.deepStrictEqual(gray16[15], [255, 255, 255]);
-  // Twenty-two palettes, every id unique.
+  // Twenty-seven palettes, every id unique.
   const ids = new Set(D.PALETTES.map(function (p) { return p.id; }));
   assert.strictEqual(ids.size, D.PALETTES.length);
 });

@@ -1,19 +1,20 @@
 {
   "name": "dither-studio-desktop",
   "productName": "Dither Studio",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "Dither Studio as a desktop application: the offline dithering press in its own window, with native open/save, a tool rail, a panel dock and a guided tutorial.",
   "author": "Thijn Köhne",
   "private": true,
   "main": "electron/main.js",
   "homepage": "https://github.com/thijnperd/dither-studio",
+  "updateRepo": "thijnperd/dither-studio",
   "repository": {
     "type": "git",
     "url": "https://github.com/thijnperd/dither-studio.git"
   },
   "scripts": {
     "start": "electron .",
-    "test": "node tools/core.test.js && node tools/tour.test.js",
+    "test": "node tools/core.test.js && node tools/tour.test.js && node tools/update.test.js",
     "smoke": "electron . --smoke --smoke-script tools/smoke-in-page.js",
     "pack": "electron-builder --win --dir",
     "dist": "electron-builder --win",
@@ -28,6 +29,7 @@
     "appId": "com.thijnperd.ditherstudio",
     "productName": "Dither Studio",
     "copyright": "Copyright © 2026 Thijn Köhne",
+    "artifactName": "Dither-Studio-${version}-${arch}.${ext}",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -41,6 +43,12 @@
       "GUIDE.md",
       "LICENSE-LUCIDE.txt",
       "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../CHANGELOG.md",
+        "to": "CHANGELOG.md"
+      }
     ],
     "win": {
       "icon": "build/icon.png",
@@ -66,6 +74,13 @@
       "target": [
         {
           "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
           "arch": [
             "x64",
             "arm64"

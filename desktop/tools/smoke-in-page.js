@@ -438,6 +438,26 @@
     /lessons/.test(document.getElementById('note-learn').textContent),
     document.getElementById('note-learn').textContent);
 
+  // Hiding is the permanent version of folding: no station, no jump chip, and
+  // no intro. The Help menu can bring it back, which is the only way to undo it.
+  tour.hide();
+  await wait(50);
+  check('hiding the tutorial removes the Learn station',
+    document.getElementById('g-learn').hidden === true && tour.hidden() === true,
+    JSON.stringify(tour.progress()));
+  check('and removes its jump chip too',
+    document.querySelector('#jump .jump-chip[data-target="learn"]').hidden === true);
+  check('and a hidden tour never introduces itself again',
+    tour.shouldIntro() === false, JSON.stringify(tour.progress()));
+  tour.show();
+  await wait(50);
+  check('showing it brings the station and its chip back',
+    document.getElementById('g-learn').hidden === false &&
+    document.querySelector('#jump .jump-chip[data-target="learn"]').hidden === false,
+    JSON.stringify(tour.progress()));
+  tour.reset();
+  await wait(50);
+
   // Finishing every lesson: the tour has done its job, so it folds the station
   // away, spends the intro for good and closes its own card - a finished
   // tutorial is not a panel left open for the rest of the app's life.
