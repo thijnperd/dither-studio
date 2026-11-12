@@ -49,14 +49,14 @@
         steps: [
           {
             title: 'There is already something on the table',
-            body: 'The app opens on a built-in sample — three classical paintings travel with the app, and the Source panel holds a picker for them: a dropdown for the name and the paintings themselves underneath, plus the arrows to step through and come round again. So the press has something to print and nothing has to be loaded first. Your own picture goes in the same way: Open image… in the Source panel, a file dropped straight onto the proof, or Ctrl+V to paste one.',
+            body: 'The app opens on a built-in sample. Three classical paintings travel with the app, and the Source panel holds a picker for them: a dropdown for the name and the paintings themselves underneath, plus the arrows to step through and come round again. So the press has something to print and nothing has to be loaded first. Your own picture goes in the same way: Open image… in the Source panel, a file dropped straight onto the proof, or Ctrl+V to paste one.',
             why: 'Everything below is made from this one source, so changing it changes every proof.',
             target: '#canvas-wrap',
             open: 'source',
           },
           {
             title: 'Choose a press',
-            body: 'This picker holds all forty-six algorithms, in families: ordered screens, stochastic noise, the three structure-aware screens, Yliluoma colour mixing and fourteen error-diffusion kernels. Press it and pick another — or step through the list with the arrows beside it.',
+            body: 'This picker holds all forty-six algorithms, in families: ordered screens, stochastic noise, the three structure-aware screens, Yliluoma colour mixing and fourteen error-diffusion kernels. Press it and pick another, or step through the list with the arrows beside it.',
             why: 'The press decides the pattern; the ink decides the colour. Those are two separate decisions here.',
             target: '#algorithm',
             open: 'press',
@@ -72,14 +72,14 @@
           },
           {
             title: 'Pull a proof',
-            body: 'Export PNG writes the proof at the scale in the box beside it — 1×, 2×, 4× or 8×. Scaling is nearest-neighbour, so the printed pixel grid stays crisp instead of being blurred up.',
+            body: 'Export PNG writes the proof at the scale in the box beside it: 1×, 2×, 4× or 8×. Scaling is nearest-neighbour, so the printed pixel grid stays crisp instead of being blurred up.',
             why: '8× of a 1600 px working image is 12800 px. Big, but it is your disk.',
             target: '#export',
             when: function (s) { return !!s.savedPath || /Exported/.test(s.status || ''); },
           },
           {
             title: 'The receipt in the caption bar',
-            body: 'After a save the caption names the file. Click that name and the folder opens with the file selected — the shortest path from a proof to anywhere you need it.',
+            body: 'After a save the caption names the file. Click that name and the folder opens with the file selected, the shortest path from a proof to anywhere you need it.',
             target: '#tb-note',
           },
         ],
@@ -101,7 +101,7 @@
           },
           {
             title: 'Step through the catalogue',
-            body: 'The arrows beside a picker walk that catalogue one entry at a time — Ctrl+↑ and Ctrl+↓ do the algorithm, Ctrl+← and Ctrl+→ the palette, from anywhere in the window. There are also Previous/Next entries in the Press menu.',
+            body: 'The arrows beside a picker walk that catalogue one entry at a time. Ctrl+↑ and Ctrl+↓ do the algorithm, Ctrl+← and Ctrl+→ the palette, from anywhere in the window. There are also Previous/Next entries in the Press menu.',
             why: 'Comparing two screens by stepping between them beats scrolling a list of forty-six.',
             target: '#algorithm-next',
           },
@@ -138,7 +138,7 @@
           },
           {
             title: 'The seed',
-            body: 'Every random stage — the noise masks, void-and-cluster, the stochastic screens — is driven by this one number, and nothing else is random. Change it and you change the arrangement of dots, not the picture.',
+            body: 'Every random stage, from the noise masks to void-and-cluster and the stochastic screens, is driven by this one number, and nothing else is random. Change it and you change the arrangement of dots, not the picture.',
             why: 'The same seed with the same settings prints the same proof, forever, on any machine. That is what makes a proof reproducible; the ⟳ button rolls a new one.',
             target: '#seed',
           },
@@ -168,12 +168,12 @@
           },
           {
             title: 'Gamma',
-            body: 'Gamma moves the midtones without touching either end — the most useful dial on a flat or backlit photograph, and the one to reach for before contrast.',
+            body: 'Gamma moves the midtones without touching either end: the most useful dial on a flat or backlit photograph, and the one to reach for before contrast.',
             target: '#gamma',
           },
           {
             title: 'Brightness, contrast, saturation and hue',
-            body: 'The blunt four. Contrast spreads the values apart, brightness moves them up and down, saturation and hue decide how much colour the ink has to work with — and with a two-ink palette, hue changes which two inks land where.',
+            body: 'The blunt four. Contrast spreads the values apart, brightness moves them up and down, saturation and hue decide how much colour the ink has to work with. With a two-ink palette, hue changes which two inks land where.',
             target: '#contrast',
           },
           {
@@ -184,7 +184,7 @@
           },
           {
             title: 'Denoise',
-            body: 'A 3×3 median filter. Single-pixel noise is the one thing a dither loves to exaggerate — one stray pixel becomes a dot on its own — so a photograph from a phone usually wants this before anything else.',
+            body: 'A 3×3 median filter. Single-pixel noise is the one thing a dither loves to exaggerate: one stray pixel becomes a dot on its own, so a photograph from a phone usually wants this before anything else.',
             target: '#denoise',
           },
         ],
@@ -200,7 +200,7 @@
         steps: [
           {
             title: 'Re-ink the finished dither',
-            body: 'A tone map replaces the colours of the finished proof, so the pattern is untouched and only the two inks change. Sepia, cyanotype, blueprint, amber, thermal — eleven in the list, plus your own.',
+            body: 'A tone map replaces the colours of the finished proof, so the pattern is untouched and only the two inks change. Sepia, cyanotype, blueprint, amber, thermal: eleven in the list, plus your own.',
             why: 'This is the cheapest way to change the whole mood: it costs one pass and no re-dithering.',
             target: '#g-ink',
             open: 'ink',
@@ -220,7 +220,7 @@
           {
             title: 'What happens to transparency',
             body: 'Flatten onto paper puts a transparent source on white. Dither the matte prints the alpha as pattern, so a soft edge becomes dots. Keep as PNG alpha leaves the transparency in the exported file.',
-            why: 'A kept matte is a proof you can lay over any paper later — the checkerboard behind the canvas is only there to show it is still transparent.',
+            why: 'A kept matte is a proof you can lay over any paper later; the checkerboard behind the canvas is only there to show it is still transparent.',
             target: '#alpha-mode',
           },
         ],
@@ -249,12 +249,12 @@
           },
           {
             title: 'The stack itself',
-            body: 'Every row carries its own amount, a switch, arrows to reorder it, and — for the effects that have them — a mode. Order matters: grain under scanlines is not the same print as grain over them.',
+            body: 'Every row carries its own amount, a switch, arrows to reorder it, plus a mode where the effect has one. Order matters: grain under scanlines is not the same print as grain over them.',
             target: '#effect-list',
           },
           {
             title: 'Glow, the last thing printed',
-            body: 'Glow spreads the lit dots of the proof outwards: Radius in pixels, Intensity as a percentage. It is not a blur — it adds ink around the bright side, the way a light leaks on film.',
+            body: 'Glow spreads the lit dots of the proof outwards: Radius in pixels, Intensity as a percentage. It is not a blur: it adds ink around the bright side, the way a light leaks on film.',
             target: '#g-glow',
             open: 'glow',
           },
@@ -276,20 +276,20 @@
         steps: [
           {
             title: 'The same proof, in characters',
-            body: 'Text mode prints the dither as a grid of characters instead of pixels. It is the same engine and the same recipe — only the last step changes, from a dot to a letter.',
+            body: 'Text mode prints the dither as a grid of characters instead of pixels. It is the same engine and the same recipe; only the last step changes, from a dot to a letter.',
             why: 'It is the oldest form of dithering there is: a fixed set of marks, chosen by tone.',
             target: '#g-type',
             open: 'type',
           },
           {
             title: 'Turn it on',
-            body: 'Tick Print with characters — Ctrl+T does the same from anywhere — and the proof becomes a character grid. Two more controls appear with it: the ramp and the cell size.',
+            body: 'Tick Print with characters; Ctrl+T does the same from anywhere. The proof becomes a character grid, with two more controls: the ramp and the cell size.',
             target: '#text-mode',
             when: function (s) { return s.textMode === true; },
           },
           {
             title: 'The ramp',
-            body: 'Which characters are used, darkest first: ASCII, blocks, shades, hex or binary. The ramp is the ink set of text mode — a binary ramp gives you a two-character proof.',
+            body: 'Which characters are used, darkest first: ASCII, blocks, shades, hex or binary. The ramp is the ink set of text mode; a binary ramp gives you a two-character proof.',
             target: '#text-charset-row',
           },
           {
@@ -300,7 +300,7 @@
           {
             title: 'Export the grid',
             body: 'Export .txt writes what is on screen as plain text you can paste into anything. The character count comes back in the status bar.',
-            why: 'FillText has a budget — above thirty thousand characters a frame the app turns text mode off rather than dropping frames.',
+            why: 'FillText has a budget: above thirty thousand characters a frame, the app turns text mode off rather than dropping frames.',
             target: '#export-txt',
             when: function (s) { return /characters/.test(s.status || ''); },
           },
@@ -317,7 +317,7 @@
         steps: [
           {
             title: 'Screens that read the picture',
-            body: 'Most dithers tile a fixed pattern over the image. These three — Rain Streaks, Dot Field and Smooth Diffusion — read the image first: a noise field is stretched along its contours, then biased towards its edges, so the screen follows the shading instead of fighting it.',
+            body: 'Most dithers tile a fixed pattern over the image. These three, Rain Streaks, Dot Field and Smooth Diffusion, read the image first: a noise field is stretched along its contours, then biased towards its edges, so the screen follows the shading instead of fighting it.',
             target: '#algorithm',
             show: [['press-algorithm', 'rain']],
             when: function (s) { return s.algorithm === 'rain'; },
@@ -329,7 +329,7 @@
           },
           {
             title: 'Flow',
-            body: 'How far the screen stretches along the contours. Push it up and the pattern starts to run with the shading — the liquid look; take it down and the screen goes grainy again.',
+            body: 'How far the screen stretches along the contours. Push it up and the pattern starts to run with the shading, the liquid look; take it down and the screen goes grainy again.',
             target: '#flow-row',
           },
           {
@@ -339,7 +339,7 @@
           },
           {
             title: 'Or take the whole look',
-            body: 'The Presets panel holds twenty-one recipes. Matrix Rain, Ice Dot Field and Riso Duotone set the screen, the ink, the pixel size and the grade in one move — a starting point you then push around.',
+            body: 'The Presets panel holds twenty-one recipes. Matrix Rain, Ice Dot Field and Riso Duotone set the screen, the ink, the pixel size and the grade in one move, a starting point you then push around.',
             target: '#preset',
             show: [['window-panel-open', 'preset'], ['press-preset', 'matrixrain']],
             when: function (s) { return s.preset === 'matrixrain'; },
@@ -363,13 +363,13 @@
           },
           {
             title: 'A clip, or the camera',
-            body: 'Open clip… takes a video file; Webcam uses the camera. Both are decoded in the window and dithered here — nothing is uploaded anywhere, which is the whole point of the app.',
+            body: 'Open clip… takes a video file; Webcam uses the camera. Both are decoded in the window and dithered here; nothing is uploaded anywhere, which is the whole point of the app.',
             target: '#video-open',
           },
           {
             title: 'Frame rate, and the temporal rule',
             body: 'Once a source is live this panel grows two rows: the frame rate, 1 to 30 fps, and the temporal dither, which decides how the seed moves between frames. Frozen keeps one screen for a stable print, Shimmer reshuffles it every frame for the classic film buzz, Crawl scrolls the screen so the texture drifts upwards.',
-            why: 'A frozen screen is the honest one — it is what a single proof would look like — while shimmer hides banding at the cost of noise.',
+            why: 'A frozen screen is the honest one: it is what a single proof would look like; shimmer hides banding at the cost of noise.',
             target: '#g-motion',
           },
           {
@@ -379,7 +379,7 @@
           },
           {
             title: 'Record it',
-            body: 'Record WebM, the button in the tool rail - and the one this panel grows - captures the playback to a file. It stops itself at sixty seconds so a forgotten recording cannot fill a disk.',
+            body: 'Record WebM, the button in the tool rail or the one this panel adds, captures the playback to a file. It stops itself at sixty seconds so a forgotten recording cannot fill a disk.',
             target: '.tool[data-tool=\"record\"]',
           },
         ],
@@ -395,13 +395,13 @@
         steps: [
           {
             title: 'A recipe is the whole press',
-            body: 'A recipe is not just the algorithm: it is the ink, the pixel size, the seed, the grade, the effects stack and the glow. Twenty-one are in the box, and the one you are on is always shown here.',
+            body: 'A recipe holds the algorithm, the ink, the pixel size, the seed, the grade, the effects stack and the glow. Twenty-one are in the box, and the one you are on is always shown here.',
             target: '#g-preset',
             open: 'preset',
           },
           {
             title: 'Apply one',
-            body: 'Choosing a recipe drops every setting on the press at once. Nothing else on the machine changes, and every control stays live afterwards — a preset is a starting point, not a mode.',
+            body: 'Choosing a recipe drops every setting on the press at once. Nothing else on the machine changes, and every control stays live afterwards; a preset is a starting point, not a mode.',
             target: '#preset',
             show: [['press-preset', 'riso']],
             when: function (s) { return s.preset === 'riso'; },
@@ -452,7 +452,7 @@
           },
           {
             title: 'Compare',
-            body: 'Hold Compare — or the C key, or the eye in the tool rail — to see the untouched source under your settings. Release and the proof comes back.',
+            body: 'Hold Compare, or the C key, or the eye in the tool rail, to see the untouched source under your settings. Release and the proof comes back.',
             why: 'The quickest way to see what the press is really doing is to look at what it was given.',
             target: '#compare',
           },
@@ -463,7 +463,7 @@
           },
           {
             title: 'Random, and the way back',
-            body: 'Random — R — rolls a fresh recipe: a new algorithm, ink, pixel size, grade and effects. Edit ▸ Reset every control puts everything back to the defaults. Neither one touches your source image.',
+            body: 'Random, or R, rolls a fresh recipe: a new algorithm, ink, pixel size, grade and effects. Edit ▸ Reset every control puts everything back to the defaults. Neither one touches your source image.',
             target: '#random',
           },
           {

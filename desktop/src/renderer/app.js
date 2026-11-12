@@ -1010,9 +1010,9 @@
   // Live renders a half-resolution frame while a control is moving, and Still
   // waits until the control settles (for slow machines and heavy recipes).
   const QUALITY_NOTES = {
-    full: 'Full — every move renders at working resolution',
-    live: 'Live — half-res while dragging',
-    still: 'Still — renders when a control settles',
+    full: 'Full: every move renders at working resolution',
+    live: 'Live: half-res while dragging',
+    still: 'Still: renders when a control settles',
   };
 
   function schedulePreview() {
@@ -1021,7 +1021,7 @@
       return;
     }
     if (state.quality === 'still') {
-      el.statStatus.textContent = 'Adjusting — release to render';
+      el.statStatus.textContent = 'Adjusting: release to render';
       return;
     }
     if (state.rafPending) return;
@@ -1258,7 +1258,7 @@
         tile.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
     }
-    setNote(el.noteSource, SAMPLES[at] ? SAMPLES[at].name : '—');
+    setNote(el.noteSource, SAMPLES[at] ? SAMPLES[at].name : 'none');
   }
 
   // `at` is an index when the picker chose one; a bare call steps to the next
@@ -1409,7 +1409,7 @@
           return desktop.copyImage({ mime: 'image/png', data: data });
         }).then(function (out) {
           if (!out || out.error) el.statStatus.textContent = 'The clipboard refused that image';
-          else el.statStatus.textContent = 'Proof copied — ' + out.size.width + '×' + out.size.height;
+          else el.statStatus.textContent = 'Proof copied: ' + out.size.width + '×' + out.size.height;
         }).catch(function () { el.statStatus.textContent = 'The clipboard refused that image'; });
       }, 'image/png');
       return;

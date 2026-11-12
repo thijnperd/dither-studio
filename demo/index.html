@@ -7,7 +7,7 @@
        of the responsive section in style.css. -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0B0D12" />
-  <title>Dither Studio — image dithering</title>
+  <title>Dither Studio: image dithering</title>
   <!-- The publicity site loads this page in a frame. Marking the document in
        the head, before the stylesheet, lets the embedded console drop its own
        masthead without a flash; the splash reads the same query string. -->
@@ -169,7 +169,7 @@
       <section class="group" id="g-press" data-group="press" data-open="true">
         <button class="group-head" type="button" aria-expanded="true">
           <span class="group-name">Press</span>
-          <span class="group-note" id="note-press">—</span>
+          <span class="group-note" id="note-press">ready</span>
           <span class="caret" aria-hidden="true">▾</span>
         </button>
         <div class="group-body">
@@ -363,9 +363,9 @@
           <label class="field" id="video-temporal-row" hidden>
             <span>Temporal dither</span>
             <select id="video-temporal">
-              <option value="freeze">Frozen — one stable screen</option>
-              <option value="shimmer" selected>Shimmer — reshuffle every frame</option>
-              <option value="crawl">Crawl — the screen scrolls</option>
+              <option value="freeze">Frozen: one stable screen</option>
+              <option value="shimmer" selected>Shimmer: reshuffle every frame</option>
+              <option value="crawl">Crawl: the screen scrolls</option>
             </select>
           </label>
           <div class="buttons buttons-1" id="video-record-row" hidden>
@@ -426,12 +426,12 @@
   <main class="stage">
     <header class="statusbar">
       <span>File <b id="stat-file">untitled</b></span>
-      <span>Size <b id="stat-size">—</b></span>
-      <span>Algorithm <b id="stat-algorithm">—</b></span>
-      <span>Palette <b id="stat-palette">—</b></span>
-      <span>Colors <b id="stat-colors">—</b></span>
-      <span>Render <b id="stat-render">—</b></span>
-      <span>Status <b id="stat-status">Ready</b></span>
+      <span>Size <b id="stat-size">…</b></span>
+      <span>Algorithm <b id="stat-algorithm">…</b></span>
+      <span>Palette <b id="stat-palette">…</b></span>
+      <span>Colors <b id="stat-colors">…</b></span>
+      <span>Render <b id="stat-render">…</b></span>
+      <span>Status <b id="stat-status" role="status" aria-live="polite">Ready</b></span>
     </header>
 
     <div class="toolbar">
@@ -469,7 +469,7 @@
         <button class="seg-btn is-on" type="button" role="radio" data-value="live" aria-checked="true">Live</button>
         <button class="seg-btn" type="button" role="radio" data-value="still" aria-checked="false">Still</button>
       </div>
-      <span class="readout" id="quality-note">Live — half-res while dragging</span>
+      <span class="readout" id="quality-note" aria-live="polite">Live: half-res while dragging</span>
       <span class="grow"></span>
       <div class="transport" id="transport" hidden>
         <button id="video-toggle" class="btn btn-mini btn-primary" type="button" disabled>Play</button>

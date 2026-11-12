@@ -423,7 +423,7 @@
     elCount.textContent = '✓ done';
     elTitle.textContent = nextLesson ? 'That is ' + lesson.title.toLowerCase() + '.' : 'That is every lesson.';
     elBody.textContent = nextLesson
-      ? 'Next: ' + nextLesson.title + ' — ' + nextLesson.summary
+      ? 'Next: ' + nextLesson.title + ' · ' + nextLesson.summary
       : lessons.length + ' lessons, the whole press. Every one of them can be run again from this list.';
     elWhy.textContent = '';
     elWhy.hidden = true;

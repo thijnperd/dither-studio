@@ -24,7 +24,7 @@
     <span class="tb-title">Dither Studio</span>
     <span class="tb-doc" id="tb-doc">demo</span>
     <span class="tb-spacer"></span>
-    <span class="tb-note" id="tb-note"></span>
+    <span class="tb-note" id="tb-note" role="status" aria-live="polite"></span>
     <div class="tb-buttons">
       <button class="wbtn" id="win-min" type="button" title="Minimise" aria-label="Minimise">
         <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M0 5h10" stroke="currentColor" stroke-width="1" /></svg>
@@ -67,7 +67,7 @@
         <button class="seg-btn is-on" type="button" role="radio" data-value="live" aria-checked="true">Live</button>
         <button class="seg-btn" type="button" role="radio" data-value="still" aria-checked="false">Still</button>
       </div>
-      <span class="oread is-dim" id="quality-note">Live — half-res while dragging</span>
+      <span class="oread is-dim" id="quality-note" aria-live="polite">Live: half-res while dragging</span>
     </div>
     <span class="opt-sep"></span>
     <div class="opt-group">
@@ -132,7 +132,7 @@
         <div class="doctab is-active" id="doc-tab" title="The open proof">
           <span class="doctab-mark" aria-hidden="true"></span>
           <span class="doctab-name" id="doc-name">untitled</span>
-          <span class="doctab-meta" id="doc-meta">—</span>
+          <span class="doctab-meta" id="doc-meta">…</span>
         </div>
       </div>
 
@@ -214,7 +214,7 @@
             <button class="group-head" type="button" aria-expanded="true">
               <span class="caret" aria-hidden="true">▾</span>
               <span class="group-name">Press</span>
-              <span class="group-note" id="note-press">—</span>
+              <span class="group-note" id="note-press">ready</span>
             </button>
             <div class="group-body">
               <div class="row-stepper">
@@ -407,9 +407,9 @@
               <label class="field" id="video-temporal-row" hidden>
                 <span>Temporal dither</span>
                 <select id="video-temporal">
-                  <option value="freeze">Frozen — one stable screen</option>
-                  <option value="shimmer" selected>Shimmer — reshuffle every frame</option>
-                  <option value="crawl">Crawl — the screen scrolls</option>
+                  <option value="freeze">Frozen: one stable screen</option>
+                  <option value="shimmer" selected>Shimmer: reshuffle every frame</option>
+                  <option value="crawl">Crawl: the screen scrolls</option>
                 </select>
               </label>
               <div class="buttons buttons-1" id="video-record-row" hidden>
@@ -504,7 +504,7 @@
         <button class="tour-skip" id="tour-skip" type="button"
           title="Skip the tour and put the Learn station away">Skip</button>
       </div>
-      <h2 class="tour-title" id="tour-title">—</h2>
+      <h2 class="tour-title" id="tour-title">Lesson</h2>
       <p class="tour-body" id="tour-body"></p>
       <p class="tour-why" id="tour-why" hidden></p>
       <div class="tour-track" aria-hidden="true"><span class="tour-fill" id="tour-fill"></span></div>
@@ -521,13 +521,13 @@
   <!-- status bar -->
   <footer class="statusbar">
     <span class="readout">File <b id="stat-file">demo</b></span>
-    <span class="readout">Size <b id="stat-size">—</b></span>
-    <span class="readout">Algorithm <b id="stat-algorithm">—</b></span>
-    <span class="readout">Palette <b id="stat-palette">—</b></span>
-    <span class="readout stat-quiet">Colors <b id="stat-colors">—</b></span>
-    <span class="readout stat-quiet">Render <b id="stat-render">—</b></span>
+    <span class="readout">Size <b id="stat-size">…</b></span>
+    <span class="readout">Algorithm <b id="stat-algorithm">…</b></span>
+    <span class="readout">Palette <b id="stat-palette">…</b></span>
+    <span class="readout stat-quiet">Colors <b id="stat-colors">…</b></span>
+    <span class="readout stat-quiet">Render <b id="stat-render">…</b></span>
     <span class="opt-grow"></span>
-    <span class="readout">Status <b id="stat-status">Ready</b></span>
+    <span class="readout">Status <b id="stat-status" role="status" aria-live="polite">Ready</b></span>
   </footer>
 
   <script src="menu-spec.js"></script>

@@ -1029,9 +1029,9 @@
   // Live renders a half-resolution frame while a control is moving, and Still
   // waits until the control settles (for slow machines and heavy recipes).
   const QUALITY_NOTES = {
-    full: 'Full — every move renders at working resolution',
-    live: 'Live — half-res while dragging',
-    still: 'Still — renders when a control settles',
+    full: 'Full: every move renders at working resolution',
+    live: 'Live: half-res while dragging',
+    still: 'Still: renders when a control settles',
   };
 
   function schedulePreview() {
@@ -1040,7 +1040,7 @@
       return;
     }
     if (state.quality === 'still') {
-      el.statStatus.textContent = 'Adjusting — release to render';
+      el.statStatus.textContent = 'Adjusting: release to render';
       return;
     }
     if (state.rafPending) return;

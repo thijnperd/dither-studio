@@ -633,7 +633,10 @@
   margin: 7px 0 0;
   color: var(--text);
   font: 600 var(--fs-app)/1.35 var(--font);
+  text-wrap: balance;
 }
+
+.tour-meta { font-variant-numeric: tabular-nums; }
 
 .tour-body {
   margin: 6px 0 0;

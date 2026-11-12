@@ -434,7 +434,7 @@
     if (doc) doc.textContent = s.name + (s.savedPath ? '  ·  saved' : '');
     if (name) name.textContent = s.name;
     if (meta) meta.textContent = s.width + ' × ' + s.height + ' @ ' + ($('stat-zoom') ? $('stat-zoom').textContent : 'Fit');
-    document.title = s.name + ' — Dither Studio';
+    document.title = s.name + ' · Dither Studio';
   }
 
   ['win-min', 'win-max', 'win-close'].forEach(function (id, index) {
@@ -468,9 +468,9 @@
   window.addEventListener('ds:saved', function (event) {
     savedCount += 1;
     const detail = event.detail || {};
-    note('Saved ' + (detail.name || detail.path || 'the proof') + ' — click here to show it in its folder');
+    note('Saved ' + (detail.name || detail.path || 'the proof') + '. Click here to show it in its folder.');
     if (detail.path && tbNote) {
-      tbNote.title = detail.path + ' — click to show it in its folder';
+      tbNote.title = detail.path + '. Click to show it in its folder.';
       tbNote.dataset.path = detail.path;
     }
     syncTitle();
