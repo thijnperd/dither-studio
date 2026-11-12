@@ -124,7 +124,7 @@
   scroll-padding-top: 30px;
 }
 
-/* The hint line at the foot of the dock carries four shortcuts on one line at
+/* The hint line at the foot of the dock carries three shortcuts on one line at
  * 336px, with an ellipsis as the safety net if a translation runs long. */
 .dock-hint {
   margin: 0;

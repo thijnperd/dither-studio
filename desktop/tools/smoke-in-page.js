@@ -71,7 +71,7 @@
   const shell = window.__shell;
   check('the chrome published its accelerator table', !!shell && shell.accelerators.length > 15,
     shell ? shell.accelerators.length : 0);
-  const wanted = ['ctrl+s', 'ctrl+o', 'ctrl+d', 'ctrl+r', 'ctrl+shift+r', 'ctrl+shift+c', 'ctrl+t', 'f1', 'f5', 'f11'];
+  const wanted = ['ctrl+s', 'ctrl+o', 'ctrl+d', 'ctrl+r', 'ctrl+shift+r', 'ctrl+shift+c', 'ctrl+t', 'ctrl+z', 'ctrl+shift+z', 'f1', 'f5', 'f11'];
   const missing = shell ? wanted.filter(function (key) { return shell.accelerators.indexOf(key) === -1; }) : wanted;
   check('every accelerator on a menu item is in the table', missing.length === 0, missing.join(', '));
   report.notes.accelerators = shell ? shell.accelerators : null;
@@ -215,6 +215,101 @@
   const fires = shell && shell.acceleratorFires ? shell.acceleratorFires() : 0;
   check('three presses ran three commands, no more', fires - firesBefore === 3, fires - firesBefore);
 
+  /* ---- undo, redo, and split compare ------------------------------ */
+
+  const beforeUndo = DS.state().algorithm;
+  const undoTarget = beforeUndo === 'bayer8' ? 'floyd-steinberg' : 'bayer8';
+  DS.command('press-algorithm', undoTarget);
+  await wait(120);
+  check('a recipe change opens an undo step', DS.state().canUndo === true);
+  press({ key: 'z', ctrlKey: true });
+  await wait(140);
+  check('Ctrl+Z restores the recipe before the change',
+    DS.state().algorithm === beforeUndo, beforeUndo + ' -> ' + DS.state().algorithm);
+  press({ key: 'z', ctrlKey: true, shiftKey: true });
+  await wait(140);
+  check('Ctrl+Shift+Z redoes it',
+    DS.state().algorithm === undoTarget, undoTarget + ' -> ' + DS.state().algorithm);
+
+  DS.command('view-split', true);
+  await wait(80);
+  const splitLayer = document.getElementById('split-layer');
+  const splitGrip = document.getElementById('split-grip');
+  check('split compare opens the source layer and its grip',
+    DS.state().split === true && !splitLayer.hidden && !splitGrip.hidden &&
+      splitLayer.width === document.getElementById('canvas').width,
+    JSON.stringify({ split: DS.state().split, layer: splitLayer.hidden, grip: splitGrip.hidden }));
+  DS.command('view-split', false);
+  await wait(60);
+  check('split compare closes again',
+    DS.state().split === false && splitLayer.hidden && splitGrip.hidden);
+
+  /* ---- palette import --------------------------------------------- */
+
+  const importer = window.DitherPaletteImport;
+  check('the palette importer is installed', !!importer && typeof importer.parse === 'function');
+  let parsedJson = null;
+  if (importer) {
+    try {
+      parsedJson = importer.parse('{"name":"Smoke Palette","colors":["#101010","#ff3300","#f0f0f0"]}', 'Fallback');
+    } catch (err) { report.notes.paletteParseError = String(err && err.message || err); }
+  }
+  check('the importer reads a JSON palette and its name',
+    !!parsedJson && parsedJson.name === 'Smoke Palette' && parsedJson.colors.length === 3,
+    parsedJson ? parsedJson.name + ' / ' + parsedJson.colors.length : report.notes.paletteParseError);
+  let parsedHex = null;
+  if (importer) {
+    try { parsedHex = importer.parse('#001122, #334455\n#667788', 'Hex Smoke'); }
+    catch (err) { report.notes.hexParseError = String(err && err.message || err); }
+  }
+  check('the importer reads a plain hex list',
+    !!parsedHex && parsedHex.colors.length === 3 && parsedHex.name === 'Hex Smoke',
+    parsedHex ? parsedHex.name + ' / ' + parsedHex.colors.length : report.notes.hexParseError);
+  let badPalette = false;
+  if (importer) {
+    try { importer.parse('not a colour'); } catch (err) { badPalette = true; }
+  }
+  check('the importer refuses text that is not a palette', badPalette);
+
+  const openedImport = DS.command('file-import-palette');
+  await wait(100);
+  check('the File menu opens the palette import window',
+    openedImport === true && !!importer && importer.isOpen());
+  if (importer) {
+    const dialogText = document.getElementById('palette-import-text');
+    dialogText.value = '#111111, #eeeeee\n#ff0000';
+    dialogText.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('palette-import-name').value = 'Dialog Smoke';
+    document.getElementById('palette-import-go').click();
+    await wait(220);
+    check('the dialog parses, imports and selects its palette',
+      DS.state().palette === 'custom-dialog-smoke' && importer.isOpen() === false,
+      DS.state().palette + ' / open=' + importer.isOpen());
+  }
+
+  const jsonId = window.__dither.importPaletteText(
+    JSON.stringify({ name: 'Smoke Palette', colors: ['#101010', '#ff3300', '#f0f0f0'] }), 'Smoke');
+  await wait(160);
+  const paletteSelect = document.getElementById('palette');
+  check('a JSON import registers and selects the palette',
+    jsonId === 'custom-smoke-palette' && DS.state().palette === jsonId, String(jsonId));
+  check('the imported palette joins the picker',
+    paletteSelect.options.length === window.DitherLib.PALETTES.length &&
+      Array.prototype.some.call(paletteSelect.options, function (option) { return option.value === jsonId; }),
+    paletteSelect.options.length + ' options');
+  check('its three inks are drawn as swatches', window.__dither.swatches() === 3, window.__dither.swatches());
+  const storedPalettes = JSON.parse(window.localStorage.getItem('dither-studio.palettes') || '[]');
+  check('the import is stored with the app settings',
+    storedPalettes.some(function (entry) { return entry.id === jsonId && entry.colors.length === 3; }),
+    storedPalettes.length + ' stored');
+
+  const hexId = window.__dither.importPaletteText('#001122, #334455\n#667788', 'Hex Smoke');
+  await wait(160);
+  check('a hex import registers and selects the palette',
+    hexId === 'custom-hex-smoke' && DS.state().palette === hexId, String(hexId));
+  check('both imports are in the custom catalogue',
+    window.__dither.customPalettes().length >= 2, window.__dither.customPalettes().length);
+
   /* ---- every command name the menus speak is wired ----------------- */
 
   const calls = [
@@ -228,8 +323,8 @@
     ['window-panel', 'effects'], ['window-panels-open'], ['window-panels-collapse'], ['window-panel', 'press'],
     ['view-zoom-in'], ['view-zoom-out'], ['view-zoom-fit'],
     ['view-quality', 'full'], ['view-quality', 'still'], ['view-quality', 'live'],
-    ['view-compare', true], ['view-compare', false],
-    ['edit-reset'], ['file-export-txt'], ['file-export-preset'], ['file-save-png'],
+    ['view-compare', true], ['view-compare', false], ['view-split', true], ['view-split', false],
+    ['edit-undo'], ['edit-redo'], ['edit-reset'], ['file-export-txt'], ['file-export-preset'], ['file-save-png'],
     ['file-open'], ['file-copy-png'],
   ];
 

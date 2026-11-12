@@ -93,6 +93,8 @@
       {
         title: 'The press',
         rows: [
+          shortcut('Undo the last recipe change', ['Ctrl', 'Z'], 'Step back through algorithm, palette, tone and effect changes.'),
+          shortcut('Redo the last recipe change', ['Ctrl', 'Shift', 'Z'], 'Step forward again after an undo.'),
           shortcut('Roll a fresh recipe', ['Ctrl', 'R'], 'A complete recipe: algorithm, palette, tones and effects.'),
           shortcut('Roll a fresh recipe', ['R'], 'The same roll from the bare keys.'),
           shortcut('New seed', ['Ctrl', 'Shift', 'R'], 'Change the seed without changing the rest of the recipe.'),
@@ -101,6 +103,7 @@
           shortcut('Previous palette', ['Ctrl', '←'], 'Step through the alphabetised palette catalogue.'),
           shortcut('Next palette', ['Ctrl', '→'], 'Step through the alphabetised palette catalogue.'),
           shortcut('Compare with the source', ['C'], 'Hold C to see the image before the press.'),
+          { title: 'Split compare the source and the proof', value: 'View ▸ Split Compare', note: 'Drag the divider, or focus it and use the arrow keys. The split is a view only; exports contain the proof alone.' },
           shortcut('Character mode', ['Ctrl', 'T'], 'Print the proof with the selected character ramp.'),
         ],
       },
@@ -579,6 +582,9 @@
     if (!overlay && !build()) return false;
     if (window.DitherPalette && window.DitherPalette.isOpen && window.DitherPalette.isOpen()) {
       window.DitherPalette.close();
+    }
+    if (window.DitherPaletteImport && window.DitherPaletteImport.isOpen && window.DitherPaletteImport.isOpen()) {
+      window.DitherPaletteImport.close();
     }
     if (pageId && allPages().some(function (page) { return page.id === pageId; })) {
       activePage = pageId;

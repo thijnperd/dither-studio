@@ -36,6 +36,147 @@
     return [0, 2, 4].map(function (at) { return parseInt(digits[1].substr(at, 2), 16); });
   }
 
+  // ---- palette import ----
+
+  // A palette file is either JSON or a list of hex colours. Both are read into
+  // the same `{ name, colors }` shape here, so the import window and the tests
+  // agree about what a valid palette is. The parser is strict about channels
+  // and counts but forgiving about separators: a Lospec export, a hand-written
+  // array and a column of `#rrggbb` lines all arrive at the same place.
+  const HEX_COLOUR = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+  function parseHexColour(value) {
+    const match = HEX_COLOUR.exec(String(value).trim());
+    if (!match) return null;
+    let digits = match[1];
+    if (digits.length === 3) {
+      digits = digits[0] + digits[0] + digits[1] + digits[1] + digits[2] + digits[2];
+    }
+    return [0, 2, 4].map(function (at) { return parseInt(digits.substr(at, 2), 16); });
+  }
+
+  function parseSingleColour(value) {
+    if (Array.isArray(value)) {
+      if (value.length < 3) throw new Error('Every colour needs three channels');
+      return value.slice(0, 3).map(function (channel) {
+        const number = Number(channel);
+        if (!Number.isInteger(number) || number < 0 || number > 255) {
+          throw new Error('Colour channels must be whole numbers from 0 to 255');
+        }
+        return number;
+      });
+    }
+    if (value && typeof value === 'object') {
+      if (typeof value.hex === 'string') return parseSingleColour(value.hex);
+      if (typeof value.color === 'string') return parseSingleColour(value.color);
+      if (typeof value.colour === 'string') return parseSingleColour(value.colour);
+      if (Array.isArray(value.rgb)) return parseSingleColour(value.rgb);
+      throw new Error('A colour object needs a hex value or an rgb triple');
+    }
+    if (typeof value === 'string') {
+      const rgb = parseHexColour(value);
+      if (!rgb) throw new Error('“' + value.trim() + '” is not a hex colour');
+      return rgb;
+    }
+    throw new Error('A colour must be a hex string, an rgb triple or a colour object');
+  }
+
+  function parseColourValue(value) {
+    if (typeof value !== 'string') return [parseSingleColour(value)];
+    const tokens = value.trim().split(/[\s,;]+/).filter(Boolean);
+    if (!tokens.length) throw new Error('A colour string cannot be empty');
+    return tokens.map(function (token) {
+      const rgb = parseHexColour(token);
+      if (!rgb) throw new Error('“' + token + '” is not a hex colour');
+      return rgb;
+    });
+  }
+
+  function flattenPaletteColours(list) {
+    const out = [];
+    list.forEach(function (item) {
+      parseColourValue(item).forEach(function (rgb) { out.push(rgb); });
+    });
+    return out;
+  }
+
+  function cleanPaletteName(value, fallback) {
+    const cleaned = String(value == null ? '' : value)
+      .replace(/[\u0000-\u001f\u007f]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60);
+    return cleaned || String(fallback || '').trim().slice(0, 60) || 'Imported palette';
+  }
+
+  function uniquePaletteColours(colors) {
+    const out = [];
+    colors.forEach(function (rgb) {
+      if (!out.some(function (seen) {
+        return seen[0] === rgb[0] && seen[1] === rgb[1] && seen[2] === rgb[2];
+      })) out.push(rgb);
+    });
+    return out;
+  }
+
+  function parsePaletteText(text, fallbackName) {
+    const source = String(text == null ? '' : text).trim();
+    if (!source) throw new Error('Paste a palette or choose a file first');
+
+    let name = '';
+    let list = null;
+    if (source[0] === '[' || source[0] === '{') {
+      let data;
+      try {
+        data = JSON.parse(source);
+      } catch (err) {
+        throw new Error('That JSON could not be read: ' + (err && err.message ? err.message : 'invalid JSON'));
+      }
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (data && typeof data === 'object') {
+        name = typeof data.name === 'string' ? data.name
+          : typeof data.title === 'string' ? data.title
+            : '';
+        if (Array.isArray(data.colors)) list = data.colors;
+        else if (Array.isArray(data.palette)) list = data.palette;
+        else if (Array.isArray(data.swatches)) list = data.swatches;
+        else if (typeof data.colors === 'string') list = [data.colors];
+        else throw new Error('A JSON palette needs a colors array');
+      } else {
+        throw new Error('A JSON palette must be an array or an object with a colors array');
+      }
+    } else {
+      const tokens = source.split(/[\s,;]+/).filter(Boolean);
+      list = tokens;
+    }
+
+    if (!list || !list.length) throw new Error('A palette needs at least two colours');
+    const colors = uniquePaletteColours(flattenPaletteColours(list));
+    if (colors.length < 2) throw new Error('A palette needs at least two different colours');
+    if (colors.length > 64) throw new Error('A palette can hold at most 64 colours');
+    return { name: cleanPaletteName(name, fallbackName), colors: colors };
+  }
+
+  // A readable name becomes a stable, URL-ish id; the caller supplies the ids
+  // already in use so an import can never shadow one of them.
+  function paletteId(name, taken) {
+    const base = 'custom-' + String(name || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40).replace(/-+$/, '');
+    const stem = base === 'custom-' ? 'custom-palette' : base;
+    const used = {};
+    (taken || []).forEach(function (id) { used[id] = true; });
+    let id = stem;
+    let number = 2;
+    while (used[id]) id = stem + '-' + (number++);
+    return id;
+  }
+
   // ---- catalogues ----
 
   // Every catalogue in the app is `[{ id, ... }]` and every lookup is the
@@ -125,6 +266,9 @@
     clampByte: clampByte,
     rgbToHex: rgbToHex,
     hexToRgb: hexToRgb,
+    parsePaletteText: parsePaletteText,
+    paletteId: paletteId,
+    cleanPaletteName: cleanPaletteName,
     byId: byId,
     indexOfId: indexOfId,
     stepThrough: stepThrough,

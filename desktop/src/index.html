@@ -73,6 +73,7 @@
     <span class="opt-sep"></span>
     <div class="opt-group">
       <button id="compare" class="obtn" title="Hold to compare with the source (C)">Compare</button>
+      <button id="split" class="obtn" aria-pressed="false" title="Split compare the source and the proof">Split</button>
       <button id="random" class="obtn" title="Roll a fresh recipe (R)">Random</button>
     </div>
     <span class="opt-grow"></span>
@@ -138,8 +139,13 @@
       </div>
 
       <div id="canvas-wrap" class="canvas-wrap">
-        <div class="canvas-frame">
+        <div class="canvas-frame" id="canvas-frame">
           <canvas id="canvas" role="img" aria-label="Dithered preview"></canvas>
+          <canvas id="split-layer" class="split-layer" aria-hidden="true" hidden></canvas>
+          <div id="split-grip" class="split-grip" role="slider" tabindex="0"
+            aria-label="Split comparison" aria-valuemin="0" aria-valuemax="100"
+            aria-valuenow="50" aria-valuetext="50% source, 50% proof"
+            title="Drag to move the split; arrow keys nudge it" hidden></div>
         </div>
         <p class="drop-veil" id="drop-veil" hidden>Drop to load</p>
       </div>
@@ -464,9 +470,47 @@
           </section>
 
         </div>
-        <p class="dock-hint"><b id="hint-key">Ctrl K</b> find · <b>C</b> compare · <b>R</b> recipe · <b>Ctrl+S</b> export</p>
+        <p class="dock-hint"><b id="hint-key">Ctrl K</b> find · <b>C</b> compare · <b>R</b> recipe</p>
       </div>
     </aside>
+  </div>
+
+  <!-- the palette import window: a paste field, a file route and a live ink
+       strip. The parser is renderer/core.js; this markup is only the surface. -->
+  <div class="pimport" id="palette-import" hidden>
+    <section class="pimport-card" role="dialog" aria-modal="true" aria-labelledby="palette-import-title">
+      <header class="pimport-head">
+        <span class="pimport-kicker">Press · Ink set</span>
+        <h2 class="pimport-title" id="palette-import-title">Import a color palette</h2>
+        <p class="pimport-note">Paste JSON or a list of hex colors. Two to 64 inks; imports stay on this machine and join the palette menu.</p>
+      </header>
+      <div class="pimport-body">
+        <label class="pimport-field">
+          <span>Name</span>
+          <input id="palette-import-name" type="text" maxlength="60" autocomplete="off" spellcheck="false"
+            placeholder="Imported palette" />
+        </label>
+        <label class="pimport-field">
+          <span>Palette</span>
+          <textarea id="palette-import-text" spellcheck="false"
+            placeholder='["#1a1c2c", "#5d275d", "#b13e53"]   ·   or   #1a1c2c #5d275d #b13e53'></textarea>
+        </label>
+        <div class="pimport-row">
+          <button class="btn" id="palette-import-file" type="button">Choose file…</button>
+          <span class="pimport-hint">JSON arrays, { "name", "colors" } objects, or hex text.</span>
+        </div>
+        <div class="pimport-preview" id="palette-import-preview" aria-live="polite">
+          No inks yet — paste a palette or choose a file.
+        </div>
+        <p class="pimport-error" id="palette-import-error" role="alert" hidden></p>
+      </div>
+      <footer class="pimport-foot">
+        <button class="btn" id="palette-import-cancel" type="button">Cancel</button>
+        <span class="pimport-grow"></span>
+        <button class="btn btn-primary" id="palette-import-go" type="button">Import palette</button>
+      </footer>
+      <input type="file" id="palette-import-file-input" accept="application/json,.json,.hex,.txt,text/plain" hidden />
+    </section>
   </div>
 
   <!-- the command palette: one field that finds its way around the whole app.
@@ -595,6 +639,7 @@
   <script src="renderer/video.js"></script>
   <script src="renderer/core.js"></script>
   <script src="renderer/app.js"></script>
+  <script src="renderer/palette-import.js"></script>
   <script src="renderer/palette.js"></script>
   <script src="renderer/help.js"></script>
   <script src="renderer/shell.js"></script>

@@ -38,6 +38,7 @@ const api = {
   openVideo: function () { return ipcRenderer.invoke('ds:open-video'); },
   // Returns { name, path, text } or null.
   openJson: function () { return ipcRenderer.invoke('ds:open-json'); },
+  openPalette: function () { return ipcRenderer.invoke('ds:open-palette'); },
 
   /* ---- files out ---- */
   // payload: { name, mime, data: ArrayBuffer }. Returns { path } or null.

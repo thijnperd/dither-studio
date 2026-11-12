@@ -314,6 +314,20 @@ ipcMain.handle('ds:open-json', function () {
   });
 });
 
+ipcMain.handle('ds:open-palette', function () {
+  return openRoute({
+    title: 'Import a color palette',
+    filters: [
+      { name: 'Palette files', extensions: ['json', 'hex', 'txt'] },
+      { name: 'All files', extensions: ['*'] },
+    ],
+    properties: ['openFile'],
+  }, async function (file) {
+    const text = await fs.readFile(file, 'utf8');
+    return { name: path.basename(file), path: file, text: text };
+  });
+});
+
 ipcMain.handle('ds:save-blob', function (_event, payload) {
   if (!payload || !payload.name) return null;
   const filters = payload.mime === 'image/png'

@@ -55,10 +55,10 @@
   --font: "SF Mono", "Cascadia Code", Consolas, "JetBrains Mono", Menlo, monospace;
   --font-ui: "Segoe UI", -apple-system, "SF Pro Text", system-ui, Roboto, sans-serif;
   --fs-app: 12.5px;
-  --fs-label: 11.5px;
-  /* The smallest step carries hints, station notes and the status bar. 10.5px
-     mono on a dark ground is legible only if you lean in; 11px is the floor. */
-  --fs-small: 11px;
+  --fs-label: 12px;
+  /* The smallest step carries hints, station notes and the status bar. Mono at
+     11px on a dark ground is legible only if you lean in; 12px is the floor. */
+  --fs-small: 12px;
 
   /* ---- motion: quick, ease-out, never showy ---- */
   /* The built-in easings are too weak to read as deliberate at these
@@ -326,7 +326,9 @@ input[type="range"]::-moz-range-thumb {
 
 .readout b { color: var(--text); font-weight: 600; }
 
-.is-dim { opacity: 0.72; }
+/* Dim enough to sit behind the main readout, bright enough to stay over 4.5:1
+   against the options bar's raised ground. */
+.is-dim { opacity: 0.88; }
 
 .opt-grow { flex: 1 1 auto; min-width: 0; }
 

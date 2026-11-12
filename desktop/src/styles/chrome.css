@@ -454,6 +454,7 @@
 }
 
 .canvas-frame {
+  position: relative;
   display: inline-block;
   padding: 0;
   border: 1px solid var(--edge);
@@ -470,6 +471,68 @@
   /* Zoom is CSS-only, so the browser must not smooth the proof away. */
   image-rendering: pixelated;
 }
+
+/* Split compare: the source is painted on its own layer so the proof canvas,
+   and therefore every export, stays exactly what the press produced. */
+.split-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.split-layer[hidden] { display: none; }
+
+.split-grip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ew-resize;
+  transform: translateX(-50%);
+}
+
+.split-grip[hidden] { display: none; }
+
+.split-grip::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+
+.split-grip::after {
+  content: "↔";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--sunken);
+  font: 600 12px/1 var(--font);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, -50%);
+}
+
+.split-grip:focus-visible { outline: none; }
+.split-grip:focus-visible::after { box-shadow: var(--focus), 0 1px 4px rgba(0, 0, 0, 0.55); }
 
 .canvas-wrap canvas.alpha-on {
   background-image:
@@ -870,4 +933,163 @@ body.dock-hidden .workarea {
 
 @media (prefers-reduced-motion: reduce) {
   .cmdk, .cmdk-card { transition: none; }
+}
+
+/* ============================ palette import ============================ */
+
+/* A paste-first dialog: the field is the largest thing in it, the ink strip is
+   the receipt. The card keeps the console's plate language rather than turning
+   into a form, and the backdrop is the same dim as the command palette. */
+.pimport {
+  position: fixed;
+  inset: 0;
+  z-index: 82;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 7, 10, 0.72);
+  opacity: 0;
+  transition: opacity 140ms var(--ease-out);
+}
+
+.pimport.is-in { opacity: 1; }
+
+.pimport-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(640px, 100%);
+  max-height: min(86vh, 760px);
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  transform: translateY(5px);
+  transition: transform 140ms var(--ease-out);
+}
+
+.pimport.is-in .pimport-card { transform: none; }
+
+.pimport-head {
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--edge-soft);
+}
+
+.pimport-kicker {
+  color: var(--muted);
+  font: var(--fs-small)/1 var(--font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pimport-title {
+  margin: 5px 0 6px;
+  color: var(--text);
+  font: 600 17px/1.2 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.pimport-note {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--muted);
+  font: var(--fs-label)/1.5 var(--font-ui);
+}
+
+.pimport-body {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pimport-field {
+  display: grid;
+  gap: 6px;
+}
+
+.pimport-field > span {
+  color: var(--muted);
+  font: var(--fs-small)/1 var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pimport-field input,
+.pimport-field textarea {
+  width: 100%;
+}
+
+.pimport-field textarea {
+  min-height: 156px;
+  resize: vertical;
+  font: var(--fs-label)/1.55 var(--font);
+}
+
+.pimport-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.pimport-hint {
+  color: var(--muted);
+  font: var(--fs-small)/1.4 var(--font-ui);
+}
+
+.pimport-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  color: var(--muted);
+  font: var(--fs-small)/1.4 var(--font);
+}
+
+.pimport-chip {
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+.pimport-count {
+  margin-left: 4px;
+  color: var(--muted);
+  font: var(--fs-small)/1 var(--font);
+}
+
+.pimport-error {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, #ff8080 40%, var(--edge));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, #ff8080 8%, var(--sunken));
+  color: #ff8080;
+  font: var(--fs-small)/1.45 var(--font-ui);
+}
+
+.pimport-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--edge-soft);
+}
+
+.pimport-grow { flex: 1 1 auto; }
+
+@media (max-width: 620px) {
+  .pimport { padding: 12px; align-items: end; }
+  .pimport-card { max-height: 92vh; }
+  .pimport-title { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pimport, .pimport-card { transition: none; }
 }

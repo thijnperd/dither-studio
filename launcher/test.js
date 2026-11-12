@@ -1303,6 +1303,67 @@ test('a cached blue-noise mask costs nothing to reuse', function () {
   assert.ok(Date.now() - t0 < 50, 'cache hits are instant');
 });
 
+// ---- 17. imported palettes ----
+
+group('imported palettes');
+
+test('registerPalette adds a custom ink set and can replace it', function () {
+  const before = D.PALETTES.length;
+  const first = D.registerPalette({
+    id: 'custom-test',
+    name: 'Custom Test',
+    colors: [[0, 0, 0], [255, 0, 0]],
+  });
+  assert.strictEqual(first.custom, true);
+  assert.strictEqual(D.PALETTES.length, before + 1);
+  assert.ok(D.PALETTES.some(function (palette) { return palette.id === 'custom-test'; }));
+
+  const red = makeSource(16, 16, function () { return [255, 0, 0]; });
+  const snapped = D.process(red, { algorithm: 'threshold', palette: 'custom-test', pixelSize: 1 });
+  assert.deepStrictEqual(Array.from(uniqueColors(snapped)), [0xff0000]);
+
+  const yll = D.process(makeSource(16, 16, function (x, y) {
+    return [x * 16, y * 16, 128];
+  }), { algorithm: 'yliluoma-polished', palette: 'custom-test', pixelSize: 1 });
+  uniqueColors(yll).forEach(function (color) {
+    assert.ok(color === 0x000000 || color === 0xff0000, 'old mixing plan colour ' + color.toString(16));
+  });
+
+  D.registerPalette({
+    id: 'custom-test',
+    name: 'Custom Test, cooled',
+    colors: [[0, 0, 0], [0, 0, 255]],
+  });
+  assert.strictEqual(D.PALETTES.length, before + 1, 'replacing does not add a second entry');
+  assert.strictEqual(D.PALETTES.filter(function (palette) { return palette.id === 'custom-test'; })[0].name,
+    'Custom Test, cooled');
+
+  const blue = makeSource(16, 16, function () { return [0, 0, 255]; });
+  const cooled = D.process(blue, { algorithm: 'threshold', palette: 'custom-test', pixelSize: 1 });
+  assert.deepStrictEqual(Array.from(uniqueColors(cooled)), [0x0000ff], 'the lookup table was rebuilt');
+  const cooledYll = D.process(makeSource(16, 16, function (x, y) {
+    return [x * 16, y * 16, 128];
+  }), { algorithm: 'yliluoma-polished', palette: 'custom-test', pixelSize: 1 });
+  uniqueColors(cooledYll).forEach(function (color) {
+    assert.ok(color === 0x000000 || color === 0x0000ff, 'the mixing plan was rebuilt, got ' + color.toString(16));
+  });
+});
+
+test('registerPalette refuses reserved ids and malformed colours', function () {
+  assert.throws(function () {
+    D.registerPalette({ id: 'bw', name: 'Shadow', colors: [[0, 0, 0], [255, 255, 255]] });
+  }, /built-in/);
+  assert.throws(function () {
+    D.registerPalette({ id: 'custom-one', name: 'One', colors: [[0, 0, 0]] });
+  }, /2–64/);
+  assert.throws(function () {
+    D.registerPalette({ id: 'custom-bad', name: 'Bad', colors: [[0, 0, 256], [0, 0, 0]] });
+  }, /0 to 255/);
+  assert.throws(function () {
+    D.registerPalette({ id: 'custom-dup', name: 'Dup', colors: [[1, 2, 3], [1, 2, 3]] });
+  }, /two different/);
+});
+
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 if (failed) process.exitCode = 1;

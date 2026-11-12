@@ -48,6 +48,7 @@
           { type: 'sep' },
           { label: 'Export Preset…', command: 'file-export-preset' },
           { label: 'Import Preset…', command: 'file-import-preset' },
+          { label: 'Import Color Palette…', command: 'file-import-palette' },
           { type: 'sep' },
           { label: 'Quit Dither Studio', command: 'file-quit', accel: 'CmdOrCtrl+Q' },
         ],
@@ -55,6 +56,9 @@
       {
         id: 'edit', label: 'Edit',
         items: [
+          { label: 'Undo Recipe Change', command: 'edit-undo', accel: 'CmdOrCtrl+Z' },
+          { label: 'Redo Recipe Change', command: 'edit-redo', accel: 'CmdOrCtrl+Shift+Z' },
+          { type: 'sep' },
           { label: 'Roll a Fresh Recipe', command: 'edit-random', accel: 'CmdOrCtrl+R' },
           { label: 'New Seed', command: 'edit-reseed', accel: 'CmdOrCtrl+Shift+R' },
           { label: 'Reset Every Control', command: 'edit-reset' },
@@ -121,6 +125,7 @@
           },
           { type: 'sep' },
           { label: 'Compare with the Source', command: 'view-compare', check: 'compare' },
+          { label: 'Split Compare', command: 'view-split', check: 'split' },
           { label: 'Panels on the Right', command: 'view-dock', check: 'dock' },
           { type: 'sep' },
           { label: 'Reload the Window', command: 'view-reload', accel: 'F5' },

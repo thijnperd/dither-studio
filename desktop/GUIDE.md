@@ -103,8 +103,8 @@ web page:
   letter opens a menu (`Alt+P` for Press); ← → walk along the bar, ↑ ↓ within a
   menu, Enter runs, Escape closes.
 - **Options bar** — how you are *looking*: zoom controls and the zoom readout,
-  the update mode (Full / Live / Still), Compare, Random, Copy PNG, the export
-  scale and Export PNG.
+  the update mode (Full / Live / Still), Compare, Split, Random, Copy PNG, the
+  export scale and Export PNG.
 - **Tool rail** — the verbs worth a button: open, the built-in sources, compare
   (hold to see the source), random, webcam, clip, record, presets. Hover or tab
   to an icon and a tooltip names it; a tool that is engaged lights up in the
@@ -131,11 +131,15 @@ web page:
 
 **File** — open an image or a clip, the next built-in source (`Ctrl+D`), save the
 proof as a PNG,
-copy it to the clipboard, export a text proof, import and export presets, quit.
+copy it to the clipboard, export a text proof, import and export presets,
+import a color palette, quit.
 
-**Edit** — roll a fresh recipe (`Ctrl+R`, the equivalent of the Random tool), a
-new seed (`Ctrl+Shift+R`), and Reset Every Control, which puts every slider back
-to the shipped default without touching your source.
+**Edit** — undo and redo recipe changes (`Ctrl+Z` / `Ctrl+Shift+Z`), roll a
+fresh recipe (`Ctrl+R`, the equivalent of the Random tool), a new seed
+(`Ctrl+Shift+R`), and Reset Every Control, which puts every slider back to the
+shipped default without touching your source. Undo covers the recipe —
+algorithm, palette, tone, effects and character settings — not loading a new
+image; a new source starts a fresh timeline. A slider drag is one undo step.
 
 **Image** — the pixel stage: the tone map (the whole list), transparency mode
 (flatten onto paper / dither the matte / keep as PNG alpha), print with
@@ -149,8 +153,9 @@ are on is ticked, so the menu doubles as a readout of the current press.
 **Effects** — add any effect from the stack catalogue; the stack is ordered and
 reorderable in the Effects panel, and Clear the Stack empties it.
 
-**View** — zoom in/out/fit, the update mode, Compare with the Source, whether the
-dock is shown at all, reload the window, developer tools, full screen.
+**View** — zoom in/out/fit, the update mode, Compare with the Source, Split
+Compare, whether the dock is shown at all, reload the window, developer tools,
+full screen.
 
 **Window** — every panel by name (tick = open), Open Every Panel, Collapse Every
 Panel. Collapsing the panels you are not using is the fastest way to give the
@@ -218,8 +223,17 @@ because they are what the app is for:
   is for when you want to watch an expensive algorithm work.
 - **Hold Compare** (or the eye in the tool rail, or `C`) to flash the source
   under the proof. What you are judging is how much of the picture survived.
+  **Split** keeps both visible at once: drag the divider, or focus it and use
+  the arrow keys. The split is a view only, so exports contain the proof alone.
 - The proof is deterministic: the seed in the Press panel drives every random
   stage, and the same recipe always produces the same image.
+- **Bring your own inks.** *File ▸ Import Color Palette…* opens a small import
+  window. Paste a JSON array, a `{ "name", "colors" }` object, or a plain list
+  of `#rrggbb` values, or choose a `.json`, `.hex` or `.txt` file. The strip
+  under the field previews the inks it read. A palette needs 2–64 distinct
+  colours; imports are saved with the app's settings, join the palette menu
+  and Find, and are selected when they arrive. Importing the same name again
+  updates that palette in place.
 
 ## 7. Getting it out
 
@@ -270,7 +284,8 @@ the web build: the app stores a list of station names, not a blob of state, so
 a future version that adds a panel does not leave a stale one behind.
 
 The rest of your recipe is not silently persisted. Presets are files, on purpose:
-a `.json` you can read, diff and keep.
+a `.json` you can read, diff and keep. Imported palettes are the deliberate
+exception: they live in the app's local settings so they are there next launch.
 
 ## 10. Troubleshooting
 

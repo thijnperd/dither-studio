@@ -62,9 +62,16 @@
     };
   }
 
-  const TREE = SPEC.menus.map(function (menu) {
-    return { id: menu.id, label: menu.label, items: menu.items.map(expand) };
-  });
+  function buildTree() {
+    return SPEC.menus.map(function (menu) {
+      return { id: menu.id, label: menu.label, items: menu.items.map(expand) };
+    });
+  }
+
+  // The catalogue is normally fixed, but an imported palette joins the Press
+  // menu at runtime. Rebuilding the one tree keeps the drawn bar and the native
+  // menu in step without teaching either one about imports.
+  let TREE = buildTree();
 
   function menuById(id) {
     for (let i = 0; i < TREE.length; i++) if (TREE[i].id === id) return TREE[i];
@@ -81,7 +88,7 @@
       algorithm: s.algorithm, palette: s.palette, toneMap: s.toneMap,
       preset: s.preset, quality: s.quality, alphaMode: s.alphaMode,
       textRamp: s.textRamp, serpentine: s.serpentine, textMode: s.textMode,
-      compare: s.compare, dock: !document.body.classList.contains('dock-hidden'),
+      compare: s.compare, split: s.split, dock: !document.body.classList.contains('dock-hidden'),
     };
     s.openGroups.forEach(function (id) { map['panel:' + id] = true; });
     return map;
@@ -108,6 +115,15 @@
     }
     if (force) desktop.sendMenu(TREE);
   }
+
+  window.addEventListener('ds:catalogues', function () {
+    TREE = buildTree();
+    lastPushed = '';
+    if (window.__shell) {
+      window.__shell.menus = TREE.map(function (menu) { return menu.id + ':' + menu.items.length; });
+    }
+    pushToMain(true);
+  });
 
   // ---- the drawn menu bar ----
 
@@ -364,7 +380,8 @@
       // A modal owns the keyboard while it is open. Ctrl+K is the one global
       // exception: it closes Help (palette.open does that) and opens Find.
       const modal = (window.DitherHelp && window.DitherHelp.isOpen()) ||
-        (window.DitherPalette && window.DitherPalette.isOpen());
+        (window.DitherPalette && window.DitherPalette.isOpen()) ||
+        (window.DitherPaletteImport && window.DitherPaletteImport.isOpen());
       if (modal && hit.name !== 'view-palette') return;
       event.preventDefault();
       event.stopPropagation();

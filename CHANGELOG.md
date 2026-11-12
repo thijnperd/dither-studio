@@ -10,6 +10,35 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.3.2 — Your own inks (2026-11-12)
+
+**Import a palette, undo a recipe change, and split the proof against its source.**
+
+- **Custom palettes.** File ▸ Import Color Palette… opens a paste-first import
+  window. It reads a JSON array of hex colours, a `{ "name", "colors" }`
+  object (including Lospec-style exports), RGB triples, or a plain hex list —
+  `#rrggbb`, `#rgb`, separated by commas, spaces or lines. Choose a `.json`,
+  `.hex` or `.txt` file instead of pasting if you prefer. The ink strip previews
+  the result before it is committed.
+- **Imported palettes stay put.** Two to 64 distinct colours, named and saved in
+  the app's local settings. They join the palette picker, the Press menu and
+  Find, and are selected when they arrive. Re-importing the same name updates
+  that palette in place rather than adding a duplicate. The engine's palette
+  lookup and mixing-plan caches are rebuilt when an import replaces one.
+- **Undo and redo the recipe.** `Ctrl+Z` / `Ctrl+Shift+Z` walk an 80-step
+  history of algorithm, palette, every slider, the effect stack and the text
+  settings. A slider drag is one step; loading a new image starts a fresh
+  timeline. The Edit menu, Find and the Help reference carry the same verbs.
+- **Split compare.** View ▸ Split Compare keeps the source and the proof on
+  screen together with a draggable divider. Arrow keys and Home/End move it
+  from the keyboard. It is a view only, so exports still contain the proof
+  alone, and it is disabled while a clip is playing.
+- **A clearer reading line.** The smallest labels and hints are 12px now, and a
+  dimmed line is 0.88 rather than 0.72 opacity, so station notes and the quality
+  hint hold their contrast on the dark panel. The dock hint is shortened to fit
+  at that size.
+- The desktop guide covers the importer, the history and the split view.
+
 ## 0.3.1 — A clearer reference (2026-11-12)
 
 **Help is a proper window now, and the station arrows turn on their own centres.**

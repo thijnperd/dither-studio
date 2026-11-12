@@ -87,6 +87,47 @@ test('the pair round-trips every byte value', function () {
   }
 });
 
+// ---- palette import ----
+
+group('palette import');
+
+test('a JSON array of hex strings is a palette', function () {
+  const parsed = Core.parsePaletteText('["#1a1c2c", "#5d275d", "#b13e53"]', 'Fallback');
+  assert.deepStrictEqual(parsed.colors, [[26, 28, 44], [93, 39, 93], [177, 62, 83]]);
+  assert.strictEqual(parsed.name, 'Fallback');
+});
+
+test('a JSON object carries its own name and colours', function () {
+  const parsed = Core.parsePaletteText('{"name":"Lospec 4","colors":["#000","#f00","#fff","#0f0"]}');
+  assert.strictEqual(parsed.name, 'Lospec 4');
+  assert.deepStrictEqual(parsed.colors, [[0, 0, 0], [255, 0, 0], [255, 255, 255], [0, 255, 0]]);
+});
+
+test('a plain hex list takes commas, spaces, semicolons and lines', function () {
+  const parsed = Core.parsePaletteText('#000000, #ff0000\n#ffffff; 00ff00', 'Smoke');
+  assert.strictEqual(parsed.colors.length, 4);
+  assert.deepStrictEqual(parsed.colors[3], [0, 255, 0]);
+});
+
+test('rgb triples and colour objects are read too', function () {
+  const parsed = Core.parsePaletteText('[[1,2,3], {"hex":"#ffffff"}]');
+  assert.deepStrictEqual(parsed.colors, [[1, 2, 3], [255, 255, 255]]);
+});
+
+test('duplicate inks collapse, and a palette still needs two colours', function () {
+  const parsed = Core.parsePaletteText('#000 #000 #fff');
+  assert.deepStrictEqual(parsed.colors, [[0, 0, 0], [255, 255, 255]]);
+  assert.throws(function () { Core.parsePaletteText('#000 #000'); }, /two different colours/);
+  assert.throws(function () { Core.parsePaletteText('not a colour'); }, /not a hex colour/);
+  assert.throws(function () { Core.parsePaletteText('[]'); }, /at least two colours/);
+});
+
+test('the import id is readable, stable and never collides', function () {
+  assert.strictEqual(Core.paletteId('My Great Palette', []), 'custom-my-great-palette');
+  assert.strictEqual(Core.paletteId('My Great Palette', ['custom-my-great-palette']), 'custom-my-great-palette-2');
+  assert.strictEqual(Core.paletteId('  ...  ', []), 'custom-palette');
+});
+
 // ---- catalogues ----
 
 group('catalogues');

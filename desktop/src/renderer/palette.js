@@ -45,13 +45,17 @@
   // every entry takes the same road the menus do.
   const ACTIONS = [
     { label: 'Open an image…', command: 'file-open', keywords: 'load picture file' },
+    { label: 'Import a color palette…', command: 'file-import-palette', keywords: 'palette inks json hex custom' },
     { label: 'Export the proof as a PNG', command: 'file-save-png', keywords: 'save file download' },
     { label: 'Copy the proof to the clipboard', command: 'file-copy-png', keywords: 'paste clipboard' },
     { label: 'Export the text proof', command: 'file-export-txt', keywords: 'characters txt' },
+    { label: 'Undo a recipe change', command: 'edit-undo', keywords: 'back history revert' },
+    { label: 'Redo a recipe change', command: 'edit-redo', keywords: 'forward history' },
     { label: 'Roll a fresh recipe', command: 'edit-random', keywords: 'random surprise' },
     { label: 'New seed', command: 'edit-reseed', keywords: 'random seed' },
     { label: 'Reset every control', command: 'edit-reset', keywords: 'defaults clear' },
     { label: 'Compare with the source', command: 'view-compare', arg: true, keywords: 'original before' },
+    { label: 'Split compare the source and the proof', command: 'view-split', keywords: 'before after compare divider' },
     { label: 'Fit in window', command: 'view-zoom-fit', keywords: 'zoom' },
     { label: 'Toggle character mode', command: 'image-textmode', keywords: 'text ascii type' },
     { label: 'Clear the effects stack', command: 'effects-clear', keywords: 'glitch reset' },
@@ -330,6 +334,9 @@
     if (window.DitherHelp && window.DitherHelp.isOpen && window.DitherHelp.isOpen()) {
       window.DitherHelp.close();
     }
+    if (window.DitherPaletteImport && window.DitherPaletteImport.isOpen && window.DitherPaletteImport.isOpen()) {
+      window.DitherPaletteImport.close();
+    }
     overlay.hidden = false;
     restoreFocus = document.activeElement;
     field.value = '';
@@ -352,9 +359,15 @@
 
   function toggle() { if (isOpen()) close(); else open(); }
 
+  // An imported palette changes the catalogue under a palette that was already
+  // built. Clearing the index makes the next open include it; the event is the
+  // signal, so app.js does not have to know this module exists.
+  window.addEventListener('ds:catalogues', function () { items = null; });
+
   window.DitherPalette = {
     open: open,
     close: close,
+    refresh: function () { items = null; },
     toggle: toggle,
     isOpen: isOpen,
     // What the field is showing, for the smoke run: labels only, no internals.

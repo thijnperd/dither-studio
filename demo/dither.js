@@ -977,6 +977,58 @@
     return entry;
   }
 
+  // Imported ink sets are the one exception to the catalogue being fixed at
+  // load. Registering an entry updates the catalogue and the id map, then drops
+  // the two caches keyed by that id: a replaced palette must not keep its old
+  // lookup table or its old mixing plans. Built-in ids are reserved.
+  function registerPalette(palette) {
+    if (!palette || typeof palette !== 'object') {
+      throw new Error('A palette needs a name and 2–64 colours');
+    }
+    const id = String(palette.id || '').trim();
+    if (!/^[a-z][a-z0-9_-]{0,63}$/i.test(id)) {
+      throw new Error('A palette id must start with a letter and use only letters, numbers, - or _');
+    }
+    const name = String(palette.name || '').trim();
+    if (!name) throw new Error('A palette needs a name');
+    if (name.length > 60) throw new Error('A palette name must be 60 characters or fewer');
+    if (!Array.isArray(palette.colors) || palette.colors.length < 2 || palette.colors.length > 64) {
+      throw new Error('A palette needs 2–64 colours');
+    }
+    const colors = [];
+    palette.colors.forEach(function (color) {
+      if (!Array.isArray(color) || color.length < 3) {
+        throw new Error('Every palette colour must be an [r, g, b] triple');
+      }
+      const rgb = color.slice(0, 3).map(function (value) {
+        const channel = Number(value);
+        if (!Number.isInteger(channel) || channel < 0 || channel > 255) {
+          throw new Error('Palette channels must be whole numbers from 0 to 255');
+        }
+        return channel;
+      });
+      if (!colors.some(function (seen) {
+        return seen[0] === rgb[0] && seen[1] === rgb[1] && seen[2] === rgb[2];
+      })) colors.push(rgb);
+    });
+    if (colors.length < 2) throw new Error('A palette needs at least two different colours');
+
+    const existing = PALETTE_BY_ID.get(id);
+    if (existing && !existing.custom) {
+      throw new Error('That palette id belongs to a built-in palette');
+    }
+    const entry = { id: id, name: name, colors: colors, custom: true };
+    const at = PALETTES.findIndex(function (candidate) { return candidate.id === id; });
+    if (at >= 0) PALETTES[at] = entry;
+    else PALETTES.push(entry);
+    PALETTE_BY_ID.set(id, entry);
+    LUT_CACHE.delete(id);
+    Array.from(YLL_CACHE.keys()).forEach(function (key) {
+      if (key.indexOf(id + '|') === 0) YLL_CACHE.delete(key);
+    });
+    return entry;
+  }
+
   // The plan metric is the squared distance between the target and the plan's
   // mean: every entry of a plan lands the same number of times across a screen
   // tile, so the plan's mean is exactly the tone the tile renders.
@@ -2092,6 +2144,7 @@
     blueNoiseValue: blueNoiseValue,
     blueNoiseRanks: blueNoiseRanks,
     paletteLut: paletteLut,
+    registerPalette: registerPalette,
     snapIndex: snapIndex,
     // mixing plans (Yliluoma)
     mixingPlan: function (paletteId, option, target) {

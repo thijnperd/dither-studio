@@ -98,6 +98,7 @@
     statPalette: $('stat-palette'), statColors: $('stat-colors'), statRender: $('stat-render'),
     statStatus: $('stat-status'), statZoom: $('stat-zoom'),
     zoomOut: $('zoom-out'), zoomFit: $('zoom-fit'), zoomIn: $('zoom-in'), compare: $('compare'),
+    split: $('split'), splitLayer: $('split-layer'), splitGrip: $('split-grip'),
     exportScale: $('export-scale'), export: $('export'),
     videoWebcam: $('video-webcam'), videoOpen: $('video-open'), videoFile: $('video-file'),
     videoToggle: $('video-toggle'), videoFps: $('video-fps'), videoFpsValue: $('video-fps-value'),
@@ -140,6 +141,7 @@
     { id: 'preset', name: 'Presets' },
   ];
   const GROUP_STORE = 'dither-studio.groups';
+  const PALETTE_STORE = 'dither-studio.palettes';
 
   const state = {
     source: null,       // { data, width, height } at working resolution
@@ -153,7 +155,101 @@
     rafPending: false,
     videoOn: false,     // frames come from video.js rather than a still image
     quality: 'live',    // 'full' | 'live' | 'still' — the viewport update mode
+    splitOn: false,     // source on the left of a draggable divider, proof on the right
+    splitAt: 0.5,
   };
+
+  // A bounded snapshot history for the recipe itself. Loading a new source
+  // starts a fresh timeline: undo is for tuning the press, not for swapping
+  // the painting underneath it. Slider drags coalesce into one entry, so one
+  // undo puts the control back where it was before the drag.
+  const history = {
+    past: [],
+    future: [],
+    suspended: false,
+    group: null,
+    seq: 0,
+    lastKey: '',
+    limit: 80,
+  };
+
+  function historySnapshot() {
+    return {
+      settings: JSON.parse(JSON.stringify(state.settings)),
+      text: { on: !!text.on, ramp: text.ramp, size: text.size },
+    };
+  }
+
+  function resetHistory() {
+    state.settings.glitches = deriveGlitches();
+    const snap = historySnapshot();
+    history.past = [{ snap: snap, group: null }];
+    history.future = [];
+    history.suspended = false;
+    history.group = null;
+    history.lastKey = JSON.stringify(snap);
+  }
+
+  function beginHistoryGroup(name) {
+    if (!history.group) history.group = name + ':' + (++history.seq);
+  }
+
+  function endHistoryGroup() {
+    history.group = null;
+  }
+
+  function recordHistory() {
+    if (history.suspended || state.videoOn || !state.source) return;
+    const snap = historySnapshot();
+    const key = JSON.stringify(snap);
+    if (key === history.lastKey) return;
+    const entry = { snap: snap, group: history.group };
+    const last = history.past[history.past.length - 1];
+    if (history.group && last && last.group === history.group) {
+      history.past[history.past.length - 1] = entry;
+    } else {
+      history.past.push(entry);
+    }
+    history.lastKey = key;
+    history.future = [];
+    if (history.past.length > history.limit) history.past.shift();
+  }
+
+  function restoreHistory(snap) {
+    history.suspended = true;
+    state.settings = D.mergeSettings(snap.settings);
+    readGlitchState(snap.settings && snap.settings.glitches);
+    text.on = !!snap.text.on;
+    text.ramp = snap.text.ramp || 'ascii';
+    text.size = snap.text.size || 10;
+    syncUI();
+    render(true);
+    history.lastKey = JSON.stringify(historySnapshot());
+    history.suspended = false;
+  }
+
+  function undoRecipe() {
+    if (history.past.length < 2) {
+      el.statStatus.textContent = 'Nothing to undo';
+      return false;
+    }
+    history.future.push(history.past.pop());
+    restoreHistory(history.past[history.past.length - 1].snap);
+    el.statStatus.textContent = 'Undid a recipe change';
+    return true;
+  }
+
+  function redoRecipe() {
+    if (!history.future.length) {
+      el.statStatus.textContent = 'Nothing to redo';
+      return false;
+    }
+    const entry = history.future.pop();
+    history.past.push(entry);
+    restoreHistory(entry.snap);
+    el.statStatus.textContent = 'Redid a recipe change';
+    return true;
+  }
 
   // The glitch stack lives in the panel as a reorderable list, so the UI state
   // is the order plus a per-effect switch and amount.
@@ -568,6 +664,15 @@
     });
   }
 
+  // A newly imported palette has to reach the open select too; the catalogue
+  // array is mutated in place so the menus and the command palette see it.
+  function rebuildPaletteSelect() {
+    const selected = state.settings.palette;
+    el.palette.textContent = '';
+    buildPaletteSelect();
+    el.palette.value = selected;
+  }
+
   function buildToneMapSelect() {
     buildSelect(el.toneMap, TONE_MAPS_SORTED, { label: function (map) { return map.name; } });
   }
@@ -683,10 +788,11 @@
         });
       }
       amount.addEventListener('input', function () {
+        beginHistoryGroup('effect:' + id);
         glitches.amount[id] = parseInt(amount.value, 10);
         schedulePreview();
       });
-      amount.addEventListener('change', function () { render(true); });
+      amount.addEventListener('change', function () { render(true); endHistoryGroup(); });
       up.addEventListener('click', function () { moveEffect(index, -1); });
       down.addEventListener('click', function () { moveEffect(index, 1); });
       remove.addEventListener('click', function () { removeEffect(id); });
@@ -711,6 +817,7 @@
   }
 
   function addEffect(id) {
+    endHistoryGroup();
     const meta = byId(D.GLITCHES, id);
     if (!meta || glitches.on[id]) return;
     glitches.on[id] = true;
@@ -725,6 +832,7 @@
   }
 
   function removeEffect(id) {
+    endHistoryGroup();
     if (!glitches.on[id]) return;
     glitches.on[id] = false;
     buildEffectList();
@@ -734,6 +842,7 @@
   }
 
   function moveEffect(index, delta) {
+    endHistoryGroup();
     const active = activeEffects();
     const target = index + delta;
     if (target < 0 || target >= active.length) return;
@@ -876,6 +985,40 @@
     } },
   ];
 
+  // Imported palettes live beside the grouped-panel setting: a small JSON list
+  // in localStorage, not a file the app owns. The engine registers them before
+  // the sorted views are built, so boot is the same path as a fresh import.
+  function storedCustomPalettes() {
+    let raw = null;
+    try { raw = window.localStorage.getItem(PALETTE_STORE); } catch (err) { return []; }
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && Array.isArray(parsed.palettes)) return parsed.palettes;
+    } catch (err) { /* a corrupt list is ignored, not fatal */ }
+    return [];
+  }
+
+  function saveCustomPalettes() {
+    const list = D.PALETTES.filter(function (palette) { return palette.custom; })
+      .map(function (palette) {
+        return { id: palette.id, name: palette.name, colors: palette.colors };
+      });
+    try { window.localStorage.setItem(PALETTE_STORE, JSON.stringify(list)); }
+    catch (err) { /* private mode, file://, or storage disabled: still usable this session */ }
+  }
+
+  function loadStoredPalettes() {
+    storedCustomPalettes().slice(0, 64).forEach(function (entry) {
+      try {
+        D.registerPalette({ id: entry.id, name: entry.name, colors: entry.colors });
+      } catch (err) { /* skip a stale or hand-edited entry */ }
+    });
+  }
+
+  loadStoredPalettes();
+
   // The pickers, menus and command palette all read these sorted views, so a
   // catalogue cannot be alphabetical in one place and authored in another.
   // Algorithms keep their family grouping: the order is the way the press
@@ -905,6 +1048,7 @@
   }
 
   function applySettings(next, label) {
+    endHistoryGroup();
     state.settings = D.mergeSettings(next);
     readGlitchState(next && next.glitches);
     syncUI();
@@ -932,6 +1076,7 @@
     const source = full ? state.source : state.preview;
     if (!source) return;
     state.settings.glitches = deriveGlitches();
+    if (full) recordHistory();
     const res = D.process(source, state.settings);
 
     if (full) state.result = res;
@@ -1059,7 +1204,9 @@
   };
 
   function schedulePreview() {
-    if (state.quality === 'full') {
+    // A split is a comparison view: half-resolution proof under a full source
+    // would put the divider over two different pixel grids.
+    if (state.quality === 'full' || state.splitOn) {
       render(true);
       return;
     }
@@ -1094,6 +1241,7 @@
   // One place where the algorithm and palette change, so the select, the
   // stepper arrows, a preset and a test hook all take the same path.
   function setAlgorithm(id) {
+    endHistoryGroup();
     state.settings.algorithm = id;
     el.algorithm.value = id;
     syncScreenRows();
@@ -1108,6 +1256,7 @@
   }
 
   function setPalette(id) {
+    endHistoryGroup();
     state.settings.palette = id;
     el.palette.value = id;
     el.thresholdRow.hidden = id !== 'bw';
@@ -1120,6 +1269,40 @@
     const next = stepThrough(PALETTES_SORTED, state.settings.palette, delta);
     setPalette(next.id);
     return next.id;
+  }
+
+  // One route for both the dialog and the debug hook. Re-importing a name
+  // updates that custom palette in place, so trying a palette twice does not
+  // leave a trail of identical entries in the picker.
+  function importPalette(parsed) {
+    if (!parsed || !Array.isArray(parsed.colors)) {
+      return { ok: false, error: 'A palette needs 2–64 colours' };
+    }
+    const name = Core.cleanPaletteName(parsed.name, 'Imported palette');
+    const existing = D.PALETTES.find(function (palette) {
+      return palette.custom && palette.name.toLowerCase() === name.toLowerCase();
+    });
+    const id = existing ? existing.id : Core.paletteId(name, D.PALETTES.map(function (palette) { return palette.id; }));
+    let entry;
+    try {
+      entry = D.registerPalette({ id: id, name: name, colors: parsed.colors });
+    } catch (err) {
+      const error = err && err.message ? err.message : 'That palette could not be imported';
+      el.statStatus.textContent = error;
+      return { ok: false, error: error };
+    }
+
+    const at = PALETTES_SORTED.findIndex(function (palette) { return palette.id === entry.id; });
+    if (at >= 0) PALETTES_SORTED[at] = entry;
+    else PALETTES_SORTED.push(entry);
+    PALETTES_SORTED.sort(byName);
+    saveCustomPalettes();
+    rebuildPaletteSelect();
+    setPalette(entry.id);
+    el.statStatus.textContent = (existing ? 'Palette updated · ' : 'Palette imported · ') + entry.name;
+    window.dispatchEvent(new CustomEvent('ds:catalogues', { detail: { kind: 'palettes', id: entry.id } }));
+    if (window.DitherPalette && window.DitherPalette.refresh) window.DitherPalette.refresh();
+    return { ok: true, id: entry.id };
   }
 
   function paletteById(id) {
@@ -1176,11 +1359,61 @@
     if (state.result) ctx.putImageData(toImageData(state.result), 0, 0);
   }
 
+  function clampSplit(value) {
+    return Math.max(0.02, Math.min(0.98, value));
+  }
+
+  // The source lives on its own layer above the proof, so dragging the split
+  // never touches the canvas that Copy PNG and Export read.
+  function drawSplitLayer() {
+    if (!state.splitOn || !state.original || !el.splitLayer) return;
+    const source = state.original;
+    if (el.splitLayer.width !== source.width || el.splitLayer.height !== source.height) {
+      el.splitLayer.width = source.width;
+      el.splitLayer.height = source.height;
+    }
+    const x = Math.max(0, Math.min(source.width, Math.round(source.width * state.splitAt)));
+    const lctx = el.splitLayer.getContext('2d');
+    lctx.clearRect(0, 0, el.splitLayer.width, el.splitLayer.height);
+    if (x > 0) lctx.putImageData(source, 0, 0, 0, 0, x, source.height);
+  }
+
+  function syncSplit() {
+    const on = !!state.splitOn && !!state.original;
+    if (!el.split || !el.splitGrip || !el.splitLayer) return;
+    el.split.classList.toggle('btn-primary', on);
+    el.split.setAttribute('aria-pressed', on ? 'true' : 'false');
+    el.splitGrip.hidden = !on;
+    el.splitLayer.hidden = !on || !!state.compareOn;
+    if (!on) return;
+    const pct = Math.round(state.splitAt * 100);
+    el.splitGrip.style.left = pct + '%';
+    el.splitGrip.setAttribute('aria-valuenow', String(pct));
+    el.splitGrip.setAttribute('aria-valuetext', pct + '% source, ' + (100 - pct) + '% proof');
+    if (!state.compareOn) drawSplitLayer();
+  }
+
+  function setSplit(on) {
+    state.splitOn = !!on && !!state.original && !state.videoOn;
+    if (state.splitOn && state.compareOn) setCompare(false);
+    syncSplit();
+    el.statStatus.textContent = state.splitOn ? 'Split: source left · proof right' : 'Split off';
+    window.dispatchEvent(new CustomEvent('ds:ui'));
+  }
+
   function setCompare(on) {
     state.compareOn = !!on;
     if (!state.original) return;
-    if (on) ctx.putImageData(state.original, 0, 0);
-    else showResult();
+    if (on) {
+      ctx.putImageData(state.original, 0, 0);
+      if (el.splitLayer) el.splitLayer.hidden = true;
+    } else {
+      showResult();
+      if (state.splitOn) {
+        if (el.splitLayer) el.splitLayer.hidden = false;
+        drawSplitLayer();
+      }
+    }
     el.compare.classList.toggle('btn-primary', on);
   }
 
@@ -1211,7 +1444,9 @@
     el.canvas.height = imageData.height;
     state.zoom = null;
     applyZoom();
+    resetHistory();
     render(true);
+    syncSplit();
     syncGroupNotes();
     el.statStatus.textContent = capped ? 'Scaled to ' + MAX_SOURCE + 'px' : 'Ready';
   }
@@ -1523,6 +1758,7 @@
 
     BINDINGS.forEach(function (binding) {
       binding.input.addEventListener('input', function () {
+        beginHistoryGroup('slider:' + binding.path);
         const value = parseFloat(binding.input.value);
         setPath(state.settings, binding.path, value);
         binding.label.textContent = binding.fmt(value);
@@ -1531,6 +1767,7 @@
       binding.input.addEventListener('change', function () {
         setPath(state.settings, binding.path, parseFloat(binding.input.value));
         render(true);
+        endHistoryGroup();
       });
     });
 
@@ -1553,12 +1790,14 @@
     });
 
     el.seed.addEventListener('change', function () {
+      endHistoryGroup();
       state.settings.seed = (parseInt(el.seed.value, 10) || 0) >>> 0;
       el.seed.value = state.settings.seed;
       render(true);
     });
 
     el.reseed.addEventListener('click', function () {
+      endHistoryGroup();
       state.settings.seed = (Math.random() * 0xffffffff) >>> 0;
       el.seed.value = state.settings.seed;
       render(true);
@@ -1582,6 +1821,7 @@
 
     [el.toneInk, el.tonePaper].forEach(function (input) {
       input.addEventListener('input', function () {
+        beginHistoryGroup('tone-colour');
         state.settings.toneInk = hexToRgb(el.toneInk.value);
         state.settings.tonePaper = hexToRgb(el.tonePaper.value);
         schedulePreview();
@@ -1590,6 +1830,7 @@
         state.settings.toneInk = hexToRgb(el.toneInk.value);
         state.settings.tonePaper = hexToRgb(el.tonePaper.value);
         render(true);
+        endHistoryGroup();
       });
     });
 
@@ -1609,6 +1850,7 @@
       render(true);
     });
     el.textSize.addEventListener('input', function () {
+      beginHistoryGroup('text-size');
       text.size = parseInt(el.textSize.value, 10) || 10;
       el.textSizeValue.textContent = String(text.size);
       schedulePreview();
@@ -1616,6 +1858,7 @@
     el.textSize.addEventListener('change', function () {
       text.size = parseInt(el.textSize.value, 10) || 10;
       render(true);
+      endHistoryGroup();
     });
     el.exportTxt.addEventListener('click', exportTXT);
     el.copy.addEventListener('click', copyPNG);
@@ -1679,6 +1922,41 @@
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (type) {
       el.compare.addEventListener(type, function () { setCompare(false); });
+    });
+
+    el.split.addEventListener('click', function () { setSplit(!state.splitOn); });
+
+    let splitPointer = null;
+    el.splitGrip.addEventListener('pointerdown', function (event) {
+      if (!state.splitOn) return;
+      event.preventDefault();
+      splitPointer = event.pointerId;
+      try { el.splitGrip.setPointerCapture(event.pointerId); } catch (err) { /* synthetic events */ }
+      el.splitGrip.focus();
+    });
+    el.splitGrip.addEventListener('pointermove', function (event) {
+      if (splitPointer !== event.pointerId) return;
+      const rect = el.canvas.getBoundingClientRect();
+      if (!rect.width) return;
+      state.splitAt = clampSplit((event.clientX - rect.left) / rect.width);
+      syncSplit();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (type) {
+      el.splitGrip.addEventListener(type, function (event) {
+        if (splitPointer === event.pointerId) splitPointer = null;
+      });
+    });
+    el.splitGrip.addEventListener('keydown', function (event) {
+      if (!state.splitOn) return;
+      let next = state.splitAt;
+      if (event.key === 'ArrowLeft') next -= 0.02;
+      else if (event.key === 'ArrowRight') next += 0.02;
+      else if (event.key === 'Home') next = 0.02;
+      else if (event.key === 'End') next = 0.98;
+      else return;
+      event.preventDefault();
+      state.splitAt = clampSplit(next);
+      syncSplit();
     });
 
     el.export.addEventListener('click', exportPNG);
@@ -1886,6 +2164,9 @@
     }
     videoState.ready = true;
     state.videoOn = true;
+    state.splitOn = false;
+    syncSplit();
+    resetHistory();
     state.stillName = state.name;   // so the rail reads the still again afterwards
     state.name = kind === 'webcam' ? 'webcam' : 'video';
     state.zoom = null;
@@ -1903,6 +2184,9 @@
     video.synthetic(width, height);
     videoState.ready = true;
     state.videoOn = true;
+    state.splitOn = false;
+    syncSplit();
+    resetHistory();
     state.stillName = state.name;
     state.name = 'video';
     state.zoom = null;
@@ -1918,6 +2202,7 @@
     state.videoOn = false;
     videoState.ready = false;
     state.name = state.stillName || state.name;
+    resetHistory();
     if (video) {
       if (video.recording) video.stopRecording();
       video.release();
@@ -2080,6 +2365,21 @@
       syncUI();
       render(true);
     },
+    // Test hooks: import through the same parser and registration the dialog
+    // uses, and read back what is stored. No dialog, no synthetic clicks.
+    importPaletteText: function (text, fallbackName) {
+      try {
+        const result = importPalette(Core.parsePaletteText(text, fallbackName));
+        return result.ok ? result.id : null;
+      } catch (err) {
+        el.statStatus.textContent = err && err.message ? err.message : 'That palette could not be imported';
+        return null;
+      }
+    },
+    customPalettes: function () {
+      return D.PALETTES.filter(function (palette) { return palette.custom; })
+        .map(function (palette) { return { id: palette.id, name: palette.name, colors: palette.colors }; });
+    },
     // unique colours actually drawn on the canvas: verifies palette membership
     canvasColors: function () {
       const data = ctx.getImageData(0, 0, el.canvas.width, el.canvas.height).data;
@@ -2169,6 +2469,7 @@
   }
 
   function stepSeed(delta) {
+    endHistoryGroup();
     state.settings.seed = ((state.settings.seed || 0) + (delta || 1) * 7919) >>> 0;
     el.seed.value = state.settings.seed;
     render(true);
@@ -2187,6 +2488,7 @@
   }
 
   function clearStack() {
+    endHistoryGroup();
     activeEffects().slice().forEach(function (id) { removeEffect(id); });
     syncUI();
     render(true);
@@ -2194,6 +2496,13 @@
 
   const COMMANDS = {
     'file-open': function () { openImageDialog(); },
+    'file-import-palette': function () {
+      if (!window.DitherPaletteImport) {
+        el.statStatus.textContent = 'The palette importer is not available';
+        return;
+      }
+      window.DitherPaletteImport.open(importPalette);
+    },
     'file-open-clip': function () { el.videoOpen.click(); },
     'file-demo': function () { loadSample(); },
     'file-save-png': function () { exportPNG(); },
@@ -2202,6 +2511,8 @@
     'file-export-preset': function () { el.presetExport.click(); },
     'file-import-preset': function () { el.presetImport.click(); },
     'file-quit': function () { if (desktop) desktop.quit(); },
+    'edit-undo': undoRecipe,
+    'edit-redo': redoRecipe,
     'edit-random': function () { randomize(); },
     'edit-reseed': function () { stepSeed(1); },
     'edit-reset': resetEveryControl,
@@ -2222,6 +2533,7 @@
     'view-zoom-fit': function () { state.zoom = null; applyZoom(); },
     'view-quality': function (arg) { setQuality(arg); },
     'view-compare': function (arg) { setCompare(arg === undefined ? !state.compareOn : !!arg); },
+    'view-split': function (arg) { setSplit(arg === undefined ? !state.splitOn : !!arg); },
     // Opening a station and toggling one are different verbs: the tutorial asks
     // for a panel to be open and must not close it if it already is. The menus
     // keep the toggle, because toggling is what clicking a menu item means.
@@ -2249,6 +2561,7 @@
   function runCommand(name, arg) {
     const fn = COMMANDS[name];
     if (!fn) { el.statStatus.textContent = 'Nothing is wired to ' + name; return false; }
+    endHistoryGroup();
     fn(arg);
     syncUI();
     return true;
@@ -2271,6 +2584,9 @@
       textRamp: text.ramp,
       serpentine: !!state.settings.serpentine,
       compare: !!state.compareOn,
+      split: !!state.splitOn,
+      canUndo: history.past.length > 1,
+      canRedo: history.future.length > 0,
       effects: activeEffects(),
       openGroups: GROUPS.filter(function (g) { return groupOpen(g.id); }).map(function (g) { return g.id; }),
       status: el.statStatus.textContent,
