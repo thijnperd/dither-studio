@@ -10,6 +10,45 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.4.0 — The press moves (2026-11-13)
+
+**A timeline for stills, data-only plugins, and more inks and recipes.**
+
+- **Animate a still.** *Effects ▸ Animate the Still* opens a timeline under the
+  proof: 1–12 seconds at 6–30 fps, tracks for eleven settings (strength, seed
+  drift, screen shift, threshold, pixel size, brightness, contrast, saturation,
+  hue, glow radius, glow intensity), four eases and independent track slices.
+  Scrub the playhead, loop playback, and export the take as a WebM. Closing the
+  timeline returns the still at the frame you stopped on.
+- **Plugins are declarative packages.** *File ▸ Plugin Manager…* fetches a JSON
+  catalogue over HTTPS from this repository, falling back to the copy bundled
+  with the app when GitHub is unreachable. Installing a package stores it on
+  this machine; removing it takes it away. There is no `eval`, no `Function`, no
+  `import()` and no downloaded JavaScript at all.
+- **The first three plugins.** *Ink Extractor* pulls a palette from the open
+  image with CINS, median-cut, octree or polarity clustering. *Shape Press* adds
+  a barcode, cross-stitch, halftone or bitmap effect and stays hidden from the
+  picker until its package is installed. Preset packs add whole recipes;
+  the catalogue ships with Niko's Glitch Universe, Caroline's Undead Dithering,
+  2_s0ur's Broken Signal and **Dreamy Cyberpunk**, adapted from Studio AAA's
+  Dither Boy download.
+- **Thirty ink sets.** The Cyberpunk palette download adds Breach (6 inks),
+  Acid (12) and Holo (12), quoted from the pack and recorded in `SOURCES.md`.
+  Breach is the set the two Dreamy Cyberpunk recipes use.
+- **The demo says what it is.** On a desktop the web demo is a shop window: six
+  recipes, no plugin manager and no custom palette import, with a route to the
+  download. On a phone or tablet it unlocks all 27 recipes (the 25 built-ins
+  plus the two Dreamy Cyberpunk recipes) and every palette, because the desktop
+  app does not run there. The demo also keeps plugin-owned effects out of its
+  stack, since it cannot install them.
+- **Smoke checks are selectable.** `npm run smoke` is now a fast boot check;
+  `npm run smoke:plugins`, `npm run smoke:animation` and `npm run smoke:quick`
+  test one area, and `npm run smoke:all` is the full in-page set. The CI and
+  release jobs run the full suite, and the focused suites skip the splash.
+- The desktop guide covers the Plugin Manager, the Ink Extractor, Shape Press
+  and the animation timeline; the README and palettes guide carry the new
+  counts and the demo's rules.
+
 ## 0.3.2 — Your own inks (2026-11-12)
 
 **Import a palette, undo a recipe change, and split the proof against its source.**

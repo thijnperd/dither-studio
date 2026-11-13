@@ -1,7 +1,7 @@
 # Dither Studio
 
 Dither Studio is an offline dithering workbench for images and video. Load a
-picture or a clip, choose one of **46 dither algorithms** and one of **27 ink
+picture or a clip, choose one of **46 dither algorithms** and one of **30 ink
 sets**, grade the tone and detail, stack a few effects on top, and keep what
 comes out — a PNG at up to 8×, the clipboard, a grid of text characters, a WebM
 recording, or the recipe itself as JSON.
@@ -44,20 +44,21 @@ shelf and the download links, is
   IGN, R2, crosshatch, stochastic dithers, three Yliluoma colour-mixing plans,
   fourteen error-diffusion kernels, and three structure-aware screens that read
   the image's own contours instead of tiling over it.
-- **27 ink sets.** 1-bit black and white, Game Boy, Game Boy Pocket, C64, NES,
+- **30 ink sets.** 1-bit black and white, Game Boy, Game Boy Pocket, C64, NES,
   ZX Spectrum, CGA, EGA, Apple II, MSX, Macintosh II, Teletext, Virtual Boy,
-  PICO-8, Gruvbox, Sweetie 16, Endesga 16, Nord, three grey ramps, and six
-  single-ink sets (amber, sepia, cyan, blueprint, matrix green, ice). In a
-  colour mode every output pixel is exactly one of the palette's inks.
+  PICO-8, Gruvbox, Sweetie 16, Endesga 16, Nord, three Cyberpunk sets (Breach,
+  Acid and Holo), three grey ramps, and six single-ink sets (amber, sepia, cyan,
+  blueprint, matrix green, ice). In a colour mode every output pixel is exactly
+  one of the palette's inks.
 - **Tone, detail, ink.** Black and white point, gamma, brightness, contrast,
   saturation and hue; blur, unsharp mask and median denoise; and **13 tone
   maps** that re-ink a finished dither — so a 1-bit proof stays exactly two
   inks — including your own ink and paper.
-- **15 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
+- **17 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
   grain, pixel sort, wave, drip, kaleidoscope, dead pixels, vignette, CRT
-  bloom, ripple, starfield, tape tracking and channel roll, added one at a time,
-  reorderable, each with its own amount and mode — plus a blurred **glow** pass
-  that adds in linear light.
+  bloom, ripple, starfield, tape tracking, channel roll, temporal variation and
+  Shape Press (with its plugin), added one at a time, reorderable, each with its
+  own amount and mode — plus a blurred **glow** pass that adds in linear light.
 - **Chunky pixels.** A pixel size of 1–16 box-averages the picture before
   dithering and upscales it without smoothing, for pixel-art output.
 - **Text mode.** Print the proof as ASCII, blocks, shades, hex or binary, and
@@ -65,15 +66,30 @@ shelf and the download links, is
 - **Video.** A clip or the webcam through the whole press at 1–30 fps, with
   three temporal dither rules and WebM recording; a frame that overruns its
   slot is dropped rather than queued.
-- **25 recipes.** Whole setups — algorithm, palette, grading, effects and glow
-  — applied in one pick, from Newsprint and Halftone Noir to VHS Decay, Sweetie
-  Postcard, Tape Deck and the three structure-aware looks. (The frozen launcher
-  keeps its 21.)
+- **Animation for stills.** *Effects ▸ Animate the Still* opens a timeline over
+  the proof: 1–12 seconds at 6–30 fps, tracks for eleven settings, four eases,
+  loop and scrub, and a WebM export of the take.
+- **Plugins, as data.** File ▸ Plugin Manager installs declarative JSON packages
+  from this repository's GitHub (with a bundled fallback when offline). A
+  package switches on a capability or adds recipes; installed packages stay on
+  the machine. The Ink Extractor pulls a palette out of the open photo, Shape
+  Press redraws the proof as barcode, cross-stitch, halftone or bitmap sets, and
+  preset packs add whole recipes. No downloaded JavaScript is ever executed.
+- **25 built-in recipes.** Whole setups — algorithm, palette, grading, effects
+  and glow — applied in one pick, from Newsprint and Halftone Noir to VHS Decay,
+  Sweetie Postcard, Tape Deck and the three structure-aware looks. The bundled
+  preset packs add more, including the two Dreamy Cyberpunk recipes adapted from
+  Studio AAA's Dither Boy download. (The frozen launcher keeps its 21.)
 - **Any screen.** The console contracts for a phone or tablet instead of being
   redesigned: finger-sized controls, pinch-to-zoom on the proof, a station strip
   that reads at a glance, and a phone console that opens as a capped sheet so
   the proof stays in view. In the web demo, a phone held sideways keeps a side
   rail.
+- **A demo that is honest about itself.** On a desktop the web demo is a shop
+  window: six recipes, no plugins and no custom palette import, with a download
+  link that says what the app adds. On a phone or tablet it unlocks all 27
+  recipes (the 25 built-ins plus the two Dreamy Cyberpunk recipes) and every
+  palette, because the desktop app does not run there.
 - **Updates in the app.** *Help ▸ Check for Updates…* reads the public GitHub
   release and installs the build for this machine when you agree; after an
   update, *What's New* shows the matching changelog section once.
@@ -284,7 +300,7 @@ from *Help ▸ Check for Updates…*, and the press works with no connection.
 node launcher/test.js                                        # 87 engine tests
 bash tools/check.sh launcher/index.html --expect canvas       # a page in a real browser
 node tools/check-examples.js                                 # examples/ against its own manifest
-cd desktop && npm test && npm run smoke                       # 44 core, tour and updater checks, then the window
+cd desktop && npm test && npm run smoke:all                   # core, tour and updater checks, then the full window run
 ```
 
 The smoke run boots the real desktop app on a profile of its own, runs the

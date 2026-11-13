@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "updated": "2026-11-13",
+  "plugins": [
+    {
+      "id": "ink-extractor",
+      "name": "Ink Extractor",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "ink-extractor",
+      "summary": "Pull a retro palette out of a photo with CINS, median-cut, octree or polarity clustering.",
+      "author": "Dither Studio",
+      "file": "ink-extractor.json"
+    },
+    {
+      "id": "shape-press",
+      "name": "Shape Press",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "shape-press",
+      "summary": "Render the proof as barcode, cross-stitch, halftone or bitmap shape sets.",
+      "author": "Dither Studio",
+      "file": "shape-press.json"
+    },
+    {
+      "id": "nikos-glitch",
+      "name": "Niko's Glitch Universe",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Three original recipes inspired by Niko Virolainen's neon, CRT and dirty-glow looks.",
+      "author": "Dither Studio",
+      "homepage": "https://studioaaa.com/dither-boy-in-niko-virolainens-glitch-universe/",
+      "file": "nikos-glitch.json"
+    },
+    {
+      "id": "caroline-undead",
+      "name": "Caroline's Undead Dithering",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Original muted, textured recipes inspired by Caroline Dietl's medieval grunge.",
+      "author": "Dither Studio",
+      "homepage": "https://studioaaa.com/caroline-dietls-undead-dithering/",
+      "file": "caroline-undead.json"
+    },
+    {
+      "id": "dreamy-cyberpunk",
+      "name": "Dreamy Cyberpunk",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Two soft-focus, glitched Cyberpunk recipes adapted from Studio AAA's Dither Boy preset download.",
+      "author": "Studio AAA · adapted for Dither Studio",
+      "homepage": "https://studioaaa.com/dreamy-cyberpunk-presets-download/",
+      "file": "dreamy-cyberpunk.json"
+    },
+    {
+      "id": "s0ur-static",
+      "name": "2_s0ur's Broken Signal",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Original green-portrait and broken-signal recipes inspired by 2_s0ur's glitch work.",
+      "author": "Dither Studio",
+      "homepage": "https://studioaaa.com/dither-boy-spotlight-2_s0urs-glitch-art/",
+      "file": "s0ur-static.json"
+    }
+  ]
+}

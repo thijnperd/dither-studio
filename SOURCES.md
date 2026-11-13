@@ -117,8 +117,16 @@ feature set navigable — not the paint.
 | [Sweetie 16](https://lospec.com/palette-list/sweetie-16) by GrafxKid (CC0) | `sweetie-16` |
 | [Endesga 16](https://lospec.com/palette-list/endesga-16) by ENDESGA | `endesga-16` |
 | [Nord](https://www.nordtheme.com/) theme colours, via [Lospec](https://lospec.com/palette-list/nord-theme) | `nord` |
+| [Cyberpunk Palettes — Studio AAA](https://studioaaa.com/dreamy-cyberpunk-presets-download/) (downloaded Dither Boy pack; RGB values quoted from its JSON) | `cyberpunk-breach` (Breach, 6 inks), `cyberpunk-acid` (Acid, 12), `cyberpunk-holo` (Holo, 12) |
 | Constructed inks and levels | `gray-4/8/16` (2/3/4-bit ramps), `amber`, `sepia`, `cyan-ink`, `blueprint`, `ice`, `selenium`, `oxide`, and the tone maps in `TONE_MAPS` |
 | The digital rain of *The Matrix* (a two-ink green phosphor look, as reproduced across countless shader ports) | `matrix` — constructed here from the look, not copied from any implementation |
+
+## Preset adaptations
+
+| Source | What it informed |
+|---|---|
+| [Dreamy Cyberpunk presets — Studio AAA](https://studioaaa.com/dreamy-cyberpunk-presets-download/) (two `.dither-boy.preset` files, Dither Boy 6.0.4) | The two `Dreamy Cyberpunk` recipes in the `dreamy-cyberpunk` preset pack. The downloaded files were read for their palette, modulation axis, luminance threshold, subtle tint and glow; the recipes were re-authored as Dither Studio settings (smooth-diffusion screen, temporal/aberration/wave/grain stack, glow). No Dither Boy code or preset JSON is shipped. |
+| [Niko Virolainen](https://studioaaa.com/dither-boy-in-niko-virolainens-glitch-universe/), [Caroline Dietl](https://studioaaa.com/caroline-dietls-undead-dithering/), [2_s0ur](https://studioaaa.com/dither-boy-spotlight-2_s0urs-glitch-art/) (published Dither Boy artist pages) | The three original preset packs in `desktop/src/plugins/`; they are inspired by the artists' looks, not copies of their files. |
 
 ## What is not from anywhere
 

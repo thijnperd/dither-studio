@@ -3,7 +3,7 @@
 Dither Studio is a print shop for pixels that lives in a folder. You load an
 image or a video, choose a press and an ink set, grade and stack a few effects,
 and pull a proof — as pixels, as characters, as a PNG, or as a WebM recording.
-Forty-six dither algorithms, twenty-seven palettes, twenty-five presets, fifteen
+Forty-six dither algorithms, thirty palettes, twenty-five presets, fifteen
 effects. No install, no build step, no uploads; the press works offline.
 
 The five-minute path: **open the web demo** at
@@ -30,9 +30,9 @@ Every section, in order:
   - [Installed from the browser instead](#installed-from-the-browser-instead)
   - [Keeping it portable](#keeping-it-portable)
 - [2. The console, station by station](#2-the-console-station-by-station) — the rail, panel by panel
-- [3. The catalogue](#3-the-catalogue) — 46 algorithms, 27 palettes, 13 tone maps, 15 effects, 5 text ramps
+- [3. The catalogue](#3-the-catalogue) — 46 algorithms, 30 palettes, 13 tone maps, 17 effects, 5 text ramps
   - [Algorithms (46)](#algorithms-46)
-  - [Palettes (27)](#palettes-27)
+  - [Palettes (30)](#palettes-30)
   - [Tone maps (13)](#tone-maps-13)
   - [Effects (15)](#effects-15)
   - [Text ramps (5)](#text-ramps-5)
@@ -128,11 +128,11 @@ rail lights up as you scroll, so the strip doubles as a position readout.
 | Station | What is in it |
 |---|---|
 | **Source** | **Open image…**, the sample button — **Built-in source** in the launcher and desktop app, **Try a sample** in the web demo — which steps through the three built-in paintings and comes round again, and the drop/paste hint. Drag a file onto the stage, or press `Ctrl+V` to paste an image from anywhere. |
-| **Press** | **Algorithm** (46, in six groups) and **Palette** (27) with ◀ ▶ steppers to walk each list; the **swatch strip** showing the actual inks; **Pixel size** 1–16; **Threshold** (mono only, 0–255); **Strength** 0–200 %; **Serpentine sweep**; **Seed** with a dice button. |
+| **Press** | **Algorithm** (46, in six groups) and **Palette** (30) with ◀ ▶ steppers to walk each list; the **swatch strip** showing the actual inks; **Pixel size** 1–16; **Threshold** (mono only, 0–255); **Strength** 0–200 %; **Serpentine sweep**; **Seed** with a dice button. |
 | **Tone** | Black point, white point, gamma, brightness, contrast, saturation and hue — applied before dithering, in linear light where it matters. The header note shows the current gamma (`ct 1.20`). |
 | **Ink** | Eleven **tone maps** that re-ink the finished dither (Halftone noir, Amber CRT, Thermal, Matrix green, Ice …), a **custom** entry that takes your own ink and paper colours, and the **Alpha** rule: flatten onto paper, dither the matte to hard edges, or keep a real PNG alpha channel. |
 | **Detail** | **Blur** (0–4), **Sharpen** (unsharp mask, 0–2) and a 3×3 **median denoise** toggle. |
-| **Effects** | **Add to the stack** — fifteen effects, added one at a time, each row with its amount, its mode where it has one, and ↑ ↓ ✕ to reorder or remove. Effects run top to bottom, after the dither. |
+| **Effects** | **Add to the stack** — seventeen effects in the desktop app (Shape Press arrives with its plugin; the web builds offer the other sixteen), added one at a time, each row with its amount, its mode where it has one, and ↑ ↓ ✕ to reorder or remove. Effects run top to bottom, after the dither. |
 | **Glow** | A blurred screen-blend pass after the effects: **Radius** 0–8 and **Intensity** 0–100, added in linear light. |
 | **Motion** | Video mode: **Webcam** / **Open video…**, then frame rate, temporal rule and **Record WebM**. The transport (Play/Pause and the frame readout) sits under the viewport. |
 | **Type** | **Print with characters**, the character **ramp**, the **cell** size in pixels (6–24), and **Export .txt**. |
@@ -187,7 +187,7 @@ serpentine sweeping removes its worming artifact. Mixing is the only colour fami
 that can dither *between* inks instead of choosing one. Structure-aware screens
 are the ones that read the picture — next section.
 
-### Palettes (27)
+### Palettes (30)
 
 | Palette | Inks | Notes |
 |---|---|---|
@@ -196,6 +196,7 @@ are the ones that read the picture — next section.
 | CGA Mode 4 · Teletext | 4 · 8 | Four loud CGA colours; eight Teletext bars |
 | ZX Spectrum | 15 | The eight brights, their dark counterparts |
 | Commodore 64 · NES · Macintosh II · PICO-8 · Gruvbox · Sweetie 16 · Endesga 16 · Nord · EGA | 16 each | Hardware, product and artist palettes. Sweetie 16 (GrafxKid), Endesga 16 (ENDESGA) and Nord are sourced in [SOURCES.md](SOURCES.md) |
+| Cyberpunk Breach · Cyberpunk Acid · Cyberpunk Holo | 6 · 12 · 12 | Studio AAA's Dither Boy Cyberpunk palette pack, three sets quoted from the download; Breach is the set the Dreamy Cyberpunk recipes use |
 | Apple II | 6 | Low-res colour set |
 | MSX | 15 | |
 | Virtual Boy | 4 | Red on black |
@@ -448,7 +449,7 @@ case, printed by `node launcher/test.js`):
 | Ordered dithering plus effects | ≈ 190 ms |
 | Structure screen with flow and streak at 100 | ≈ 360 ms |
 | The polished mixing plan | ≈ 615 ms |
-| All fifteen effects | ≈ 1.0 s |
+| All sixteen non-plugin effects | ≈ 1.0 s |
 
 The default view (960×640 at pixel size 2) renders in roughly 40–90 ms.
 

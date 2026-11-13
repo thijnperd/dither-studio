@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "nikos-glitch",
+  "name": "Niko's Glitch Universe",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Three original recipes inspired by Niko Virolainen's neon, CRT and dirty-glow looks.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/dither-boy-in-niko-virolainens-glitch-universe/",
+  "data": {
+    "presets": [
+      {
+        "id": "niko-crt-ghost",
+        "name": "Niko · CRT Ghost",
+        "settings": {
+          "algorithm": "bayer8",
+          "palette": "sweetie-16",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.18, "saturation": 1.2, "gamma": 1.03, "sharpen": 0.25 },
+          "glitches": [
+            { "id": "scanlines", "amount": 25 },
+            { "id": "aberration", "amount": 20 },
+            { "id": "grain", "amount": 14 }
+          ],
+          "glow": { "radius": 2, "intensity": 35 }
+        }
+      },
+      {
+        "id": "niko-neon-bloom",
+        "name": "Niko · Neon Bloom",
+        "settings": {
+          "algorithm": "smooth-diffusion",
+          "palette": "pico8",
+          "pixelSize": 1,
+          "screen": { "smooth": 6, "flow": 82, "streak": 18 },
+          "adjustments": { "contrast": 1.12, "saturation": 1.35, "brightness": 1.04 },
+          "glow": { "radius": 4, "intensity": 55 }
+        }
+      },
+      {
+        "id": "niko-dirty-glow",
+        "name": "Niko · Dirty Glow",
+        "settings": {
+          "algorithm": "atkinson",
+          "palette": "gameboy-pocket",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.15, "saturation": 1.25 },
+          "toneMap": "rose",
+          "glitches": [
+            { "id": "crt", "amount": 40 },
+            { "id": "wave", "amount": 20 },
+            { "id": "grain", "amount": 18 }
+          ],
+          "glow": { "radius": 3, "intensity": 60 }
+        }
+      }
+    ]
+  }
+}

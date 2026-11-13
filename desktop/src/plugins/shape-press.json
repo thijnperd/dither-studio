@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "shape-press",
+  "name": "Shape Press",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "shape-press",
+  "summary": "Render the proof as barcode, cross-stitch, halftone or bitmap shape sets.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/introducing-shape-shifter-free-in-dither-boy-v6-6-6/",
+  "data": {
+    "modes": ["barcode", "cross", "halftone", "bitmap"]
+  }
+}

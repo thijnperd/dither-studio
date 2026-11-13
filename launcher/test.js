@@ -878,8 +878,8 @@ test('the new inks carry the levels they promise', function () {
   assert.strictEqual(palette('matrix').colors.length, 2);
   assert.strictEqual(palette('ice').colors.length, 2);
   assert.ok(palette('matrix').colors[1][1] > palette('matrix').colors[0][1], 'matrix green brightens green');
-  assert.strictEqual(D.PALETTES.length, 27);
-  assert.strictEqual(D.GLITCHES.length, 15);
+  assert.strictEqual(D.PALETTES.length, 30);
+  assert.strictEqual(D.GLITCHES.length, 17);
   assert.strictEqual(D.ALGORITHMS.length, 46);
 });
 
@@ -995,7 +995,7 @@ function imageOf(w, h, fn) {
 }
 
 test('every glitch names itself and only offers modes it implements', function () {
-  assert.strictEqual(D.GLITCHES.length, 15);
+  assert.strictEqual(D.GLITCHES.length, 17);
   const ids = new Set();
   D.GLITCHES.forEach(function (g) {
     assert.ok(g.id && g.name && g.hint, 'metadata for ' + g.id);
@@ -1231,6 +1231,74 @@ test('shimmer redraws a noisy screen but keeps the tone', function () {
   }
   assert.ok(diff > w * h * 0.25, 'the screen really reshuffles (' + diff + ' pixels)');
   assert.ok(Math.abs(darkA - darkB) < w * h * 0.02, 'the tone holds: ' + darkA + ' vs ' + darkB);
+});
+
+// ---- 15b. animation: the timeline rule ----
+
+group('animation timeline');
+
+test('a track moves from its first value to its last, easing between', function () {
+  const base = D.mergeSettings({ ditherStrength: 100 });
+  const linear = D.animationSettings(base, [{ property: 'ditherStrength', from: 100, to: 0 }], 5, 11);
+  assert.strictEqual(linear.ditherStrength, 50);
+  const first = D.animationSettings(base, [{ property: 'ditherStrength', from: 100, to: 0 }], 0, 11);
+  const last = D.animationSettings(base, [{ property: 'ditherStrength', from: 100, to: 0 }], 10, 11);
+  assert.strictEqual(first.ditherStrength, 100);
+  assert.strictEqual(last.ditherStrength, 0);
+  const eased = D.animationSettings(base, [{ property: 'ditherStrength', from: 100, to: 0, ease: 'in' }], 5, 11);
+  assert.strictEqual(eased.ditherStrength, 75);
+  assert.strictEqual(D.animationSettings(base, [{ property: 'ditherStrength', from: 100, to: 0, ease: 'out' }], 5, 11).ditherStrength, 25);
+});
+
+test('seed is additive and the other properties are absolute', function () {
+  const base = D.mergeSettings({ seed: 1000, adjustments: { brightness: 1 } });
+  const seedFrame = D.animationSettings(base, [{ property: 'seed', from: 0, to: 16 }], 10, 11);
+  assert.strictEqual(seedFrame.seed, 1016);
+  const bright = D.animationSettings(base, [{ property: 'adjustments.brightness', from: 1, to: 0.5 }], 10, 11);
+  assert.strictEqual(bright.adjustments.brightness, 0.5);
+});
+
+test('a track can hold a slice of the timeline', function () {
+  const base = D.mergeSettings({ ditherStrength: 100 });
+  const track = { property: 'ditherStrength', from: 100, to: 0, start: 0.5, end: 1 };
+  assert.strictEqual(D.animationSettings(base, [track], 2, 11).ditherStrength, 100, 'before its slice');
+  assert.strictEqual(D.animationSettings(base, [track], 5, 11).ditherStrength, 100, 'at the start of its slice');
+  assert.strictEqual(D.animationSettings(base, [track], 10, 11).ditherStrength, 0, 'at the end of its slice');
+});
+
+test('frame index is clamped, frame count is safe and unknown tracks are ignored', function () {
+  const base = D.mergeSettings({});
+  const s = D.animationSettings(base, [{ property: 'nope', from: 0, to: 1 }], 999, 3);
+  assert.strictEqual(s.frameIndex, 2);
+  assert.strictEqual(D.animationSettings(base, [], -4, 1).frameIndex, 0);
+  assert.strictEqual(D.animationSettings(base, null, 0, 0).frameIndex, 0);
+  assert.strictEqual(D.ANIMATION_PROPERTIES.length, 11);
+  assert.strictEqual(D.ANIMATION_EASES.length, 4);
+});
+
+test('the temporal variation effect moves with the frame and repeats exactly', function () {
+  const w = 32, h = 24;
+  const src = makeSource(w, h, function (x, y) { return [x * 7, y * 9, 90]; });
+  const base = { algorithm: 'floyd-steinberg', palette: 'bw', pixelSize: 1, seed: 9,
+    glitches: [{ id: 'temporal', amount: 80, mode: 'wave' }] };
+  const a = D.process(src, Object.assign({}, base, { frameIndex: 0 }));
+  const b = D.process(src, Object.assign({}, base, { frameIndex: 4 }));
+  const again = D.process(src, Object.assign({}, base, { frameIndex: 0 }));
+  assert.notDeepStrictEqual(Array.from(a.data), Array.from(b.data), 'a later frame is a different wave');
+  assert.deepStrictEqual(Array.from(a.data), Array.from(again.data), 'the same frame is reproducible');
+});
+
+test('Shape Press draws all four shape sets and is marked as a plugin effect', function () {
+  const meta = D.GLITCHES.find(function (g) { return g.id === 'shapepress'; });
+  assert.ok(meta && meta.plugin === 'shape-press');
+  const w = 24, h = 24;
+  const src = makeSource(w, h, function (x, y) { return [x * 10, y * 10, 80]; }).data;
+  meta.modes.forEach(function (mode) {
+    const out = src.slice();
+    D.applyGlitchStack(out, w, h, [{ id: 'shapepress', amount: 100, mode: mode.id }], 5, 0);
+    assert.ok(!sameBytes(out, src), mode.id + ' changes the frame');
+    for (let i = 0; i < out.length; i++) assert.ok(out[i] >= 0 && out[i] <= 255);
+  });
 });
 
 // ---- 16. performance budget ----

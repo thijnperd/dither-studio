@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "ink-extractor",
+  "name": "Ink Extractor",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "ink-extractor",
+  "summary": "Pull a retro palette out of a photo with CINS, median-cut, octree or polarity clustering.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/introducing-color-cat/",
+  "data": {
+    "methods": ["cins", "median", "octree", "polarity"],
+    "defaultCount": 8
+  }
+}

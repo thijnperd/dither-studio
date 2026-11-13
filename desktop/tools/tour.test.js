@@ -302,10 +302,10 @@ test('the tour never promises a value the app does not ship', function () {
   // The numbers in the prose are the app's own catalogues: a new algorithm or
   // recipe that is not reflected in the lesson text is a stale sentence.
   const spoken = steps.map(function (step) { return step.body + ' ' + (step.why || ''); }).join(' ');
-  const words = { 46: D.ALGORITHMS.length, 27: D.PALETTES.length, 15: D.GLITCHES.length, 25: PRESETS.length };
+  const words = { 46: D.ALGORITHMS.length, 30: D.PALETTES.length, 27: D.PALETTES.length, 17: D.GLITCHES.length, 25: PRESETS.length };
   Object.keys(words).forEach(function (number) {
     const spelled = {
-      15: 'fifteen', 25: 'twenty-five', 27: 'twenty-seven', 46: 'forty-six',
+      17: 'seventeen', 25: 'twenty-five', 27: 'twenty-seven', 30: 'thirty', 46: 'forty-six',
     }[number];
     if (words[number] !== Number(number)) {
       assert(spoken.indexOf(spelled) < 0 && spoken.indexOf(number) < 0,

@@ -230,7 +230,7 @@
       {
         id: 'stack-effects',
         title: 'Stack effects',
-        summary: 'Thirteen effects that run after the dither, plus the glow over them.',
+        summary: 'Seventeen effects that run after the dither, plus the glow over them.',
         theme: 'Effects',
         minutes: 3,
         steps: [
@@ -435,7 +435,7 @@
         steps: [
           {
             title: 'The whole catalogue is in the menus',
-            body: 'File, Edit, Image, Press, Effects, View, Window and Help hold all forty-six algorithms, twenty-seven palettes, fifteen effects, thirteen tone maps and twenty-five recipes, with the accelerators beside them.',
+            body: 'File, Edit, Image, Press, Effects, View, Window and Help hold all forty-six algorithms, thirty palettes, seventeen effects, thirteen tone maps and twenty-five built-in recipes, with the accelerators beside them.',
             why: 'The menus are expanded from the same tables the panels are built from, so a new algorithm can never be missing from one of them.',
             target: '#menubar',
           },

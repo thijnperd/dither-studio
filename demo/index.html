@@ -138,6 +138,11 @@
     <header class="rail-head">
       <h1 class="brand"><img class="brand-mark" src="icon-192.png" alt="" width="26" height="26" decoding="async">Dither <span>Studio</span></h1>
       <p class="tagline">Image, video and type, pressed offline</p>
+      <p class="demo-promo" id="demo-promo">
+        <span class="demo-promo-kicker">Demo console</span>
+        <span id="demo-promo-copy">Six recipes, no plugins and no custom palettes.</span>
+        <a href="https://github.com/thijnperd/dither-studio/releases/latest">Download the desktop app</a>
+      </p>
       <button class="console-toggle" id="console-toggle" type="button"
               aria-expanded="true" aria-controls="rail">
         <span class="console-toggle-label">Console</span>
@@ -401,7 +406,7 @@
       <section class="group" id="g-preset" data-group="preset" data-open="false">
         <button class="group-head" type="button" aria-expanded="false">
           <span class="group-name">Presets</span>
-          <span class="group-note" id="note-preset">25 recipes</span>
+          <span class="group-note" id="note-preset">6 of 27 recipes</span>
           <span class="caret" aria-hidden="true">▾</span>
         </button>
         <div class="group-body">
@@ -414,6 +419,12 @@
             <button id="preset-import" class="btn">Import JSON</button>
           </div>
           <input type="file" id="preset-file" accept="application/json,.json" hidden />
+          <p class="demo-limits" id="demo-limits">
+            <b>The demo has six recipes, no plugins and no custom palette import.</b>
+            The desktop app adds all 27 recipes, plugin packs, the Ink Extractor,
+            Shape Press and the animation timeline.
+            <a href="https://github.com/thijnperd/dither-studio/releases/latest">Get the app →</a>
+          </p>
         </div>
       </section>
     </div>

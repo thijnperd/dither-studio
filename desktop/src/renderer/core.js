@@ -179,6 +179,211 @@
 
   // ---- catalogues ----
 
+  // ---- palette extraction (Ink Extractor) ----
+
+  // A palette extracted from a photograph should look like it came off old
+  // hardware, not like a colour picker. These routines sample the image,
+  // cluster it and then nudge the result towards saturation and contrast.
+  // They are pure and DOM-free so `node tools/core.test.js` can cover them.
+  const EXTRACT_METHODS = ['cins', 'median', 'octree', 'polarity'];
+
+  function extractSample(data, width, height, limit) {
+    const total = Math.max(1, width * height);
+    const step = Math.max(1, Math.floor(Math.sqrt(total / Math.max(1, limit))));
+    const out = [];
+    for (let y = 0; y < height; y += step) {
+      for (let x = 0; x < width; x += step) {
+        const p = (y * width + x) * 4;
+        if (data[p + 3] === 0) continue;
+        out.push([data[p], data[p + 1], data[p + 2]]);
+        if (out.length >= limit) return out;
+      }
+    }
+    return out;
+  }
+
+  function lumaOf(rgb) {
+    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  }
+
+  function colourDistance(a, b) {
+    const dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2];
+    return dr * dr + dg * dg + db * db;
+  }
+
+  function averageColour(pixels) {
+    let r = 0, g = 0, b = 0;
+    for (let i = 0; i < pixels.length; i++) {
+      r += pixels[i][0]; g += pixels[i][1]; b += pixels[i][2];
+    }
+    const n = Math.max(1, pixels.length);
+    return [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
+  }
+
+  function medianCut(pixels, count) {
+    let boxes = [pixels.slice()];
+    while (boxes.length < count) {
+      let best = -1, bestScore = -1, bestChannel = 0;
+      boxes.forEach(function (box, index) {
+        if (box.length < 2) return;
+        let min = [255, 255, 255], max = [0, 0, 0];
+        box.forEach(function (c) {
+          for (let k = 0; k < 3; k++) {
+            if (c[k] < min[k]) min[k] = c[k];
+            if (c[k] > max[k]) max[k] = c[k];
+          }
+        });
+        const ranges = [max[0] - min[0], max[1] - min[1], max[2] - min[2]];
+        const channel = ranges.indexOf(Math.max(ranges[0], ranges[1], ranges[2]));
+        const score = ranges[channel] * Math.sqrt(box.length);
+        if (score > bestScore) { bestScore = score; best = index; bestChannel = channel; }
+      });
+      if (best < 0 || bestScore <= 0) break;
+      const box = boxes[best].slice().sort(function (a, b) { return a[bestChannel] - b[bestChannel]; });
+      const mid = Math.floor(box.length / 2);
+      boxes.splice(best, 1, box.slice(0, mid), box.slice(mid));
+    }
+    return boxes.filter(function (box) { return box.length; }).map(averageColour);
+  }
+
+  // Octree in spirit: a 4-bit RGB histogram, ranked by population, with a
+  // minimum separation so eight near-identical browns do not fill the palette.
+  function octreeCut(pixels, count) {
+    const bins = new Map();
+    pixels.forEach(function (c) {
+      const key = ((c[0] >> 4) << 8) | ((c[1] >> 4) << 4) | (c[2] >> 4);
+      let bin = bins.get(key);
+      if (!bin) { bin = { count: 0, r: 0, g: 0, b: 0 }; bins.set(key, bin); }
+      bin.count++; bin.r += c[0]; bin.g += c[1]; bin.b += c[2];
+    });
+    const ranked = Array.from(bins.values()).sort(function (a, b) { return b.count - a.count; });
+    const out = [];
+    ranked.forEach(function (bin) {
+      if (out.length >= count) return;
+      const c = [Math.round(bin.r / bin.count), Math.round(bin.g / bin.count), Math.round(bin.b / bin.count)];
+      if (out.every(function (seen) { return colourDistance(seen, c) >= 18 * 18; })) out.push(c);
+    });
+    return out;
+  }
+
+  function polarityCut(pixels, count) {
+    const sorted = pixels.slice().sort(function (a, b) { return lumaOf(a) - lumaOf(b); });
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const at = count === 1 ? 0 : Math.round((i / (count - 1)) * (sorted.length - 1));
+      out.push(sorted[Math.max(0, Math.min(sorted.length - 1, at))]);
+    }
+    // A polarity palette also keeps the loudest colour in the frame: the one
+    // accent that makes a limited palette read as a designed set.
+    let accent = pixels[0] || [0, 0, 0];
+    let accentScore = -1;
+    pixels.forEach(function (c) {
+      const max = Math.max(c[0], c[1], c[2]), min = Math.min(c[0], c[1], c[2]);
+      const score = (max - min) * (0.4 + lumaOf(c) / 255);
+      if (score > accentScore) { accentScore = score; accent = c; }
+    });
+    out.push(accent);
+    return out;
+  }
+
+  function retroBoost(rgb, saturation, contrast) {
+    const l = lumaOf(rgb);
+    return [0, 1, 2].map(function (i) {
+      const sat = l + (rgb[i] - l) * saturation;
+      return clampByte((sat - 128) * contrast + 128);
+    });
+  }
+
+  function uniqueColours(colors, minDistance) {
+    const out = [];
+    colors.forEach(function (c) {
+      const rgb = [clampByte(c[0]), clampByte(c[1]), clampByte(c[2])];
+      if (out.every(function (seen) { return colourDistance(seen, rgb) >= minDistance * minDistance; })) out.push(rgb);
+    });
+    return out;
+  }
+
+  function extractPalette(data, width, height, count, method) {
+    const wanted = Math.max(2, Math.min(32, Math.round(Number(count) || 8)));
+    const how = EXTRACT_METHODS.indexOf(method) >= 0 ? method : 'cins';
+    if (!data || width < 1 || height < 1) throw new Error('An image is needed to extract a palette');
+    const pixels = extractSample(data, width, height, 24000);
+    if (pixels.length < 2) throw new Error('That image does not have enough visible pixels');
+    let colors;
+    if (how === 'octree') colors = octreeCut(pixels, wanted);
+    else if (how === 'median') colors = medianCut(pixels, wanted);
+    else if (how === 'polarity') colors = polarityCut(pixels, wanted);
+    else colors = medianCut(pixels.map(function (c) { return retroBoost(c, 1.3, 1.08); }), wanted);
+    colors = uniqueColours(colors, 10);
+    if (colors.length < 2) {
+      colors = uniqueColours(colors.concat([[0, 0, 0], [255, 255, 255]]), 1);
+    }
+    colors.sort(function (a, b) { return lumaOf(a) - lumaOf(b); });
+    return colors.slice(0, wanted);
+  }
+
+  // ---- plugin packages ----
+
+  // A plugin is a signed-by-nobody data package: metadata plus a declarative
+  // payload. There is no `main`, no `eval` and no code path that could run one.
+  // Validation is strict for the fields the app consumes, and drops everything
+  // else, so a package cannot smuggle settings into a prototype or a DOM call.
+  const PLUGIN_KINDS = ['tool', 'preset-pack'];
+  const PLUGIN_CAPABILITIES = ['ink-extractor', 'shape-press'];
+  const EXTRACT_LABELS = { cins: 'CINS', median: 'Median cut', octree: 'Octree', polarity: 'Polarity' };
+
+  function pluginSlug(value) {
+    return /^[a-z][a-z0-9-]{1,47}$/.test(String(value || ''));
+  }
+
+  function validatePluginPackage(pkg) {
+    if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) throw new Error('A plugin must be a JSON object');
+    if (pkg.schema !== 1) throw new Error('Unsupported plugin schema');
+    if (!pluginSlug(pkg.id)) throw new Error('A plugin id must be lower-case letters, numbers and hyphens');
+    if (typeof pkg.name !== 'string' || !pkg.name.trim() || pkg.name.length > 60) throw new Error('A plugin needs a name');
+    if (!/^\d+\.\d+\.\d+$/.test(String(pkg.version || ''))) throw new Error('A plugin version must look like 1.0.0');
+    if (PLUGIN_KINDS.indexOf(pkg.kind) < 0) throw new Error('Unknown plugin kind');
+    if (typeof pkg.summary !== 'string' || pkg.summary.length > 240) throw new Error('A plugin needs a summary of 240 characters or fewer');
+    const out = {
+      schema: 1,
+      id: pkg.id,
+      name: pkg.name.trim(),
+      version: pkg.version,
+      kind: pkg.kind,
+      summary: pkg.summary,
+      author: typeof pkg.author === 'string' ? pkg.author.slice(0, 60) : 'Unknown',
+      homepage: typeof pkg.homepage === 'string' && /^https?:\/\//.test(pkg.homepage) ? pkg.homepage.slice(0, 300) : '',
+      data: {},
+    };
+    if (pkg.kind === 'tool') {
+      if (PLUGIN_CAPABILITIES.indexOf(pkg.capability) < 0) throw new Error('Unknown plugin capability');
+      out.capability = pkg.capability;
+      if (pkg.data && typeof pkg.data === 'object') {
+        if (Array.isArray(pkg.data.methods)) {
+          out.data.methods = pkg.data.methods.filter(function (m) { return EXTRACT_METHODS.indexOf(m) >= 0; });
+        }
+        if (pkg.data.defaultCount) out.data.defaultCount = Math.max(2, Math.min(32, Math.round(pkg.data.defaultCount)));
+      }
+      return out;
+    }
+    if (!pkg.data || !Array.isArray(pkg.data.presets) || !pkg.data.presets.length || pkg.data.presets.length > 24) {
+      throw new Error('A preset pack needs 1–24 presets');
+    }
+    out.data.presets = pkg.data.presets.map(function (preset, index) {
+      if (!preset || typeof preset !== 'object') throw new Error('Preset ' + (index + 1) + ' is not an object');
+      if (!pluginSlug(preset.id)) throw new Error('Preset ' + (index + 1) + ' needs a lower-case id');
+      if (typeof preset.name !== 'string' || !preset.name.trim() || preset.name.length > 60) throw new Error('Preset ' + (index + 1) + ' needs a name');
+      if (!preset.settings || typeof preset.settings !== 'object' || Array.isArray(preset.settings)) {
+        throw new Error('Preset ' + (index + 1) + ' needs a settings object');
+      }
+      let settings;
+      try { settings = JSON.parse(JSON.stringify(preset.settings)); }
+      catch (err) { throw new Error('Preset ' + (index + 1) + ' has settings that cannot be stored'); }
+      return { id: preset.id, name: preset.name.trim(), settings: settings };
+    });
+    return out;
+  }
+
   // Every catalogue in the app is `[{ id, ... }]` and every lookup is the
   // same scan. The shell carried seven copies of it; these are the scan, once.
   function byId(list, id) {
@@ -269,6 +474,11 @@
     parsePaletteText: parsePaletteText,
     paletteId: paletteId,
     cleanPaletteName: cleanPaletteName,
+    extractPalette: extractPalette,
+    EXTRACT_METHODS: EXTRACT_METHODS,
+    EXTRACT_LABELS: EXTRACT_LABELS,
+    validatePluginPackage: validatePluginPackage,
+    PLUGIN_KINDS: PLUGIN_KINDS,
     byId: byId,
     indexOfId: indexOfId,
     stepThrough: stepThrough,

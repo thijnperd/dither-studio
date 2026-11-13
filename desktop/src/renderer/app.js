@@ -307,7 +307,7 @@
   // ids that are on, and the entries a preset or an export wants - come from
   // one filter rather than two.
   function deriveGlitches() {
-    return activeEffects().map(function (id) {
+    return activeEffects().filter(function (id) { return effectAvailable(effectMeta(id)); }).map(function (id) {
       return { id: id, amount: glitches.amount[id], mode: glitches.mode[id] };
     });
   }
@@ -622,6 +622,10 @@
   }
 
   function motionSummary() {
+    if (animation && animation.isActive()) {
+      const a = animation.stats();
+      return (a.playing ? 'playing' : 'paused') + ' · ' + a.total + ' frames';
+    }
     if (!state.videoOn || !video) return 'no source';
     const stats = video.stats();
     return stats.playing ? 'playing · ' + stats.fps + ' fps' : 'paused · ' + stats.fps + ' fps';
@@ -686,7 +690,7 @@
   // still holds every id, so presets, JSON export and `deriveGlitches()`
   // keep the shape they always had.
   function activeEffects() {
-    return glitches.order.filter(function (id) { return glitches.on[id]; });
+    return glitches.order.filter(function (id) { return glitches.on[id] && effectAvailable(effectMeta(id)); });
   }
 
   function effectMeta(id) {
@@ -807,7 +811,7 @@
     placeholder.value = '';
     placeholder.textContent = 'Choose an effect…';
     el.effectAdd.appendChild(placeholder);
-    GLITCHES_SORTED.forEach(function (g) {
+    availableGlitches().forEach(function (g) {
       if (glitches.on[g.id]) return;
       const option = document.createElement('option');
       option.value = g.id;
@@ -819,6 +823,10 @@
   function addEffect(id) {
     endHistoryGroup();
     const meta = byId(D.GLITCHES, id);
+    if (meta && !effectAvailable(meta)) {
+      el.statStatus.textContent = 'Install ' + (meta.plugin === 'shape-press' ? 'Shape Press' : meta.plugin) + ' from the Plugin Manager first';
+      return;
+    }
     if (!meta || glitches.on[id]) return;
     glitches.on[id] = true;
     if (!glitches.amount[id]) glitches.amount[id] = 50;
@@ -985,6 +993,17 @@
     } },
   ];
 
+  // Installed preset packs join the same catalogue as the built-in recipes.
+  // BASE_PRESETS stays untouched, so removing a plugin removes exactly its
+  // entries on the next sync instead of rebuilding the built-ins by hand.
+  const BASE_PRESETS = PRESETS.slice();
+  function pluginPresetEntries() {
+    return window.DitherPlugins && window.DitherPlugins.presets ? window.DitherPlugins.presets() : [];
+  }
+  pluginPresetEntries().forEach(function (preset) {
+    if (!byId(PRESETS, preset.id)) PRESETS.push(preset);
+  });
+
   // Imported palettes live beside the grouped-panel setting: a small JSON list
   // in localStorage, not a file the app owns. The engine registers them before
   // the sorted views are built, so boot is the same path as a fresh import.
@@ -1031,6 +1050,17 @@
   const GLITCHES_SORTED = D.GLITCHES.slice().sort(byName);
   const PALETTES_SORTED = D.PALETTES.slice().sort(byName);
   const PRESETS_SORTED = PRESETS.slice().sort(byName);
+
+  // Effects that belong to a plugin only appear once that plugin is installed.
+  // The engine still knows how to draw them (an old preset can name one); the
+  // gate is the UI, which is where a person chooses what is available.
+  function effectAvailable(meta) {
+    return !meta.plugin || !!(window.DitherPlugins && window.DitherPlugins.has(meta.plugin));
+  }
+
+  function availableGlitches() {
+    return GLITCHES_SORTED.filter(effectAvailable);
+  }
   const TEXT_RAMPS_SORTED = TEXT_RAMPS.slice().sort(byName);
   const TONE_MAPS_SORTED = D.TONE_MAPS.slice().sort(function (a, b) {
     // None is the off switch, so it stays at the top; the maps after it read
@@ -1062,6 +1092,37 @@
     applySettings(preset.settings, preset.name);
   }
 
+  // One install or removal can change both catalogues. Rebuild them in place:
+  // the menus and the command palette hold references to these arrays, so a
+  // fresh array would leave half the chrome reading the old list.
+  function syncPluginCatalogues() {
+    PRESETS.length = 0;
+    BASE_PRESETS.forEach(function (preset) { PRESETS.push(preset); });
+    pluginPresetEntries().forEach(function (preset) {
+      if (!byId(PRESETS, preset.id)) PRESETS.push(preset);
+    });
+    PRESETS_SORTED.length = 0;
+    PRESETS.slice().sort(byName).forEach(function (preset) { PRESETS_SORTED.push(preset); });
+    buildPresetSelect();
+
+    // Pull a plugin effect out of the stack if its plugin has just gone. The
+    // stack order keeps the id, so reinstalling restores the recipe.
+    activeEffects().forEach(function (id) {
+      if (!effectAvailable(effectMeta(id))) glitches.on[id] = false;
+    });
+    buildEffectList();
+    syncEffectChoices();
+    syncGroupNotes();
+    render(true);
+    window.dispatchEvent(new CustomEvent('ds:catalogues', { detail: { kind: 'plugins' } }));
+  }
+
+  if (window.DitherPlugins && window.DitherPlugins.onChange) {
+    window.DitherPlugins.onChange(function (type) {
+      if (type === 'install' || type === 'remove') syncPluginCatalogues();
+    });
+  }
+
   // ---- rendering ----
 
   function toImageData(res) {
@@ -1069,10 +1130,10 @@
   }
 
   function render(full) {
-    // During video playback the frame loop owns the canvas; a still render
-    // here would only be overwritten by the next frame. (A tickOnce render,
-    // an export or a paused frame still goes through the normal path.)
+    // During video playback or animation the frame loop owns the canvas; a
+    // still render here would only be overwritten by the next frame.
     if (state.videoOn && video && video.playing) return;
+    if (animation && animation.isActive()) { animation.refresh(); return; }
     const source = full ? state.source : state.preview;
     if (!source) return;
     state.settings.glitches = deriveGlitches();
@@ -1157,24 +1218,26 @@
 
   // The ink and paper for the type: the tone map's own colours when one is on,
   // otherwise the console's.
-  function inkColors() {
-    const map = byId(D.TONE_MAPS, state.settings.toneMap);
+  function inkColors(settings) {
+    const s = settings || state.settings;
+    const map = byId(D.TONE_MAPS, s.toneMap);
     if (map && map.id !== 'none') {
       const custom = map.id === 'custom';
       return {
-        ink: rgbToHex(custom ? state.settings.toneInk : map.ink),
-        paper: rgbToHex(custom ? state.settings.tonePaper : map.paper),
+        ink: rgbToHex(custom ? s.toneInk : map.ink),
+        paper: rgbToHex(custom ? s.tonePaper : map.paper),
       };
     }
     return { ink: '#e8eaf0', paper: '#0b0c10' };
   }
 
-  function drawTextResult(res) {
+  function drawTextResult(res, settings) {
+    const s = settings || state.settings;
     const grid = textGrid(res);
     if (grid.cols * grid.rows > TEXT_CELL_CAP) return false;
-    const ink = inkColors();
+    const ink = inkColors(s);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if (state.settings.alphaMode === 'matte') {
+    if (s.alphaMode === 'matte') {
       ctx.fillStyle = ink.paper;
       ctx.fillRect(0, 0, res.width, res.height);
     } else {
@@ -1420,6 +1483,7 @@
   // ---- loading images ----
 
   function setSource(imageData, name, capped) {
+    if (animation && animation.isActive()) animation.stop();
     videoStop();
     state.original = imageData;
     state.source = { data: imageData.data, width: imageData.width, height: imageData.height };
@@ -1728,7 +1792,7 @@
       glitches: [],
       glow: { radius: 0, intensity: 0 },
     };
-    const pool = D.GLITCHES.slice();
+    const pool = availableGlitches().slice();
     const count = (Math.random() * 3) | 0;
     for (let i = 0; i < count && pool.length; i++) {
       const pick = pool.splice((Math.random() * pool.length) | 0, 1)[0];
@@ -2087,6 +2151,59 @@
     : null;
   const videoState = { temporal: 'shimmer', ready: false };
 
+  // The animation timeline is a separate controller, like video.js: it owns
+  // the clock and the track rows, while this shell decides what a frame means.
+  const animation = (window.DitherAnimation && window.DitherAnimation.create)
+    ? window.DitherAnimation.create({
+      getBaseSettings: function () { return state.settings; },
+      onFrame: renderAnimationFrame,
+      onStop: function () {
+        el.statStatus.textContent = 'Animation closed';
+        render(true);
+      },
+      onStatus: function (text) { el.statStatus.textContent = text; },
+      getCanvas: function () { return el.canvas; },
+      download: download,
+    })
+    : null;
+
+  function startAnimation() {
+    if (!state.source) {
+      el.statStatus.textContent = 'Open an image first';
+      return false;
+    }
+    if (state.videoOn) videoStop();
+    setCompare(false);
+    if (state.splitOn) setSplit(false);
+    setGroup('motion', true);
+    revealGroup('motion');
+    if (!animation) {
+      el.statStatus.textContent = 'The animation controller did not load';
+      return false;
+    }
+    return animation.start();
+  }
+
+  function renderAnimationFrame(settings, frameIndex, total) {
+    if (!state.source) return 0;
+    const t0 = performance.now();
+    const res = D.process(state.source, settings);
+    state.result = res;
+    if (el.canvas.width !== res.width || el.canvas.height !== res.height) {
+      el.canvas.width = res.width;
+      el.canvas.height = res.height;
+      applyZoom();
+    }
+    showAlphaBehind(settings.alphaMode);
+    if (!(text.on && drawTextResult(res, settings))) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.putImageData(toImageData(res), 0, 0);
+    }
+    updateStats(res, true);
+    el.statStatus.textContent = 'Animation · frame ' + (frameIndex + 1) + ' / ' + total;
+    return performance.now() - t0;
+  }
+
   function videoStatus(text) {
     el.videoNote.textContent = text;
   }
@@ -2155,6 +2272,7 @@
       videoStatus('Video mode needs video.js, which did not load.');
       return false;
     }
+    if (animation && animation.isActive()) animation.stop();
     try {
       if (kind === 'webcam') await video.webcam();
       else await video.load(file);
@@ -2299,6 +2417,8 @@
         zoom: el.statZoom.textContent,
         quality: state.quality,
         effects: activeEffects(),
+        plugins: window.DitherPlugins ? window.DitherPlugins.installed().map(function (p) { return p.id; }) : [],
+        animation: animation ? animation.stats() : null,
         openGroups: GROUPS.filter(function (g) { return groupOpen(g.id); })
           .map(function (g) { return g.id; }),
         glitches: deriveGlitches().map(function (g) {
@@ -2310,6 +2430,26 @@
     applyPreset: function (id) { applyPreset(id); },
     randomize: randomize,
     exportTxt: exportTXT,
+    // --- plugins, animation and the Ink Extractor -------------------------
+    pluginsOpen: openPluginManager,
+    pluginsInstall: function (id) { return window.DitherPlugins ? window.DitherPlugins.install(id) : null; },
+    pluginsRemove: function (id) { return window.DitherPlugins ? window.DitherPlugins.remove(id) : false; },
+    pluginsInstalled: function () { return window.DitherPlugins ? window.DitherPlugins.installed() : []; },
+    pluginPresets: function () { return window.DitherPlugins ? window.DitherPlugins.presets() : []; },
+    extractPalette: function (count, method) {
+      if (!state.original) return null;
+      return Core.extractPalette(state.original.data, state.original.width, state.original.height, count, method);
+    },
+    inkExtractorOpen: openInkExtractor,
+    animationStart: startAnimation,
+    animationStop: function () { return animation ? animation.stop() : false; },
+    animationPlay: function () { return animation ? animation.play() : false; },
+    animationPause: function () { return animation ? animation.pause() : false; },
+    animationTick: function (index) { return animation ? animation.tick(index) : null; },
+    animationAddTrack: function (id) { return animation ? animation.addTrack(id) : null; },
+    animationStats: function () { return animation ? animation.stats() : null; },
+    animationFrameSettings: function (index) { return animation ? animation.frameSettings(index) : null; },
+    animationRecord: function () { return animation ? animation.record() : false; },
     // Test hook: load a synthetic source (a data URL) without a file dialog.
     loadDataURL: function (url, name) {
       const img = new Image();
@@ -2494,8 +2634,54 @@
     render(true);
   }
 
+  function openPluginManager() {
+    if (!window.DitherPlugins) {
+      el.statStatus.textContent = 'The plugin manager is not available';
+      return false;
+    }
+    return window.DitherPlugins.open();
+  }
+
+  function openInkExtractor() {
+    const pkg = window.DitherPlugins && window.DitherPlugins.tool('ink-extractor');
+    if (!pkg) {
+      el.statStatus.textContent = 'Install Ink Extractor from File › Plugin Manager first';
+      return false;
+    }
+    if (!window.DitherInkExtractor) {
+      el.statStatus.textContent = 'The Ink Extractor dialog is not available';
+      return false;
+    }
+    return window.DitherInkExtractor.open({
+      methods: pkg.data.methods && pkg.data.methods.length ? pkg.data.methods : Core.EXTRACT_METHODS,
+      defaultCount: pkg.data.defaultCount || 8,
+      getSource: function () { return state.original; },
+      sourceName: function () { return state.name; },
+      onImport: importPalette,
+    });
+  }
+
+  function animationCommand(action) {
+    if (!animation) {
+      el.statStatus.textContent = 'The animation controller did not load';
+      return false;
+    }
+    if (action === 'start') return startAnimation();
+    if (action === 'export') {
+      if (!animation.isActive()) startAnimation();
+      return animation.record();
+    }
+    if (action === 'stop') return animation.stop();
+    if (!animation.isActive()) startAnimation();
+    if (animation.isPlaying()) animation.pause();
+    else animation.play();
+    return true;
+  }
+
   const COMMANDS = {
     'file-open': function () { openImageDialog(); },
+    'file-plugin-manager': openPluginManager,
+    'file-extract-palette': openInkExtractor,
     'file-import-palette': function () {
       if (!window.DitherPaletteImport) {
         el.statStatus.textContent = 'The palette importer is not available';
@@ -2511,6 +2697,10 @@
     'file-export-preset': function () { el.presetExport.click(); },
     'file-import-preset': function () { el.presetImport.click(); },
     'file-quit': function () { if (desktop) desktop.quit(); },
+    'motion-start': function () { return animationCommand('start'); },
+    'motion-toggle': function () { return animationCommand('toggle'); },
+    'motion-stop': function () { return animationCommand('stop'); },
+    'motion-export': function () { return animationCommand('export'); },
     'edit-undo': undoRecipe,
     'edit-redo': redoRecipe,
     'edit-random': function () { randomize(); },
@@ -2588,6 +2778,8 @@
       canUndo: history.past.length > 1,
       canRedo: history.future.length > 0,
       effects: activeEffects(),
+      plugins: window.DitherPlugins ? window.DitherPlugins.installed().map(function (p) { return p.id; }) : [],
+      animation: animation ? animation.stats() : null,
       openGroups: GROUPS.filter(function (g) { return groupOpen(g.id); }).map(function (g) { return g.id; }),
       status: el.statStatus.textContent,
       width: el.canvas.width,
@@ -2606,7 +2798,7 @@
     catalogues: {
       ALGORITHMS: D.ALGORITHMS,
       PALETTES: PALETTES_SORTED,
-      GLITCHES: GLITCHES_SORTED,
+      GLITCHES: availableGlitches(),
       TONE_MAPS: TONE_MAPS_SORTED,
       PRESETS: PRESETS_SORTED,
       TEXT_RAMPS: TEXT_RAMPS_SORTED,

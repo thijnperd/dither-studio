@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "id": "s0ur-static",
+  "name": "2_s0ur's Broken Signal",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Original green-portrait and broken-signal recipes inspired by 2_s0ur's glitch work.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/dither-boy-spotlight-2_s0urs-glitch-art/",
+  "data": {
+    "presets": [
+      {
+        "id": "s0ur-green-ghost",
+        "name": "2_s0ur · Green Ghost",
+        "settings": {
+          "algorithm": "floyd-steinberg",
+          "palette": "matrix",
+          "pixelSize": 1,
+          "adjustments": { "contrast": 1.25, "brightness": 0.96, "saturation": 1.1 },
+          "glitches": [
+            { "id": "channelroll", "amount": 35 },
+            { "id": "tracking", "amount": 40 },
+            { "id": "deadpixels", "amount": 20 }
+          ],
+          "glow": { "radius": 2, "intensity": 30 }
+        }
+      },
+      {
+        "id": "s0ur-broken-portrait",
+        "name": "2_s0ur · Broken Portrait",
+        "settings": {
+          "algorithm": "sierra",
+          "palette": "gameboy",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.2, "saturation": 1.18 },
+          "glitches": [
+            { "id": "blocks", "amount": 45 },
+            { "id": "wave", "amount": 30 },
+            { "id": "pixelsort", "amount": 55, "mode": "rows" },
+            { "id": "aberration", "amount": 30 }
+          ]
+        }
+      },
+      {
+        "id": "s0ur-signal-loss",
+        "name": "2_s0ur · Signal Loss",
+        "settings": {
+          "algorithm": "random-noise",
+          "palette": "virtualboy",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.2, "saturation": 1.1 },
+          "glitches": [
+            { "id": "tracking", "amount": 70 },
+            { "id": "crt", "amount": 35 },
+            { "id": "deadpixels", "amount": 40 },
+            { "id": "grain", "amount": 25 }
+          ]
+        }
+      }
+    ]
+  }
+}

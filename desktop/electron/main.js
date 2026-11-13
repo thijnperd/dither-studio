@@ -31,6 +31,7 @@ const fs = require('fs/promises');
 const fsSync = require('fs');
 const path = require('path');
 const updates = require('./update');
+const plugins = require('./plugins');
 
 const APP_ROOT = path.join(__dirname, '..');
 // The splash plays a fixed animation and this is what the window waits for
@@ -655,6 +656,7 @@ if (!gotLock) {
 
   app.whenReady().then(function () {
     updates.wire();
+    plugins.wire();
     if (process.platform === 'win32') app.setAppUserModelId('com.thijnperd.ditherstudio');
     // Electron installs a default menu (File > Exit, Edit > Copy...) until
     // one is set. The app draws its own menu bar and sends the tree a moment

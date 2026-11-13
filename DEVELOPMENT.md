@@ -109,7 +109,9 @@ builds.
 | [`tools/sync-renderer.js`](desktop/tools/sync-renderer.js) | keeps `src/renderer/{dither,video,samples}.js` byte-identical to the launcher build's copies |
 | [`tools/tour.test.js`](desktop/tools/tour.test.js) | the tutorial data's own suite: real panels, real commands, nothing already done on a fresh app |
 | [`tools/update.test.js`](desktop/tools/update.test.js) | the updater's own suite: semver ordering, platform asset choice, changelog extraction and the Windows helper |
-| [`tools/smoke-in-page.js`](desktop/tools/smoke-in-page.js) | the page half of the smoke run |
+| [`tools/smoke.js`](desktop/tools/smoke.js) | the smoke runner: picks a suite and starts the app with it |
+| [`tools/smoke-in-page.js`](desktop/tools/smoke-in-page.js) | the page half of the full smoke run |
+| [`tools/smoke-quick.js`](desktop/tools/smoke-quick.js), [`tools/smoke-plugins.js`](desktop/tools/smoke-plugins.js), [`tools/smoke-animation.js`](desktop/tools/smoke-animation.js) | the focused suites behind `npm run smoke`, `smoke:plugins` and `smoke:animation` |
 
 The desktop shell is its own code. It used to be the web shell with ten patches
 applied, which meant every helper existed twice, so the desktop now has a core of
@@ -253,7 +255,7 @@ that only draws them. If you change the total, change `SPLASH_MIN_MS` in
 To look at a single frame while you work on it, hold the animation and shoot it:
 
 ```bash
-DITHER_SPLASH_MS=99999 DITHER_SPLASH_AT=2400 npm run smoke
+DITHER_SPLASH_MS=99999 DITHER_SPLASH_AT=2400 npm run smoke:all
 # -> $DITHER_SMOKE_DIR/dither-splash.png, frozen at 2.4 s
 ```
 
@@ -406,8 +408,11 @@ fails the run and names itself.
 
 ```bash
 cd desktop
-npm test                                       # core, tour and updater: 44 checks, no window
-npm run smoke                                  # boot, check, screenshot, exit 0/1
+npm test                                       # core, tour and updater: 54 checks, no window
+npm run smoke                                  # quick boot, chrome and a live proof
+npm run smoke:plugins                          # plugin store, Shape Press, presets, Ink Extractor
+npm run smoke:animation                        # animation timeline and still restore
+npm run smoke:all                              # the full in-page set; exit 0/1
 ```
 
 `npm test` runs the three Node suites. `tools/core.test.js` covers the colour
@@ -418,19 +423,26 @@ the command names and panel ids, so a lesson cannot outlive the verb it drives;
 `tools/update.test.js` covers version ordering, platform asset choice, changelog
 extraction and the Windows helper (5 checks). None of them needs a window.
 
-`npm run smoke` is `electron . --smoke --smoke-script tools/smoke-in-page.js`.
-`--smoke` loads the real app and waits for it to signal ready, `--smoke-script`
-evaluates that file in the page, then the harness prints one JSON report and
-exits non-zero on any console error, page error, failed check or failed command
-— the page's own verdict is part of the run's, not a footnote beside it. It also
-photographs both windows into `$DITHER_SMOKE_DIR`: the splash window shoots
-itself as its animation reaches the wordmark (it is over in under three seconds,
-so waiting for the page checks to finish would miss it), and the app window is
-shot at the end. The run also gets a profile of its own, deleted before it
-starts, so it always meets the app the way a fresh install does — the presets,
-panels and tutorial progress on the machine running it are untouched.
+`npm run smoke` runs `tools/smoke.js` with the `quick` suite. The runner maps a
+suite name to an in-page script, boots the real app, waits for it to signal
+ready, then lets the harness print one JSON report and exit non-zero on any
+console error, page error, failed check or failed command — the page's own
+verdict is part of the run's, not a footnote beside it. `tools/smoke-quick.js`
+checks the boot surface and one live render; `tools/smoke-plugins.js` installs
+from the bundled package path and checks the Shape Press gate, a preset pack and
+the Ink Extractor; `tools/smoke-animation.js` scrubs the timeline and restores
+the still. The focused suites set `DITHER_NO_SPLASH=1`, so they take seconds.
+`npm run smoke:all` runs `tools/smoke-in-page.js`, the complete set, and is what
+CI and a release use.
 
-The current run checks: the chrome exists, the catalogues fill their
+The full run photographs both windows into `$DITHER_SMOKE_DIR`: the splash
+window shoots itself as its animation reaches the wordmark (it is over in under
+three seconds, so waiting for the page checks to finish would miss it), and the
+app window is shot at the end. The run also gets a profile of its own, deleted
+before it starts, so it always meets the app the way a fresh install does — the
+presets, panels and tutorial progress on the machine running it are untouched.
+
+The full run checks: the chrome exists, the catalogues fill their
 lists, every slider is painted, the menus draw, their submenus expand to the full
 catalogue and stay open while the pointer is on one of their rows, the 32 command
 names the run exercises are all wired, the effects stack is the real markup,
@@ -465,13 +477,13 @@ Environment variables let it exercise the parts a page cannot reach:
 
 ```bash
 # the whole export chain: a simulated Ctrl+S, then proof the file exists
-DITHER_SMOKE_SAVE=/tmp/proof.png DITHER_SMOKE_KEY=ctrl+s npm run smoke
+DITHER_SMOKE_SAVE=/tmp/proof.png DITHER_SMOKE_KEY=ctrl+s npm run smoke:all
 
 # the native menu drives the app
-DITHER_SMOKE_SAVE=/tmp/menu.png DITHER_SMOKE_MENU='File/Save Proof as PNG' npm run smoke
+DITHER_SMOKE_SAVE=/tmp/menu.png DITHER_SMOKE_MENU='File/Save Proof as PNG' npm run smoke:all
 
 # video mode: DITHER_SMOKE_OPEN answers the open-clip dialog with a real file
-DITHER_SMOKE_OPEN=/tmp/clip.mp4 npm run smoke
+DITHER_SMOKE_OPEN=/tmp/clip.mp4 npm run smoke:all
 ```
 
 The same harness runs against a packaged build, which is the only way to check

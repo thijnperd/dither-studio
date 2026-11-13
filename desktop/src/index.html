@@ -156,6 +156,10 @@
           <button id="video-toggle" class="obtn obtn-primary" type="button" disabled>Play</button>
           <span class="readout" id="video-readout">frame 0 · 12 fps</span>
         </div>
+        <div class="transport" id="animation-transport" hidden>
+          <button id="animation-toggle" class="obtn obtn-primary" type="button">Play</button>
+          <span class="readout" id="animation-readout">frame 1 / 72 · 24 fps</span>
+        </div>
       </footer>
     </section>
 
@@ -425,6 +429,32 @@
               </div>
               <p class="hint" id="video-note">Play a clip or the webcam through the press.
                 The transport sits under the proof.</p>
+              <div class="anim" id="animation-panel-wrap">
+                <button id="animation-start" class="btn btn-primary" type="button">Animate the still</button>
+                <div id="animation-panel" hidden>
+                  <div class="anim-bar">
+                    <button id="animation-play" class="btn" type="button">Play</button>
+                    <button id="animation-export" class="btn" type="button">Export WebM</button>
+                    <button id="animation-stop" class="btn" type="button">Close</button>
+                  </div>
+                  <div class="anim-timing">
+                    <label><span>Seconds</span>
+                      <input id="animation-duration" type="number" min="1" max="12" step="1" value="3" />
+                    </label>
+                    <label><span>FPS</span>
+                      <input id="animation-fps" type="number" min="6" max="30" step="1" value="24" />
+                    </label>
+                    <label class="check"><input id="animation-loop" type="checkbox" checked /> Loop</label>
+                  </div>
+                  <div class="anim-tracks" id="animation-tracks"></div>
+                  <div class="anim-add">
+                    <select id="animation-property" aria-label="Property to animate"></select>
+                    <button id="animation-add" class="btn" type="button">Add track</button>
+                  </div>
+                  <div class="anim-rail" aria-hidden="true"><span id="animation-playhead"></span></div>
+                  <p class="anim-note" id="animation-note">A track moves one setting over the timeline.</p>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -510,6 +540,69 @@
         <button class="btn btn-primary" id="palette-import-go" type="button">Import palette</button>
       </footer>
       <input type="file" id="palette-import-file-input" accept="application/json,.json,.hex,.txt,text/plain" hidden />
+    </section>
+  </div>
+
+  <!-- the plugin manager: a data-only catalogue pulled from the repository.
+       Nothing in this window is executable; installing a package stores its
+       JSON and lights up one of the app's own built-in capabilities. -->
+  <div class="pimport" id="plugin-manager" hidden>
+    <section class="pimport-card plugin-card" role="dialog" aria-modal="true" aria-labelledby="plugin-title">
+      <header class="pimport-head">
+        <span class="pimport-kicker">File · Plugins</span>
+        <h2 class="pimport-title" id="plugin-title">Plugin manager</h2>
+        <p class="pimport-note">Install declarative packs pulled from the project on GitHub. A package can add presets or switch on a built-in tool; it never runs downloaded code.</p>
+      </header>
+      <div class="pimport-body">
+        <div class="plugin-bar">
+          <button class="btn" id="plugin-refresh" type="button">Refresh from GitHub</button>
+          <span class="pimport-hint" id="plugin-status" role="status" aria-live="polite"></span>
+        </div>
+        <div class="plugin-list" id="plugin-list"></div>
+        <p class="plugin-note">Installed packages stay on this machine. The catalogue is fetched over HTTPS from
+          <b>thijnperd/dither-studio</b>; the app ships a fallback copy so the manager still works offline.</p>
+      </div>
+      <footer class="pimport-foot">
+        <span class="pimport-grow"></span>
+        <button class="btn btn-primary" id="plugin-close" type="button">Close</button>
+      </footer>
+    </section>
+  </div>
+
+  <!-- Ink Extractor: the ColorCat-shaped tool. It reads pixels, clusters them
+       and hands the result to the normal palette importer. -->
+  <div class="pimport" id="ink-extractor" hidden>
+    <section class="pimport-card" role="dialog" aria-modal="true" aria-labelledby="ink-title">
+      <header class="pimport-head">
+        <span class="pimport-kicker">Plugins · Ink Extractor</span>
+        <h2 class="pimport-title" id="ink-title">Extract a palette from an image</h2>
+        <p class="pimport-note">Four retro-leaning quantizers: CINS, Median cut, Octree and Polarity. The result is sorted dark to light and can be edited before it is imported.</p>
+      </header>
+      <div class="pimport-body">
+        <div class="ink-controls">
+          <label class="pimport-field">
+            <span>Algorithm</span>
+            <select id="ink-method"></select>
+          </label>
+          <label class="pimport-field">
+            <span>Colors</span>
+            <input id="ink-count" type="number" min="2" max="32" step="1" value="8" />
+          </label>
+        </div>
+        <div class="buttons">
+          <button class="btn" id="ink-current" type="button">Use the open image</button>
+          <button class="btn" id="ink-file" type="button">Choose image…</button>
+        </div>
+        <input type="file" id="ink-file-input" accept="image/*" hidden />
+        <p class="plugin-meta" id="ink-source"></p>
+        <div class="pimport-preview" id="ink-preview" aria-live="polite">No colors yet — choose an image.</div>
+        <p class="pimport-error" id="ink-error" role="alert" hidden></p>
+      </div>
+      <footer class="pimport-foot">
+        <button class="btn" id="ink-cancel" type="button">Cancel</button>
+        <span class="pimport-grow"></span>
+        <button class="btn btn-primary" id="ink-import" type="button" disabled>Import palette</button>
+      </footer>
     </section>
   </div>
 
@@ -638,8 +731,11 @@
   <script src="renderer/dither.js"></script>
   <script src="renderer/video.js"></script>
   <script src="renderer/core.js"></script>
+  <script src="renderer/plugins.js"></script>
+  <script src="renderer/animation.js"></script>
   <script src="renderer/app.js"></script>
   <script src="renderer/palette-import.js"></script>
+  <script src="renderer/ink-extractor.js"></script>
   <script src="renderer/palette.js"></script>
   <script src="renderer/help.js"></script>
   <script src="renderer/shell.js"></script>

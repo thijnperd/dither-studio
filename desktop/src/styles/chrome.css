@@ -577,11 +577,180 @@
    empty 28px band of chrome, so it leaves until there is something to drive.
    The transport's own `hidden` flag is the only switch, so the CSS cannot
    disagree with the app about whether video is on. */
-.viewport-bar:not(:has(#transport:not([hidden]))) { display: none; }
+.viewport-bar:not(:has(#transport:not([hidden]), #animation-transport:not([hidden]))) { display: none; }
 
 .viewport-bar .readout { font-size: var(--fs-small); }
 
 .viewport-bar .obtn { height: 20px; padding: 0 9px; }
+
+/* ============================================================== animation */
+
+.anim {
+  display: grid;
+  gap: 9px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--edge-soft);
+}
+
+.anim-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.anim-bar .btn { flex: 1 1 auto; padding: 0 7px; }
+
+.anim-timing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 7px;
+}
+
+.anim-timing label:not(.check) {
+  display: grid;
+  gap: 3px;
+  flex: 1 1 64px;
+  color: var(--muted);
+  font: var(--fs-small)/1.2 var(--font);
+}
+
+.anim-timing input[type="number"] {
+  width: 100%;
+  height: 24px;
+  font: var(--fs-small)/1 var(--font);
+}
+
+.anim-tracks {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.anim-empty {
+  margin: 0;
+  color: var(--muted);
+  font: var(--fs-small)/1.45 var(--font-ui);
+}
+
+.anim-track {
+  display: grid;
+  gap: 5px;
+  padding: 7px 8px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+}
+
+.anim-track-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.anim-track-name {
+  flex: 1 1 auto;
+  color: var(--text);
+  font: var(--fs-label)/1.2 var(--font-ui);
+}
+
+.anim-track-fields {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.anim-track-fields input {
+  width: 58px;
+  min-width: 0;
+  height: 23px;
+  font: var(--fs-small)/1 var(--font);
+}
+
+.anim-track-fields select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 23px;
+  font: var(--fs-small)/1 var(--font);
+}
+
+.anim-arrow { color: var(--muted); font: var(--fs-small)/1 var(--font); }
+
+.anim-add {
+  display: flex;
+  gap: 5px;
+}
+
+.anim-add select { flex: 1 1 auto; min-width: 0; }
+.anim-add .btn { flex: 0 0 auto; padding: 0 8px; }
+
+.anim-rail {
+  position: relative;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--edge-soft);
+}
+
+.anim-rail span {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: translateX(-1px);
+}
+
+.anim-note {
+  margin: 0;
+  color: var(--muted);
+  font: var(--fs-small)/1.45 var(--font-ui);
+}
+
+/* ================================================================ plugins */
+
+.plugin-card { width: min(680px, 100%); }
+
+.plugin-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plugin-list {
+  display: grid;
+  gap: 7px;
+}
+
+.plugin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+}
+
+.plugin-row.is-installed { border-color: color-mix(in srgb, var(--accent) 34%, var(--edge-soft)); }
+
+.plugin-name { margin: 0; color: var(--text); font: 600 var(--fs-label)/1.25 var(--font-ui); }
+.plugin-summary { margin: 3px 0 0; color: var(--muted); font: var(--fs-small)/1.45 var(--font-ui); }
+.plugin-meta { margin: 4px 0 0; color: var(--muted); font: var(--fs-small)/1.2 var(--font); }
+.plugin-row .btn { white-space: nowrap; }
+.plugin-note { margin: 0; color: var(--muted); font: var(--fs-small)/1.45 var(--font-ui); }
+
+.ink-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px;
+  gap: 10px;
+}
+
+.ink-controls input[type="number"] { width: 100%; }
 
 /* ================================================================= status */
 

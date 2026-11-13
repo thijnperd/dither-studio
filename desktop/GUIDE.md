@@ -130,9 +130,8 @@ web page:
 ### Menu by menu
 
 **File** — open an image or a clip, the next built-in source (`Ctrl+D`), save the
-proof as a PNG,
-copy it to the clipboard, export a text proof, import and export presets,
-import a color palette, quit.
+proof as a PNG, copy it to the clipboard, export a text proof, import and export
+presets, import a color palette, open the Plugin Manager, quit.
 
 **Edit** — undo and redo recipe changes (`Ctrl+Z` / `Ctrl+Shift+Z`), roll a
 fresh recipe (`Ctrl+R`, the equivalent of the Random tool), a new seed
@@ -147,8 +146,9 @@ characters, the character ramp, and shortcuts to the Tone and Detail panels.
 
 **Press** — the heart of it: the full algorithm menu (all 46, each with its
 `name` as written in the app), the full palette menu, previous/next for both
-(`Ctrl+↑↓`, `Ctrl+←→`), Serpentine Sweep, and the 25 recipe presets. The item you
-are on is ticked, so the menu doubles as a readout of the current press.
+(`Ctrl+↑↓`, `Ctrl+←→`), Serpentine Sweep, and the 25 built-in recipe presets
+(plus any installed preset packs). The item you are on is ticked, so the menu
+doubles as a readout of the current press.
 
 **Effects** — add any effect from the stack catalogue; the stack is ordered and
 reorderable in the Effects panel, and Clear the Stack empties it.
@@ -276,7 +276,38 @@ you did not point it at.
   captures the playback to a WebM — the recording pulses in the accent colour
   while it runs, and the file lands through the same system save dialog.
 
-## 9. Panels, and how they remember themselves
+## 9. Plugins and the animation timeline
+
+**Plugins are packages, not scripts.** *File ▸ Plugin Manager…* fetches the
+catalogue over HTTPS from this repository (falling back to the copy bundled in
+the app when GitHub is unreachable), lists what each package does, and installs
+or removes it. Installed packages are kept in this app's local settings. A
+package is declarative JSON — a tool capability or a set of recipes — and no
+downloaded JavaScript is ever executed.
+
+- **Ink Extractor** (tool) opens a dialog that pulls a limited palette out of the
+  open image with CINS, median-cut, octree or polarity clustering; the result is
+  previewed and can be imported as a palette.
+- **Shape Press** (tool) adds one effect to the stack: barcode, cross-stitch,
+  halftone or bitmap shapes. It is hidden from the effect picker until the tool
+  is installed; a recipe that names it still renders through the engine.
+- **Preset packs** add whole recipes to the Presets station. The bundled
+  catalogue includes Niko's Glitch Universe, Caroline's Undead Dithering,
+  2_s0ur's Broken Signal and Dreamy Cyberpunk, the last adapted from Studio
+  AAA's Dither Boy download. Removing a pack removes its recipes and leaves
+  the rest of the catalogue alone.
+
+**Animate the still.** *Effects ▸ Animate the Still* puts a timeline over the
+proof. Set the duration (1–12 s) and frame rate (6–30 fps), then add tracks for
+Strength, Seed drift, Screen shift, Threshold, Pixel size, brightness, contrast,
+saturation, hue, glow radius and glow intensity. Each track has a from/to value,
+a slice of the timeline and one of four eases (linear, in, out, in-out); scrub
+the playhead or press Play with the loop on, and export the take as a WebM.
+Closing the timeline returns the still at the frame you stopped on. The
+timeline is separate from clip playback: the normal video transport still owns
+a clip while it plays.
+
+## 10. Panels, and how they remember themselves
 
 Panels collapse by clicking their header and open by clicking their tab in the
 dock strip. Which ones are open is remembered between sessions, exactly as in
@@ -287,7 +318,7 @@ The rest of your recipe is not silently persisted. Presets are files, on purpose
 a `.json` you can read, diff and keep. Imported palettes are the deliberate
 exception: they live in the app's local settings so they are there next launch.
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 **The window is white or empty.** Almost always a failed load of the renderer.
 Press `F5`; if it persists, start the app from a terminal (`npm start` in

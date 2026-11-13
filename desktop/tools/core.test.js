@@ -130,6 +130,71 @@ test('the import id is readable, stable and never collides', function () {
 
 // ---- catalogues ----
 
+group('palette extraction and plugin packages');
+
+test('all four extractors return readable inks from a synthetic photo', function () {
+  const width = 24, height = 24;
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
+    const p = i * 4;
+    data[p] = i % 3 === 0 ? 230 : 20;
+    data[p + 1] = i % 3 === 1 ? 210 : 20;
+    data[p + 2] = i % 3 === 2 ? 190 : 20;
+    data[p + 3] = 255;
+  }
+  Core.EXTRACT_METHODS.forEach(function (method) {
+    const colors = Core.extractPalette(data, width, height, 6, method);
+    assert.ok(colors.length >= 2 && colors.length <= 6, method + ' returned ' + colors.length);
+    colors.forEach(function (c) {
+      assert.strictEqual(c.length, 3);
+      c.forEach(function (v) { assert.ok(v >= 0 && v <= 255, method + ' channel ' + v); });
+    });
+    const luma = function (c) { return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+    for (let i = 1; i < colors.length; i++) {
+      assert.ok(luma(colors[i]) >= luma(colors[i - 1]), method + ' sorts dark to light');
+    }
+  });
+});
+
+test('the extractor clamps the request and rejects an empty image', function () {
+  const data = new Uint8ClampedArray(4 * 4 * 4);
+  for (let i = 0; i < 16; i++) { data[i * 4] = i * 16; data[i * 4 + 3] = 255; }
+  assert.strictEqual(Core.extractPalette(data, 4, 4, 999, 'median').length <= 32, true);
+  assert.throws(function () { Core.extractPalette(null, 0, 0, 8, 'cins'); }, /image/);
+});
+
+test('a plugin package is normalised and unknown fields are dropped', function () {
+  const pkg = Core.validatePluginPackage({
+    schema: 1,
+    id: 'demo-tool',
+    name: 'Demo Tool',
+    version: '1.2.3',
+    kind: 'tool',
+    capability: 'ink-extractor',
+    summary: 'A test package',
+    author: 'Test',
+    main: 'evil.js',
+    data: { methods: ['cins', 'bogus'], defaultCount: 12 },
+  });
+  assert.strictEqual(pkg.id, 'demo-tool');
+  assert.deepStrictEqual(pkg.data.methods, ['cins']);
+  assert.strictEqual(pkg.main, undefined);
+});
+
+test('a plugin package cannot smuggle a script or a bad preset', function () {
+  assert.throws(function () {
+    Core.validatePluginPackage({ schema: 1, id: 'bad', name: 'Bad', version: '1.0.0', kind: 'tool', capability: 'nope', summary: 'x' });
+  }, /capability/);
+  assert.throws(function () {
+    Core.validatePluginPackage({ schema: 1, id: 'bad', name: 'Bad', version: '1.0.0', kind: 'preset-pack', summary: 'x', data: { presets: [] } });
+  }, /1–24/);
+  assert.throws(function () {
+    Core.validatePluginPackage({ schema: 1, id: 'bad', name: 'Bad', version: '1.0.0', kind: 'preset-pack', summary: 'x', data: { presets: [{ id: 'ok', name: 'Ok', settings: [] }] } });
+  }, /settings object/);
+});
+
+// ---- catalogues ----
+
 group('catalogues');
 
 const LIST = [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'c', name: 'C' }];

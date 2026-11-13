@@ -46,6 +46,11 @@
   const ACTIONS = [
     { label: 'Open an image…', command: 'file-open', keywords: 'load picture file' },
     { label: 'Import a color palette…', command: 'file-import-palette', keywords: 'palette inks json hex custom' },
+    { label: 'Extract a palette from an image…', command: 'file-extract-palette', keywords: 'colorcat ink extractor plugin image' },
+    { label: 'Open the plugin manager…', command: 'file-plugin-manager', keywords: 'plugins github install preset packs tools' },
+    { label: 'Animate the still…', command: 'motion-start', keywords: 'animation timeline video motion' },
+    { label: 'Play or pause the animation', command: 'motion-toggle', keywords: 'animation timeline play' },
+    { label: 'Export the animation as WebM', command: 'motion-export', keywords: 'animation video export webm record' },
     { label: 'Export the proof as a PNG', command: 'file-save-png', keywords: 'save file download' },
     { label: 'Copy the proof to the clipboard', command: 'file-copy-png', keywords: 'paste clipboard' },
     { label: 'Export the text proof', command: 'file-export-txt', keywords: 'characters txt' },

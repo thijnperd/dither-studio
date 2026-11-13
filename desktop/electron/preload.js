@@ -64,6 +64,10 @@ const api = {
   openGuide: function () { return ipcRenderer.invoke('ds:open-guide'); },
   checkUpdates: function () { return ipcRenderer.invoke('ds:updates-check'); },
   installUpdate: function () { return ipcRenderer.invoke('ds:updates-install'); },
+  // Declarative plugin packages: the catalogue, then one package by catalogue id.
+  // Main owns the URL; the renderer never sees a fetch it can point elsewhere.
+  pluginsCatalogue: function (force, localOnly) { return ipcRenderer.invoke('ds:plugins-catalogue', !!force, !!localOnly); },
+  pluginsPackage: function (id, localOnly) { return ipcRenderer.invoke('ds:plugins-package', id, !!localOnly); },
   // The notes for this installed build; the Help window draws them.
   whatsNew: function () { return ipcRenderer.invoke('ds:whats-new'); },
 

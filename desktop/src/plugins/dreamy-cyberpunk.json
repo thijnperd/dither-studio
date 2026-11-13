@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "id": "dreamy-cyberpunk",
+  "name": "Dreamy Cyberpunk",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Two soft-focus, glitched Cyberpunk recipes adapted from Studio AAA's Dither Boy preset download.",
+  "author": "Studio AAA · adapted for Dither Studio",
+  "homepage": "https://studioaaa.com/dreamy-cyberpunk-presets-download/",
+  "data": {
+    "presets": [
+      {
+        "id": "dreamy-cyberpunk-1",
+        "name": "Dreamy Cyberpunk · Glitch 1",
+        "settings": {
+          "algorithm": "smooth-diffusion",
+          "palette": "cyberpunk-breach",
+          "pixelSize": 4,
+          "ditherStrength": 90,
+          "screen": { "smooth": 7, "flow": 78, "streak": 32 },
+          "adjustments": {
+            "brightness": 0.82, "contrast": 1.06, "saturation": 1.18,
+            "gamma": 1.04, "sharpen": 0.22
+          },
+          "glitches": [
+            { "id": "temporal", "amount": 10, "mode": "wave" },
+            { "id": "aberration", "amount": 16 },
+            { "id": "wave", "amount": 18 },
+            { "id": "grain", "amount": 12 }
+          ],
+          "glow": { "radius": 3, "intensity": 58 }
+        }
+      },
+      {
+        "id": "dreamy-cyberpunk-2",
+        "name": "Dreamy Cyberpunk · Glitch 2",
+        "settings": {
+          "algorithm": "smooth-diffusion",
+          "palette": "cyberpunk-breach",
+          "pixelSize": 4,
+          "ditherStrength": 80,
+          "screen": { "smooth": 8, "flow": 42, "streak": 58 },
+          "adjustments": {
+            "brightness": 0.78, "contrast": 1.1, "saturation": 1.24,
+            "gamma": 1.02, "sharpen": 0.3
+          },
+          "glitches": [
+            { "id": "temporal", "amount": 14, "mode": "pulse" },
+            { "id": "aberration", "amount": 22 },
+            { "id": "wave", "amount": 12 },
+            { "id": "grain", "amount": 16 }
+          ],
+          "glow": { "radius": 4, "intensity": 64 }
+        }
+      }
+    ]
+  }
+}

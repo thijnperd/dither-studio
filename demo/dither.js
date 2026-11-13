@@ -435,6 +435,20 @@
     { id: 'blueprint', name: 'Blueprint ink', colors: [[8, 24, 64], [214, 236, 255]] },
     { id: 'matrix', name: 'Matrix green ink', colors: [[3, 16, 6], [132, 255, 150]] },
     { id: 'ice', name: 'Ice ink', colors: [[6, 12, 34], [216, 240, 255]] },
+    // Three six- and twelve-ink sets from Studio AAA's Dither Boy Cyberpunk
+    // palette pack; the RGB values are the downloaded data, recorded in
+    // SOURCES.md. Breach is the set its Dreamy Cyberpunk recipes use.
+    { id: 'cyberpunk-breach', name: 'Cyberpunk Breach', colors: [
+      [10, 12, 18], [42, 48, 56], [78, 84, 92], [255, 26, 40], [255, 104, 24], [242, 238, 222],
+    ] },
+    { id: 'cyberpunk-acid', name: 'Cyberpunk Acid', colors: [
+      [10, 4, 8], [24, 6, 10], [42, 8, 16], [62, 10, 20], [26, 14, 24], [90, 16, 24],
+      [122, 20, 34], [160, 32, 56], [200, 40, 80], [184, 138, 24], [24, 184, 154], [244, 220, 216],
+    ] },
+    { id: 'cyberpunk-holo', name: 'Cyberpunk Holo', colors: [
+      [1, 2, 3], [2, 2, 43], [11, 27, 28], [10, 52, 49], [26, 66, 92], [52, 99, 108],
+      [83, 140, 139], [108, 163, 155], [131, 181, 170], [155, 186, 147], [248, 0, 0], [153, 198, 187],
+    ] },
   ];
 
   const PALETTE_BY_ID = new Map(PALETTES.map(function (p) { return [p.id, p]; }));
@@ -1470,20 +1484,30 @@
     },
     { id: 'tracking', name: 'Tape tracking', hint: 'horizontal bands slip and tear' },
     { id: 'channelroll', name: 'Channel roll', hint: 'rotates red, green and blue through each other' },
+    {
+      id: 'temporal', name: 'Temporal variation', hint: 'animates a wave, drift or pulse through the frame',
+      modes: [{ id: 'wave', name: 'Wave' }, { id: 'drift', name: 'Drift' }, { id: 'pulse', name: 'Pulse' }],
+    },
+    {
+      id: 'shapepress', name: 'Shape Press', hint: 'draws the frame as editable shape sets (Shape Press plugin)',
+      plugin: 'shape-press',
+      modes: [{ id: 'barcode', name: 'Barcode' }, { id: 'cross', name: 'Cross stitch' }, { id: 'halftone', name: 'Halftone' }, { id: 'bitmap', name: 'Bitmap' }],
+    },
   ];
   const GLITCH_BY_ID = new Map(GLITCHES.map(function (g) { return [g.id, g]; }));
   // The stack position and the effect's own index both fold into each effect's
   // RNG, so reordering the stack changes the frame without touching the seed.
   const GLITCH_SEED_INDEX = new Map(GLITCHES.map(function (g, i) { return [g.id, i + 1]; }));
 
-  function applyGlitchStack(rgba, w, h, stack, seed) {
+  function applyGlitchStack(rgba, w, h, stack, seed, frameIndex) {
+    const frame = Math.max(0, Math.round(num(frameIndex, 0)));
     for (let s = 0; s < stack.length; s++) {
       const item = stack[s];
       const amount = clampInt(item.amount, 0, 100);
       if (amount <= 0) continue;
       const idx = GLITCH_SEED_INDEX.get(item.id) || 1;
       const rng = makeRng((((seed >>> 0) ^ hash32(s + 1)) ^ hash32(idx)) >>> 0);
-      GLITCH_FNS[item.id](rgba, w, h, amount, rng, item.mode);
+      GLITCH_FNS[item.id](rgba, w, h, amount, rng, item.mode, frame);
     }
     return rgba;
   }
@@ -1829,6 +1853,93 @@
     }
   }
 
+  // Temporal variation is the one effect that reads the frame counter: a
+  // still frame is calm, and an animation or clip makes the pattern travel.
+  // Everything is a coordinate remap or a gain, so it stays deterministic.
+  function glitchTemporal(d, w, h, amount, rng, mode, frame) {
+    const k = amount / 100;
+    const phase = (frame || 0) * 0.42;
+    if (mode === 'pulse') {
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const p = (y * w + x) * 4;
+          const gain = 1 + Math.sin(x * 0.11 + y * 0.07 + phase) * k * 0.28;
+          d[p] = clamp255(d[p] * gain);
+          d[p + 1] = clamp255(d[p + 1] * gain);
+          d[p + 2] = clamp255(d[p + 2] * gain);
+        }
+      }
+      return;
+    }
+    const src = d.slice();
+    if (mode === 'drift') {
+      for (let x = 0; x < w; x++) {
+        const dy = Math.round(Math.sin(x * 0.16 + phase) * k * 5);
+        for (let y = 0; y < h; y++) {
+          const sy = clampInt(y + dy, 0, h - 1);
+          const to = (y * w + x) * 4, from = (sy * w + x) * 4;
+          d[to] = src[from]; d[to + 1] = src[from + 1]; d[to + 2] = src[from + 2];
+        }
+      }
+      return;
+    }
+    for (let y = 0; y < h; y++) {
+      const dx = Math.round(Math.sin(y * 0.20 + phase) * k * 7);
+      for (let x = 0; x < w; x++) {
+        const sx = clampInt(x + dx, 0, w - 1);
+        const to = (y * w + x) * 4, from = (y * w + sx) * 4;
+        d[to] = src[from]; d[to + 1] = src[from + 1]; d[to + 2] = src[from + 2];
+      }
+    }
+  }
+
+  // Shape Press: one 4x4 cell becomes a small shape chosen by the cell's
+  // luminance. It is deliberately a post-dither effect, so every algorithm,
+  // palette, animation and export already routes through it.
+  function glitchShapePress(d, w, h, amount, rng, mode, frame) {
+    const src = d.slice();
+    const cell = 4;
+    const k = amount / 100;
+    for (let by = 0; by < h; by += cell) {
+      for (let bx = 0; bx < w; bx += cell) {
+        let r = 0, g = 0, b = 0, count = 0;
+        for (let y = by; y < Math.min(h, by + cell); y++) {
+          for (let x = bx; x < Math.min(w, bx + cell); x++) {
+            const p = (y * w + x) * 4;
+            r += src[p]; g += src[p + 1]; b += src[p + 2]; count++;
+          }
+        }
+        const lumaValue = luma(r / count, g / count, b / count) / 255;
+        const shape = [r / count, g / count, b / count];
+        const dark = [shape[0] * 0.10, shape[1] * 0.10, shape[2] * 0.10];
+        for (let y = by; y < Math.min(h, by + cell); y++) {
+          for (let x = bx; x < Math.min(w, bx + cell); x++) {
+            const dx = x - bx, dy = y - by;
+            let on = false;
+            if (mode === 'barcode') {
+              const width = 1 + Math.round(lumaValue * (cell - 1));
+              on = dx < width;
+            } else if (mode === 'cross') {
+              on = dx === dy || dx + dy === cell - 1 || dx === 1 || dy === 1;
+            } else if (mode === 'halftone') {
+              const cx = (cell - 1) / 2, cy = (cell - 1) / 2;
+              const radius = Math.sqrt(lumaValue) * (cell / 2);
+              on = Math.sqrt((dx - cx) * (dx - cx) + (dy - cy) * (dy - cy)) <= radius;
+            } else {
+              const rank = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]][dy][dx];
+              on = lumaValue * 16 > rank;
+            }
+            const p = (y * w + x) * 4;
+            const target = on ? shape : dark;
+            d[p] = clamp255(src[p] * (1 - k) + target[0] * k);
+            d[p + 1] = clamp255(src[p + 1] * (1 - k) + target[1] * k);
+            d[p + 2] = clamp255(src[p + 2] * (1 - k) + target[2] * k);
+          }
+        }
+      }
+    }
+  }
+
   const GLITCH_FNS = {
     aberration: glitchAberration,
     blocks: glitchBlocks,
@@ -1845,6 +1956,8 @@
     starfield: glitchStarfield,
     tracking: glitchTracking,
     channelroll: glitchChannelRoll,
+    temporal: glitchTemporal,
+    shapepress: glitchShapePress,
   };
 
   // ---- glow ----
@@ -1904,6 +2017,7 @@
     serpentine: false,
     screen: { smooth: 3, flow: 60, streak: 0 },
     screenShift: 0,
+    frameIndex: 0,
     alphaMode: 'matte',
     toneMap: 'none',
     toneInk: [0, 0, 0],
@@ -1937,6 +2051,8 @@
       },
       // Runtime only: video playback slides tile screens frame by frame.
       screenShift: clampInt(Math.round(num(s.screenShift, 0)), 0, 1000000),
+      // Runtime only: animation and video drive frame-aware effects.
+      frameIndex: clampInt(Math.round(num(s.frameIndex, 0)), 0, 1000000),
       alphaMode: ALPHA_MODES.indexOf(s.alphaMode) >= 0 ? s.alphaMode : DEFAULT_SETTINGS.alphaMode,
       toneMap: TONE_MAP_BY_ID.has(s.toneMap) ? s.toneMap : DEFAULT_SETTINGS.toneMap,
       toneInk: colorTriple(s.toneInk, DEFAULT_SETTINGS.toneInk),
@@ -1985,6 +2101,7 @@
   function temporalSettings(settings, frameIndex, mode) {
     const merged = mergeSettings(settings);
     const index = Math.max(0, Math.round(num(frameIndex, 0)));
+    merged.frameIndex = index;
     if (mode === 'shimmer') {
       merged.seed = (merged.seed + Math.imul(index + 1, 0x9e3779b1)) >>> 0;
     } else if (mode === 'crawl') {
@@ -1992,6 +2109,89 @@
       // after that clamp rather than through it.
       merged.screenShift = clampInt(index, 0, 1000000);
     }
+    return merged;
+  }
+
+  // --- animation: the temporal rule for stills ---
+  // A track is one property moving from `from` to `to` over the timeline:
+  //   { property, from, to, ease, start, end }
+  // `start` and `end` are 0..1 and default to the whole timeline, so tracks
+  // can overlap or sequence. `seed` is additive (a 0..16 track rolls sixteen
+  // fresh screens), every other property is absolute.
+  const ANIMATION_PROPERTIES = [
+    { id: 'ditherStrength', name: 'Strength', min: 0, max: 200, step: 1, from: 100, to: 40 },
+    { id: 'seed', name: 'Seed drift', min: 0, max: 1000000, step: 1, from: 0, to: 16 },
+    { id: 'screenShift', name: 'Screen shift', min: 0, max: 64, step: 1, from: 0, to: 16 },
+    { id: 'threshold', name: 'Threshold', min: 0, max: 255, step: 1, from: 128, to: 96 },
+    { id: 'pixelSize', name: 'Pixel size', min: 1, max: 16, step: 1, from: 2, to: 6 },
+    { id: 'adjustments.brightness', name: 'Brightness', min: 0.5, max: 1.5, step: 0.01, from: 1, to: 0.86 },
+    { id: 'adjustments.contrast', name: 'Contrast', min: 0.5, max: 1.5, step: 0.01, from: 1, to: 1.2 },
+    { id: 'adjustments.saturation', name: 'Saturation', min: 0, max: 2, step: 0.01, from: 1, to: 1.35 },
+    { id: 'adjustments.hue', name: 'Hue', min: -180, max: 180, step: 1, from: 0, to: 60 },
+    { id: 'glow.radius', name: 'Glow radius', min: 0, max: 8, step: 1, from: 0, to: 4 },
+    { id: 'glow.intensity', name: 'Glow intensity', min: 0, max: 100, step: 1, from: 0, to: 50 },
+  ];
+  const ANIMATION_EASES = [
+    { id: 'linear', name: 'Linear' },
+    { id: 'in', name: 'Ease in' },
+    { id: 'out', name: 'Ease out' },
+    { id: 'in-out', name: 'Ease in-out' },
+  ];
+  const ANIMATION_PROPERTY_BY_ID = new Map(ANIMATION_PROPERTIES.map(function (p) { return [p.id, p]; }));
+  const ANIMATION_EASE_IDS = ANIMATION_EASES.map(function (e) { return e.id; });
+
+  function easeAnimation(t, ease) {
+    if (ease === 'in') return t * t;
+    if (ease === 'out') return 1 - (1 - t) * (1 - t);
+    if (ease === 'in-out') return t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t);
+    return t;
+  }
+
+  function setAnimationValue(settings, property, value) {
+    if (property === 'seed') {
+      settings.seed = (settings.seed + Math.round(value)) >>> 0;
+    } else if (property === 'ditherStrength') {
+      settings.ditherStrength = clampInt(Math.round(value), 0, 200);
+    } else if (property === 'screenShift') {
+      settings.screenShift = clampInt(Math.round(value), 0, 1000000);
+    } else if (property === 'threshold') {
+      settings.threshold = clampInt(Math.round(value), 0, 255);
+    } else if (property === 'pixelSize') {
+      settings.pixelSize = clampInt(Math.round(value), 1, 16);
+    } else if (property === 'adjustments.brightness') {
+      settings.adjustments.brightness = clampInt(value * 100, 50, 150) / 100;
+    } else if (property === 'adjustments.contrast') {
+      settings.adjustments.contrast = clampInt(value * 100, 50, 150) / 100;
+    } else if (property === 'adjustments.saturation') {
+      settings.adjustments.saturation = clampInt(value * 100, 0, 200) / 100;
+    } else if (property === 'adjustments.hue') {
+      settings.adjustments.hue = clampInt(Math.round(value), -180, 180);
+    } else if (property === 'glow.radius') {
+      settings.glow.radius = Math.max(0, Math.round(value));
+    } else if (property === 'glow.intensity') {
+      settings.glow.intensity = clampInt(Math.round(value), 0, 100);
+    }
+    return settings;
+  }
+
+  function animationSettings(settings, tracks, frameIndex, frameCount) {
+    const merged = mergeSettings(settings);
+    const total = Math.max(1, Math.round(num(frameCount, 1)));
+    const index = clampInt(Math.round(num(frameIndex, 0)), 0, total - 1);
+    const t = total <= 1 ? 0 : index / (total - 1);
+    (tracks || []).forEach(function (track) {
+      if (!track || !ANIMATION_PROPERTY_BY_ID.has(track.property)) return;
+      const meta = ANIMATION_PROPERTY_BY_ID.get(track.property);
+      const start = Math.max(0, Math.min(1, num(track.start, 0)));
+      const end = Math.max(0, Math.min(1, num(track.end, 1)));
+      if (end <= start || t < start || t > end) return;
+      const local = (t - start) / (end - start);
+      const ease = ANIMATION_EASE_IDS.indexOf(track.ease) >= 0 ? track.ease : 'linear';
+      const from = num(track.from, meta.from);
+      const to = num(track.to, meta.to);
+      setAnimationValue(merged, track.property, from + (to - from) * easeAnimation(local, ease));
+    });
+    merged.frameIndex = index;
     return merged;
   }
 
@@ -2065,7 +2265,7 @@
 
     const rgba = toRGBA(rgb, dw, dh);
     if (alphaSmall) applyAlpha(rgba, dw, dh, alphaSmall, settings);
-    if (settings.glitches.length) applyGlitchStack(rgba, dw, dh, settings.glitches, settings.seed);
+    if (settings.glitches.length) applyGlitchStack(rgba, dw, dh, settings.glitches, settings.seed, settings.frameIndex);
     if (settings.glow.radius > 0 && settings.glow.intensity > 0) {
       applyGlow(rgba, dw, dh, settings.glow.radius, settings.glow.intensity);
     }
@@ -2165,6 +2365,9 @@
     mergeSettings: mergeSettings,
     temporalSettings: temporalSettings,
     TEMPORAL_MODES: TEMPORAL_MODES,
+    animationSettings: animationSettings,
+    ANIMATION_PROPERTIES: ANIMATION_PROPERTIES,
+    ANIMATION_EASES: ANIMATION_EASES,
     process: process,
   };
 

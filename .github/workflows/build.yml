@@ -64,7 +64,7 @@ jobs:
 
       - name: Smoke — boot, check, screenshot
         working-directory: desktop
-        run: npm run smoke
+        run: npm run smoke:all
 
       - name: Smoke — the save chain writes a proof
         working-directory: desktop
@@ -74,7 +74,7 @@ jobs:
           export DITHER_SMOKE_DIR="$RUNNER_TEMP"
           export DITHER_SMOKE_SAVE="$RUNNER_TEMP/proof.png"
           export DITHER_SMOKE_KEY=ctrl+s
-          npm run smoke | tee "$RUNNER_TEMP/smoke.log"
+          npm run smoke:all | tee "$RUNNER_TEMP/smoke.log"
           # The report proves the app wrote the proof (the harness stat'ed
           # the bytes itself); the shell then has to see it too. Poll for a
           # bounded moment instead of racing the writer's exit.

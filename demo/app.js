@@ -19,6 +19,10 @@
   'use strict';
 
   const D = window.DitherLib;
+  // The demo has no plugin manager, so plugin-owned effects (Shape Press) are
+  // not part of its stack. The engine still knows how to draw them; the demo
+  // simply does not offer what it cannot install.
+  const EFFECTS = D.GLITCHES.filter(function (g) { return !g.plugin; });
   const MAX_SOURCE = 1600;
   const PREVIEW_SCALE = 0.5;
   const ZOOM_STEPS = [1, 2, 3, 4, 6, 8];
@@ -29,6 +33,13 @@
   // The publicity site frames this page with ?embed=1: no splash, no masthead,
   // and a recipe that shows the press off on the first paint.
   const EMBED = /[?&]embed=1(?:&|$)/.test(window.location.search);
+  // The demo is a shop window on a desktop, but it is the whole press on a
+  // phone or tablet: the desktop app does not run there, so hiding recipes
+  // would only punish the one audience that cannot install it. A coarse
+  // pointer is the stylesheet's own definition of touch, and maxTouchPoints
+  // catches a tablet whose primary pointer is still a trackpad.
+  const TOUCH = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+  const DEMO_PRESETS = ['gameboy', 'newsprint', 'riso', 'vhs', 'storm', 'wire'];
 
   const $ = function (id) { return document.getElementById(id); };
 
@@ -126,12 +137,12 @@
   // The glitch stack lives in the panel as a reorderable list, so the UI state
   // is the order plus a per-effect switch and amount.
   const glitches = {
-    order: D.GLITCHES.map(function (g) { return g.id; }),
+    order: EFFECTS.map(function (g) { return g.id; }),
     on: {},
     amount: {},
     mode: {},
   };
-  D.GLITCHES.forEach(function (g) {
+  EFFECTS.forEach(function (g) {
     glitches.on[g.id] = false;
     glitches.amount[g.id] = 50;
     glitches.mode[g.id] = g.modes ? g.modes[0].id : undefined;
@@ -193,7 +204,7 @@
   }
 
   function readGlitchState(list) {
-    D.GLITCHES.forEach(function (g) {
+    EFFECTS.forEach(function (g) {
       glitches.on[g.id] = false;
       glitches.amount[g.id] = 50;
       glitches.mode[g.id] = g.modes ? g.modes[0].id : undefined;
@@ -473,7 +484,8 @@
       : 'off');
     setNote(el.noteMotion, motionSummary());
     setNote(el.noteType, text.on ? text.ramp + ' · ' + text.size + 'px' : 'off');
-    setNote(el.notePreset, PRESETS.length + ' recipes');
+    setNote(el.notePreset, TOUCH ? PRESETS.length + ' recipes'
+      : visiblePresets().length + ' of ' + PRESETS.length + ' recipes');
     syncConsoleNote();
   }
 
@@ -573,6 +585,9 @@
 
   function buildToneMapSelect() {
     D.TONE_MAPS.forEach(function (map) {
+      // The custom ink/paper picker is one of the desktop-only extras. Touch
+      // devices keep it: they cannot use the app that would otherwise offer it.
+      if (!TOUCH && map.id === 'custom') return;
       const option = document.createElement('option');
       option.value = map.id;
       option.textContent = map.name;
@@ -714,7 +729,7 @@
     placeholder.value = '';
     placeholder.textContent = 'Choose an effect…';
     el.effectAdd.appendChild(placeholder);
-    D.GLITCHES.forEach(function (g) {
+    EFFECTS.forEach(function (g) {
       if (glitches.on[g.id]) return;
       const option = document.createElement('option');
       option.value = g.id;
@@ -725,7 +740,7 @@
 
   function addEffect(id) {
     const meta = D.GLITCHES.find(function (g) { return g.id === id; });
-    if (!meta || glitches.on[id]) return;
+    if (!meta || meta.plugin || glitches.on[id]) return;
     glitches.on[id] = true;
     if (!glitches.amount[id]) glitches.amount[id] = 50;
     if (meta.modes && !glitches.mode[id]) glitches.mode[id] = meta.modes[0].id;
@@ -887,19 +902,70 @@
       adjustments: { contrast: 1.1 },
       glitches: [{ id: 'channelroll', amount: 45 }, { id: 'aberration', amount: 25 }, { id: 'wave', amount: 15 }],
     } },
+    // The Dreamy Cyberpunk pair, adapted from Studio AAA's Dither Boy download.
+    // The desktop app installs them from the `dreamy-cyberpunk` plugin pack; the
+    // touch demo carries them directly, because the app does not run there.
+    { id: 'dreamy-cyberpunk-1', name: 'Dreamy Cyberpunk · Glitch 1', settings: {
+      algorithm: 'smooth-diffusion', palette: 'cyberpunk-breach', pixelSize: 4,
+      ditherStrength: 90, screen: { smooth: 7, flow: 78, streak: 32 },
+      adjustments: { brightness: 0.82, contrast: 1.06, saturation: 1.18, gamma: 1.04, sharpen: 0.22 },
+      glitches: [
+        { id: 'temporal', amount: 10, mode: 'wave' }, { id: 'aberration', amount: 16 },
+        { id: 'wave', amount: 18 }, { id: 'grain', amount: 12 },
+      ],
+      glow: { radius: 3, intensity: 58 },
+    } },
+    { id: 'dreamy-cyberpunk-2', name: 'Dreamy Cyberpunk · Glitch 2', settings: {
+      algorithm: 'smooth-diffusion', palette: 'cyberpunk-breach', pixelSize: 4,
+      ditherStrength: 80, screen: { smooth: 8, flow: 42, streak: 58 },
+      adjustments: { brightness: 0.78, contrast: 1.1, saturation: 1.24, gamma: 1.02, sharpen: 0.3 },
+      glitches: [
+        { id: 'temporal', amount: 14, mode: 'pulse' }, { id: 'aberration', amount: 22 },
+        { id: 'wave', amount: 12 }, { id: 'grain', amount: 16 },
+      ],
+      glow: { radius: 4, intensity: 64 },
+    } },
   ];
 
+  // Desktop demo: a taste of the recipe shelf. Touch devices get the whole
+  // shelf, because the app is not available on them.
+  function visiblePresets() {
+    if (TOUCH) return PRESETS;
+    return PRESETS.filter(function (preset) { return DEMO_PRESETS.indexOf(preset.id) >= 0; });
+  }
+
   function buildPresetSelect() {
+    el.preset.textContent = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = 'Choose a recipe…';
     el.preset.appendChild(placeholder);
-    PRESETS.forEach(function (preset) {
+    visiblePresets().forEach(function (preset) {
       const option = document.createElement('option');
       option.value = preset.id;
       option.textContent = preset.name;
       el.preset.appendChild(option);
     });
+  }
+
+  function updateDemoLimits() {
+    const promo = document.getElementById('demo-promo-copy');
+    const limits = document.getElementById('demo-limits');
+    if (promo) {
+      promo.textContent = TOUCH
+        ? 'All ' + PRESETS.length + ' recipes and every palette are unlocked here, because the desktop app runs on Windows and macOS.'
+        : 'Six recipes, no plugins and no custom palettes. The app has all ' + PRESETS.length + '.';
+    }
+    if (limits) {
+      limits.innerHTML = TOUCH
+        ? '<b>Touch edition: all ' + PRESETS.length + ' recipes and every palette.</b> '
+          + 'Plugins, custom palette import and the animation timeline stay in the desktop app. '
+          + '<a href="https://github.com/thijnperd/dither-studio/releases/latest">Get the desktop app →</a>'
+        : '<b>The demo has six recipes, no plugins and no custom palette import.</b> '
+          + 'The desktop app adds all ' + PRESETS.length + ' recipes, plugin packs, the Ink Extractor, '
+          + 'Shape Press and the animation timeline. '
+          + '<a href="https://github.com/thijnperd/dither-studio/releases/latest">Get the app →</a>';
+    }
   }
 
   function applySettings(next, label) {
@@ -911,9 +977,10 @@
   }
 
   function applyPreset(id) {
-    const preset = PRESETS.find(function (p) { return p.id === id; });
-    if (!preset) return;
+    const preset = visiblePresets().find(function (p) { return p.id === id; });
+    if (!preset) return false;
     applySettings(preset.settings, preset.name);
+    return true;
   }
 
   // ---- rendering ----
@@ -1373,7 +1440,7 @@
       glitches: [],
       glow: { radius: 0, intensity: 0 },
     };
-    const pool = D.GLITCHES.slice();
+    const pool = EFFECTS.slice();
     const count = (Math.random() * 3) | 0;
     for (let i = 0; i < count && pool.length; i++) {
       const pick = pool.splice((Math.random() * pool.length) | 0, 1)[0];
@@ -1399,6 +1466,7 @@
     buildEffectList();
     syncEffectChoices();
     buildPresetSelect();
+    updateDemoLimits();
 
     BINDINGS.forEach(function (binding) {
       binding.input.addEventListener('input', function () {
@@ -1894,7 +1962,7 @@
         status: el.statStatus.textContent,
       };
     },
-    applyPreset: function (id) { applyPreset(id); },
+    applyPreset: function (id) { return applyPreset(id); },
     randomize: randomize,
     exportTxt: exportTXT,
     // Test hook: load a synthetic source (a data URL) without a file dialog.

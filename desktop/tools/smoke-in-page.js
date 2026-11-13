@@ -725,6 +725,89 @@
   sampleSelect.value = '0';
   sampleSelect.dispatchEvent(new Event('change'));
 
+  /* ---- plugins: install from the pull path, gate a tool, add recipes ---- */
+
+  const pluginApi = window.DitherPlugins;
+  check('the plugin manager published its store', !!pluginApi && typeof pluginApi.install === 'function');
+  const shapeBefore = DS.catalogues.GLITCHES.some(function (entry) { return entry.id === 'shapepress'; });
+  check('a plugin effect is hidden until its package is installed', shapeBefore === false);
+
+  const bundledCatalogue = pluginApi ? await pluginApi.refresh(true, true) : null;
+  check('the app ships a fallback catalogue', !!bundledCatalogue &&
+    bundledCatalogue.plugins.length >= 5, bundledCatalogue ? bundledCatalogue.plugins.length : 0);
+  const inkPack = pluginApi ? await pluginApi.install('ink-extractor', true) : null;
+  check('the GitHub pull path installs the Ink Extractor', !!inkPack && inkPack.id === 'ink-extractor', inkPack && inkPack.id);
+  const shapePack = pluginApi ? await pluginApi.install('shape-press', true) : null;
+  check('the GitHub pull path installs Shape Press', !!shapePack && shapePack.id === 'shape-press', shapePack && shapePack.id);
+  const presetBefore = DS.catalogues.PRESETS.length;
+  const nikoPack = pluginApi ? await pluginApi.install('nikos-glitch', true) : null;
+  const presetAfter = DS.catalogues.PRESETS.length;
+  check('a preset pack adds recipes to the catalogue',
+    !!nikoPack && presetAfter > presetBefore &&
+      DS.catalogues.PRESETS.some(function (entry) { return entry.id === 'niko-neon-bloom'; }),
+    presetBefore + ' -> ' + presetAfter);
+  const shapeNames = Array.prototype.slice.call(document.getElementById('effect-add').options)
+    .map(function (option) { return option.textContent; });
+  check('installing Shape Press adds its effect to the picker',
+    shapeNames.indexOf('Shape Press') >= 0);
+  const shapeSorted = shapeNames.slice(1).slice().sort(function (a, b) { return a.localeCompare(b); });
+  check('Shape Press is in the alphabetical effect list',
+    shapeNames.indexOf('Shape Press') >= 0 &&
+      JSON.stringify(shapeNames.slice(1)) === JSON.stringify(shapeSorted));
+
+  const beforeShape = window.__dither.canvasHash();
+  window.__dither.addEffect('shapepress');
+  await wait(180);
+  const afterShape = window.__dither.canvasHash();
+  check('Shape Press draws a different proof', afterShape !== beforeShape, beforeShape + ' -> ' + afterShape);
+  check('the shape effect carries its four modes',
+    !!document.querySelector('#effect-list .stack-row[data-effect="shapepress"] .stack-mode'));
+  window.__dither.removeEffect('shapepress');
+  await wait(120);
+
+  const extracted = window.__dither.extractPalette(8, 'cins');
+  check('Ink Extractor reads a palette from the open image',
+    !!extracted && extracted.length >= 2 && extracted.every(function (c) {
+      return c.length === 3 && c.every(function (v) { return v >= 0 && v <= 255; });
+    }), extracted ? extracted.length + ' inks' : null);
+  const openedInk = window.__dither.inkExtractorOpen();
+  await wait(80);
+  check('Ink Extractor opens its dialog', openedInk === true && window.DitherInkExtractor.isOpen());
+  window.DitherInkExtractor.close();
+
+  DS.command('file-plugin-manager');
+  await wait(300);
+  check('the Plugin Manager lists the catalogue',
+    window.DitherPlugins.isOpen() && document.querySelectorAll('#plugin-list .plugin-row').length >= 5,
+    document.querySelectorAll('#plugin-list .plugin-row').length);
+  window.DitherPlugins.close();
+
+  /* ---- the animation timeline ------------------------------------- */
+
+  const animationStarted = window.__dither.animationStart();
+  await wait(100);
+  check('Animate the still opens the timeline', animationStarted === true &&
+    window.__dither.animationStats().active === true &&
+    document.getElementById('animation-panel').hidden === false);
+  const anim = window.__dither.animationStats();
+  check('the timeline starts with one track and a frame count',
+    anim.tracks.length >= 1 && anim.total === anim.duration * anim.fps, anim.total);
+  window.__dither.animationTick(0);
+  const firstFrame = window.__dither.canvasHash();
+  window.__dither.animationTick(anim.total - 1);
+  const lastFrame = window.__dither.canvasHash();
+  check('moving the playhead re-renders the proof', firstFrame !== lastFrame, firstFrame + ' -> ' + lastFrame);
+  check('the timeline transport is under the proof', document.getElementById('animation-transport').hidden === false);
+  check('the animation role is reported to the menu state',
+    !!DS.state().animation && DS.state().animation.frame === anim.total - 1);
+  window.__dither.animationStop();
+  await wait(120);
+  check('closing the animation returns the still',
+    window.__dither.animationStats().active === false && document.getElementById('animation-panel').hidden === true);
+
+  report.notes.plugins = window.__dither.pluginsInstalled().map(function (pkg) { return pkg.id; });
+  report.notes.animation = window.__dither.animationStats();
+
   /* ---- the dock column holds its width ---------------------------- */
 
   // The dock is a 336px column. Its tab strip is one scrolling row, and a grid

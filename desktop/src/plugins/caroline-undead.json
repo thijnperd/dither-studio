@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "id": "caroline-undead",
+  "name": "Caroline's Undead Dithering",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Original muted, textured recipes inspired by Caroline Dietl's medieval grunge.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/caroline-dietls-undead-dithering/",
+  "data": {
+    "presets": [
+      {
+        "id": "caroline-undead-parchment",
+        "name": "Caroline · Undead Parchment",
+        "settings": {
+          "algorithm": "atkinson",
+          "palette": "gruvbox",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.08, "saturation": 0.72, "gamma": 1.06 },
+          "toneMap": "sepia",
+          "glitches": [
+            { "id": "grain", "amount": 18 },
+            { "id": "vignette", "amount": 20 }
+          ]
+        }
+      },
+      {
+        "id": "caroline-medieval-moss",
+        "name": "Caroline · Medieval Moss",
+        "settings": {
+          "algorithm": "clustered-dot-8",
+          "palette": "sweetie-16",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.05, "saturation": 0.6, "brightness": 0.98 },
+          "toneMap": "forest",
+          "glitches": [
+            { "id": "grain", "amount": 20 },
+            { "id": "vignette", "amount": 30 }
+          ]
+        }
+      },
+      {
+        "id": "caroline-reliquary",
+        "name": "Caroline · Reliquary",
+        "settings": {
+          "algorithm": "floyd-steinberg",
+          "palette": "gray-8",
+          "pixelSize": 1,
+          "adjustments": { "contrast": 1.15, "gamma": 1.05, "sharpen": 0.2 },
+          "toneMap": "oxide",
+          "glitches": [
+            { "id": "grain", "amount": 12 },
+            { "id": "vignette", "amount": 25 }
+          ]
+        }
+      }
+    ]
+  }
+}
