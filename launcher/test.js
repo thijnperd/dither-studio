@@ -879,7 +879,7 @@ test('the new inks carry the levels they promise', function () {
   assert.strictEqual(palette('ice').colors.length, 2);
   assert.ok(palette('matrix').colors[1][1] > palette('matrix').colors[0][1], 'matrix green brightens green');
   assert.strictEqual(D.PALETTES.length, 30);
-  assert.strictEqual(D.GLITCHES.length, 17);
+  assert.strictEqual(D.GLITCHES.length, 21);
   assert.strictEqual(D.ALGORITHMS.length, 46);
 });
 
@@ -995,7 +995,7 @@ function imageOf(w, h, fn) {
 }
 
 test('every glitch names itself and only offers modes it implements', function () {
-  assert.strictEqual(D.GLITCHES.length, 17);
+  assert.strictEqual(D.GLITCHES.length, 21);
   const ids = new Set();
   D.GLITCHES.forEach(function (g) {
     assert.ok(g.id && g.name && g.hint, 'metadata for ' + g.id);
@@ -1301,6 +1301,60 @@ test('Shape Press draws all four shape sets and is marked as a plugin effect', f
   });
 });
 
+test('the four effect plugins declare their capabilities and change the frame', function () {
+  const plugins = {
+    crepuscular: 'crepuscular-rays',
+    riso: 'riso-misprint',
+    phosphor: 'phosphor-mask',
+    guilloche: 'guilloche-plate',
+  };
+  const w = 48, h = 48;
+  const src = makeSource(w, h, function (x, y) { return [x * 5, y * 5, (x + y) * 2]; }).data;
+  Object.keys(plugins).forEach(function (id) {
+    const meta = D.GLITCHES.find(function (g) { return g.id === id; });
+    assert.ok(meta && meta.plugin === plugins[id], id + ' is a plugin effect');
+    const modes = meta.modes ? meta.modes.map(function (m) { return m.id; }) : [undefined];
+    modes.forEach(function (mode) {
+      const a = src.slice();
+      const b = src.slice();
+      D.applyGlitchStack(a, w, h, [{ id: id, amount: 80, mode: mode }], 13, 0);
+      D.applyGlitchStack(b, w, h, [{ id: id, amount: 80, mode: mode }], 13, 0);
+      assert.ok(!sameBytes(a, src), id + ' ' + (mode || 'default') + ' changes the frame');
+      assert.deepStrictEqual(Array.from(a), Array.from(b), id + ' ' + (mode || 'default') + ' is deterministic');
+    });
+  });
+});
+
+test('a movable effect origin is clamped, preserved and actually moves the light', function () {
+  const w = 64, h = 64;
+  const black = makeSource(w, h, function () { return [0, 0, 0]; }).data;
+  const draw = function (origin) {
+    const out = black.slice();
+    D.applyGlitchStack(out, w, h, [{ id: 'crepuscular', amount: 85, origin: origin }], 21, 0);
+    return out;
+  };
+  const left = draw({ x: 20, y: 20 });
+  const right = draw({ x: 80, y: 30 });
+  const again = draw({ x: 20, y: 20 });
+  assert.ok(!sameBytes(left, right), 'a different origin draws different rays');
+  assert.deepStrictEqual(Array.from(left), Array.from(again), 'the same origin repeats exactly');
+  const at = function (data, x, y) {
+    const p = (y * w + x) * 4;
+    return data[p] + data[p + 1] + data[p + 2];
+  };
+  assert.ok(at(left, 12, 12) > at(right, 12, 12), 'the core stays near the chosen origin');
+  assert.ok(at(right, 51, 19) > at(left, 51, 19), 'and follows it when it moves');
+
+  const merged = D.mergeSettings({ glitches: [
+    { id: 'crepuscular', amount: 50, origin: { x: -10, y: 140 } },
+    { id: 'guilloche', amount: 50, origin: { x: '55', y: null } },
+    { id: 'riso', amount: 50 },
+  ] });
+  assert.deepStrictEqual(merged.glitches[0].origin, { x: 0, y: 100 });
+  assert.deepStrictEqual(merged.glitches[1].origin, { x: 50, y: 50 });
+  assert.strictEqual(merged.glitches[2].origin, undefined);
+});
+
 // ---- 16. performance budget ----
 
 group('performance budget (1024×1024, pixel size 1)');
@@ -1347,7 +1401,7 @@ test('the whole glitch stack on a megapixel', function () {
     algorithm: 'bayer4', palette: 'c64', pixelSize: 1, seed: 1,
     glitches: D.GLITCHES.map(function (g) { return { id: g.id, amount: 50 }; }),
   };
-  budget('all 11 glitches', settings, 6000);
+  budget('all 21 glitches', settings, 6000);
 });
 
 test('a structure screen holds its sample budget on a big frame', function () {

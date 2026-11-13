@@ -16,9 +16,11 @@
   check('the plugin store is published', !!plugins && typeof plugins.install === 'function');
   check('Shape Press is hidden before its package is installed',
     optionNames('effect-add').indexOf('Shape Press') < 0);
+  check('Crepuscular rays is hidden before its package is installed',
+    optionNames('effect-add').indexOf('Crepuscular rays') < 0);
 
   const catalogue = plugins ? await plugins.refresh(true, true) : null;
-  check('the bundled catalogue is readable', !!catalogue && catalogue.plugins.length >= 7,
+  check('the bundled catalogue is readable', !!catalogue && catalogue.plugins.length >= 11,
     catalogue ? catalogue.plugins.length : 0);
 
   const ink = plugins ? await plugins.install('ink-extractor', true) : null;
@@ -36,6 +38,51 @@
   check('Shape Press offers its four modes',
     !!document.querySelector('#effect-list .stack-row[data-effect="shapepress"] .stack-mode'));
   window.__dither.removeEffect('shapepress');
+
+  const rayPack = plugins ? await plugins.install('crepuscular-rays', true) : null;
+  check('Crepuscular Rays installs from the package path',
+    !!rayPack && rayPack.capability === 'crepuscular-rays');
+  check('installing Crepuscular Rays adds it to the effect picker',
+    optionNames('effect-add').indexOf('Crepuscular rays') >= 0);
+  const beforeRay = window.__dither.canvasHash();
+  window.__dither.addEffect('crepuscular');
+  await wait(180);
+  const rayRow = document.querySelector('#effect-list .stack-row[data-effect="crepuscular"]');
+  check('Crepuscular rays draws a different proof', window.__dither.canvasHash() !== beforeRay);
+  check('Crepuscular rays offers two origin sliders',
+    !!rayRow && rayRow.querySelectorAll('.stack-origin input').length === 2,
+    rayRow ? rayRow.querySelectorAll('.stack-origin input').length : null);
+  const rayHash = window.__dither.canvasHash();
+  const originX = rayRow && rayRow.querySelector('.stack-origin input');
+  if (originX) {
+    originX.value = '82';
+    originX.dispatchEvent(new Event('input', { bubbles: true }));
+    originX.dispatchEvent(new Event('change', { bubbles: true }));
+    await wait(180);
+  }
+  check('moving the origin redraws the shafts',
+    !!originX && window.__dither.canvasHash() !== rayHash, window.__dither.canvasHash());
+  window.__dither.removeEffect('crepuscular');
+  await wait(120);
+
+  const extraEffects = [
+    ['riso-misprint', 'riso', 'Riso Misprint', 'Riso misprint'],
+    ['phosphor-mask', 'phosphor', 'Phosphor Mask', 'Phosphor mask'],
+    ['guilloche-plate', 'guilloche', 'Guilloche Plate', 'Guilloche plate'],
+  ];
+  for (let i = 0; i < extraEffects.length; i++) {
+    const entry = extraEffects[i];
+    const pack = plugins ? await plugins.install(entry[0], true) : null;
+    check(entry[2] + ' installs from the package path', !!pack && pack.capability === entry[0]);
+    check('installing ' + entry[2] + ' adds it to the effect picker',
+      optionNames('effect-add').indexOf(entry[3]) >= 0);
+    const before = window.__dither.canvasHash();
+    window.__dither.addEffect(entry[1]);
+    await wait(180);
+    check(entry[2] + ' draws a different proof', window.__dither.canvasHash() !== before);
+    window.__dither.removeEffect(entry[1]);
+    await wait(100);
+  }
 
   const inkPack = plugins ? await plugins.install('dreamy-cyberpunk', true) : null;
   check('the Dreamy Cyberpunk pack installs', !!inkPack && inkPack.id === 'dreamy-cyberpunk');
@@ -211,7 +258,7 @@
     return node.querySelector('.plugin-section-title').textContent;
   });
   check('the Plugin Manager lists the catalogue',
-    plugins.isOpen() && managerRows.length >= 7, managerRows.length);
+    plugins.isOpen() && managerRows.length >= 11, managerRows.length);
   check('the manager is split into functionality and presets',
     sectionNames.join('|') === 'Functionality|Presets & color schemes', sectionNames.join('|'));
   check('every plugin row states a package size',

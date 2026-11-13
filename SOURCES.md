@@ -75,6 +75,18 @@ pick a dense palette or the two-colour variant for a calmer screen.
 | The classic swirl / ripple / wave displacement (as documented for e.g. [ImageMagick's `-swirl` and `-wave`](https://usage.imagemagick.org/transform/)) | The `ripple` glitch (concentric displacement about a seeded centre) and `wave`'s smooth displacement. |
 | Standard procedural star-field practice (seeded scattered stars, optional motion streaks and a radial glow) | The `starfield` glitch. Constructed here; a star field has no canonical published table. |
 
+## Plugin effects (added with the fourth press)
+
+| Source | What it informed |
+|---|---|
+| [GPU Gems 3, chapter 13 — "Volumetric Light Scattering as a Post-Process"](https://developer.nvidia.com/gpugems/gpugems3/part-ii-light-and-shadows/chapter-13-volumetric-light-scattering-post-process) | The `crepuscular` effect: a radial gather around a light origin, accumulating a bright-source mask with a decay weight, then adding the result in linear light. The implementation is a clean-room JavaScript version of the published equations; no shader code was copied. |
+| [Timothy Lottes, `crt-lottes-fast.glsl`](https://github.com/libretro/glsl-shaders/blob/master/crt/shaders/crt-lottes-fast.glsl) (public domain / Unlicense) | The scanline cosine and RGB triad-mask formulas behind `phosphor`. Only the published formula was used; the implementation is new JavaScript and adds the aperture-grille/shadow-mask choice. |
+| [Adobe, *PostScript Language Reference*, 3rd edition — halftone dictionaries](https://www.adobe.com/products/postscript/pdfs/PLRM.pdf) | The rotated spot-function screen behind `riso`: frequency, screen angle and a round spot threshold. The second plate, registration offset, trapping and paper stock are original print-shop behaviour rather than code from the reference. |
+| [Wolfram MathWorld — hypotrochoid](https://mathworld.wolfram.com/Hypotrochoid.html) and [epitrochoid](https://mathworld.wolfram.com/Epitrochoid.html) | The family of rolling-curve rosettes that informs `guilloche`. The effect draws its own polar distance field (five outer rings plus four counter-rotating inner rings); no guilloche library code is included. |
+
+The longer notes, including the equations and the decisions taken from them, are in
+[`docs/effects-research.md`](docs/effects-research.md).
+
 ## Video, temporal dithering and recording
 
 | Source | What it informed |

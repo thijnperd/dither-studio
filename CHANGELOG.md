@@ -10,6 +10,32 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.6.1 — Rays, riso, phosphor and guilloche (2026-11-13)
+
+**Four new effect plugins, and a light origin you can place.**
+
+- **Crepuscular Rays.** A new stack effect gathers the proof's bright areas
+  outward from a movable origin into seeded light shafts, with a white-violet
+  core. Its two Origin sliders place the source anywhere from a figure's chest
+  to a point outside the frame; the value is stored as a percentage so it
+  survives every export scale and appears in presets and JSON.
+- **Riso Misprint.** Two rotated halftone plates, a deliberate registration
+  slip and a warm paper stock, with Duotone and Black ink modes.
+- **Phosphor Mask.** Cosine scanlines, an RGB triad and a little chroma bleed,
+  with Aperture grille and Shadow mask variants.
+- **Guilloche Plate.** Five outer and four counter-rotating inner banknote
+  rosettes, engraved in light or dark ink around its own movable origin. The
+  deliberately niche one.
+- **The effects stack counts twenty-one.** The new effects join Shape Press as
+  plugin-gated tools in the bundled catalogue, which now carries eleven
+  packages: seven tools and four preset packs. Their package icons are the
+  official Tabler outline marks (`sun`, `copy`, `device-tv`, `rosette`).
+- **Provenance and checks.** The ray gather follows GPU Gems 3 ch.13, the riso
+  screen the PostScript halftone model, the phosphor formulas Lottes' fast CRT
+  shader, and the guilloche the hypotrochoid family; the longer notes are in
+  `docs/effects-research.md`. The engine, desktop core, tour and plugin smoke
+  suites cover the effects, their modes and the origin control.
+
 ## 0.6.0 — The studio menu and the guide (2026-11-13)
 
 **One menu for the studio's surfaces, and one Help window that holds the manual.**

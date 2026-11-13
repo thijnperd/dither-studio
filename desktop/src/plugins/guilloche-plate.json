@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "id": "guilloche-plate",
+  "name": "Guilloche Plate",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "guilloche-plate",
+  "summary": "Engrave banknote rosettes around a moveable point, with fine light and dark line work.",
+  "author": "Dither Studio",
+  "homepage": "https://mathworld.wolfram.com/Hypotrochoid.html",
+  "data": {}
+}

@@ -315,6 +315,21 @@ test('a scheme-maker package keeps only its harmony defaults', function () {
   assert.strictEqual(pkg.data.methods, undefined);
 });
 
+test('the four effect plugins pass the capability allowlist', function () {
+  ['crepuscular-rays', 'riso-misprint', 'phosphor-mask', 'guilloche-plate'].forEach(function (capability) {
+    const pkg = Core.validatePluginPackage({
+      schema: 1,
+      id: capability,
+      name: capability,
+      version: '1.0.0',
+      kind: 'tool',
+      capability: capability,
+      summary: 'A declarative effect package',
+    });
+    assert.strictEqual(pkg.capability, capability);
+  });
+});
+
 test('a plugin package cannot smuggle a script or a bad preset', function () {
   assert.throws(function () {
     Core.validatePluginPackage({ schema: 1, id: 'bad', name: 'Bad', version: '1.0.0', kind: 'tool', capability: 'nope', summary: 'x' });

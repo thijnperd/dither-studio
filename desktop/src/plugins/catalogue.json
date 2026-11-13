@@ -33,6 +33,46 @@
       "file": "color-scheme-maker.json"
     },
     {
+      "id": "crepuscular-rays",
+      "name": "Crepuscular Rays",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "crepuscular-rays",
+      "summary": "Turn bright areas into radial light shafts, with an origin you can place anywhere in the frame.",
+      "author": "Dither Studio",
+      "file": "crepuscular-rays.json"
+    },
+    {
+      "id": "riso-misprint",
+      "name": "Riso Misprint",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "riso-misprint",
+      "summary": "Overprint two rotated halftone plates with a small registration slip and a warm paper stock.",
+      "author": "Dither Studio",
+      "file": "riso-misprint.json"
+    },
+    {
+      "id": "phosphor-mask",
+      "name": "Phosphor Mask",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "phosphor-mask",
+      "summary": "Lay a CRT scanline and RGB phosphor triad over the proof, with aperture-grille and shadow-mask variants.",
+      "author": "Dither Studio",
+      "file": "phosphor-mask.json"
+    },
+    {
+      "id": "guilloche-plate",
+      "name": "Guilloche Plate",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "guilloche-plate",
+      "summary": "Engrave banknote rosettes around a moveable point, with fine light and dark line work.",
+      "author": "Dither Studio",
+      "file": "guilloche-plate.json"
+    },
+    {
       "id": "nikos-glitch",
       "name": "Niko's Glitch Universe",
       "version": "1.0.0",

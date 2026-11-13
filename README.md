@@ -55,11 +55,13 @@ shelf and the download links, is
   saturation and hue; blur, unsharp mask and median denoise; and **13 tone
   maps** that re-ink a finished dither — so a 1-bit proof stays exactly two
   inks — including your own ink and paper.
-- **17 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
+- **21 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
   grain, pixel sort, wave, drip, kaleidoscope, dead pixels, vignette, CRT
-  bloom, ripple, starfield, tape tracking, channel roll, temporal variation and
-  Shape Press (with its plugin), added one at a time, reorderable, each with its
-  own amount and mode — plus a blurred **glow** pass that adds in linear light.
+  bloom, ripple, starfield, tape tracking, channel roll, temporal variation,
+  Shape Press, crepuscular rays, riso misprint, phosphor mask and guilloche
+  plate (the last five with their plugins), added one at a time, reorderable,
+  each with its own amount and mode — plus a blurred **glow** pass that adds in
+  linear light. The ray and guilloche effects also take a movable origin.
 - **Chunky pixels.** A pixel size of 1–16 box-averages the picture before
   dithering and upscales it without smoothing, for pixel-art output.
 - **Text mode.** Print the proof as ASCII, blocks, shades, hex or binary, and
@@ -77,15 +79,17 @@ shelf and the download links, is
   size written on its row and the installed total below the list. A package
   switches on a capability or adds recipes; installed packages stay on the
   machine, and a declarative palette pack can also be installed from a file.
-  The bundled catalogue has seven packages — three tools and four preset
+  The bundled catalogue has eleven packages — seven tools and four preset
   packs. The Ink Extractor pulls a palette out of the open photo, Shape Press
   redraws the proof as barcode, cross-stitch, halftone or bitmap sets, Color
   Scheme Maker drafts lockable palettes from harmony rules (or a Lospec palette,
-  the open image, or pasted hex) and exports them as shareable packs, and preset
-  packs add whole recipes. Saved schemes can be renamed, reopened in the maker
-  or deleted from *File ▸ Manage Color Schemes…*, and the Presets picker gives
-  each installed pack its own heading after the built-in recipes. No downloaded
-  JavaScript is ever executed.
+  the open image, or pasted hex) and exports them as shareable packs, and the
+  four effect tools add crepuscular rays with a placeable light origin, a
+  two-plate riso misprint, a CRT phosphor mask and banknote guilloche rosettes.
+  Preset packs add whole recipes. Saved schemes can be renamed, reopened in the
+  maker or deleted from *File ▸ Manage Color Schemes…*, and the Presets picker
+  gives each installed pack its own heading after the built-in recipes. No
+  downloaded JavaScript is ever executed.
 - **25 built-in recipes.** Whole setups — algorithm, palette, grading, effects
   and glow — applied in one pick, from Newsprint and Halftone Noir to VHS Decay,
   Sweetie Postcard, Tape Deck and the three structure-aware looks. The bundled
@@ -312,7 +316,7 @@ palette's JSON: no account, no telemetry, no analytics. You can update from
 ## Checks
 
 ```bash
-node launcher/test.js                                        # 96 engine tests
+node launcher/test.js                                        # 98 engine tests
 bash tools/check.sh launcher/index.html --expect canvas       # a page in a real browser
 node tools/check-examples.js                                 # examples/ against its own manifest
 cd desktop && npm test && npm run smoke:all                   # core, tour and updater checks, then the full window run

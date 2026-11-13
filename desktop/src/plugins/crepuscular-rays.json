@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "id": "crepuscular-rays",
+  "name": "Crepuscular Rays",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "crepuscular-rays",
+  "summary": "Turn bright areas into radial light shafts, with an origin you can place anywhere in the frame.",
+  "author": "Dither Studio",
+  "homepage": "https://developer.nvidia.com/gpugems/gpugems3/part-ii-light-and-shadows/chapter-13-volumetric-light-scattering-post-process",
+  "data": {}
+}

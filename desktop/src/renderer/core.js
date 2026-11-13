@@ -559,7 +559,10 @@
   // Validation is strict for the fields the app consumes, and drops everything
   // else, so a package cannot smuggle settings into a prototype or a DOM call.
   const PLUGIN_KINDS = ['tool', 'preset-pack', 'palette-pack'];
-  const PLUGIN_CAPABILITIES = ['ink-extractor', 'shape-press', 'color-scheme-maker'];
+  const PLUGIN_CAPABILITIES = [
+    'ink-extractor', 'shape-press', 'color-scheme-maker',
+    'crepuscular-rays', 'riso-misprint', 'phosphor-mask', 'guilloche-plate',
+  ];
   const EXTRACT_LABELS = { cins: 'CINS', median: 'Median cut', octree: 'Octree', polarity: 'Polarity' };
 
   function pluginSlug(value) {

@@ -27,6 +27,10 @@
     'ink-extractor': '../assets/menu/plugin-ink-extractor.svg',
     'shape-press': '../assets/menu/plugin-shape-press.svg',
     'color-scheme-maker': '../assets/menu/plugin-color-scheme-maker.svg',
+    'crepuscular-rays': '../assets/menu/plugin-crepuscular-rays.svg',
+    'riso-misprint': '../assets/menu/plugin-riso-misprint.svg',
+    'phosphor-mask': '../assets/menu/plugin-phosphor-mask.svg',
+    'guilloche-plate': '../assets/menu/plugin-guilloche-plate.svg',
     'nikos-glitch': '../assets/menu/pack-nikos-glitch.svg',
     'caroline-undead': '../assets/menu/pack-caroline-undead.svg',
     'dreamy-cyberpunk': '../assets/menu/pack-dreamy-cyberpunk.svg',
@@ -265,6 +269,7 @@
       const detail = [];
       if (effect.amount !== undefined && effect.amount !== null) detail.push(effect.amount + '%');
       if (modeLabel(effect)) detail.push(modeLabel(effect));
+      if (effect.origin) detail.push('@ ' + effect.origin.x + ',' + effect.origin.y);
       copy.appendChild(node('small', '', detail.join(' · ') || 'active'));
       row.appendChild(copy);
       const toggle = node('button', 'fm-switch is-on');

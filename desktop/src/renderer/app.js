@@ -218,7 +218,7 @@
   function restoreHistory(snap) {
     history.suspended = true;
     state.settings = D.mergeSettings(snap.settings);
-    readGlitchState(snap.settings && snap.settings.glitches);
+    readGlitchState(state.settings.glitches);
     text.on = !!snap.text.on;
     text.ramp = snap.text.ramp || 'ascii';
     text.size = snap.text.size || 10;
@@ -258,11 +258,13 @@
     on: {},
     amount: {},
     mode: {},
+    origin: {},
   };
   D.GLITCHES.forEach(function (g) {
     glitches.on[g.id] = false;
     glitches.amount[g.id] = 50;
     glitches.mode[g.id] = g.modes ? g.modes[0].id : undefined;
+    if (g.origin) glitches.origin[g.id] = { x: g.origin.x, y: g.origin.y };
   });
 
   // Character ramps for text mode, darkest first. Kept here rather than in the
@@ -308,7 +310,13 @@
   // one filter rather than two.
   function deriveGlitches() {
     return activeEffects().filter(function (id) { return effectAvailable(effectMeta(id)); }).map(function (id) {
-      return { id: id, amount: glitches.amount[id], mode: glitches.mode[id] };
+      const meta = effectMeta(id);
+      const item = { id: id, amount: glitches.amount[id], mode: glitches.mode[id] };
+      if (meta.origin) {
+        const point = glitches.origin[id] || meta.origin;
+        item.origin = { x: point.x, y: point.y };
+      }
+      return item;
     });
   }
 
@@ -317,6 +325,7 @@
       glitches.on[g.id] = false;
       glitches.amount[g.id] = 50;
       glitches.mode[g.id] = g.modes ? g.modes[0].id : undefined;
+      if (g.origin) glitches.origin[g.id] = { x: g.origin.x, y: g.origin.y };
     });
     (list || []).forEach(function (item) {
       const meta = byId(D.GLITCHES, item.id);
@@ -326,6 +335,16 @@
       if (meta.modes) {
         const known = meta.modes.some(function (m) { return m.id === item.mode; });
         glitches.mode[meta.id] = known ? item.mode : meta.modes[0].id;
+      }
+      if (meta.origin) {
+        const point = item.origin && typeof item.origin === 'object' ? item.origin : {};
+        const clamp = function (v, fallback) {
+          return Math.max(0, Math.min(100, Math.round(typeof v === 'number' && isFinite(v) ? v : fallback)));
+        };
+        glitches.origin[meta.id] = {
+          x: clamp(point.x, meta.origin.x),
+          y: clamp(point.y, meta.origin.y),
+        };
       }
     });
     const active = (list || []).map(function (item) { return item.id; });
@@ -795,6 +814,48 @@
 
       row.appendChild(top);
       row.appendChild(line);
+
+      // A point-based effect gets two compact sliders under its amount. The
+      // origin is a percentage of the frame, so presets and exports keep it
+      // independent of the working resolution.
+      if (meta.origin) {
+        const originLine = document.createElement('div');
+        originLine.className = 'stack-origin';
+        const label = document.createElement('span');
+        label.className = 'stack-origin-label';
+        label.textContent = 'Origin';
+        originLine.appendChild(label);
+        [
+          { key: 'x', name: 'X' },
+          { key: 'y', name: 'Y' },
+        ].forEach(function (axis) {
+          const wrap = document.createElement('label');
+          wrap.className = 'stack-origin-axis';
+          const letter = document.createElement('span');
+          letter.textContent = axis.name;
+          const input = document.createElement('input');
+          input.type = 'range';
+          input.min = '0';
+          input.max = '100';
+          input.step = '1';
+          input.value = String(glitches.origin[id][axis.key]);
+          input.setAttribute('aria-label', meta.name + ' origin ' + axis.name + ' (%)');
+          const value = document.createElement('em');
+          value.textContent = String(glitches.origin[id][axis.key]);
+          wrap.appendChild(letter);
+          wrap.appendChild(input);
+          wrap.appendChild(value);
+          originLine.appendChild(wrap);
+          input.addEventListener('input', function () {
+            beginHistoryGroup('effect:' + id + ':origin');
+            glitches.origin[id][axis.key] = parseInt(input.value, 10);
+            value.textContent = input.value;
+            schedulePreview();
+          });
+          input.addEventListener('change', function () { render(true); endHistoryGroup(); });
+        });
+        row.appendChild(originLine);
+      }
       el.effectList.appendChild(row);
 
       if (mode) {
@@ -836,13 +897,14 @@
     endHistoryGroup();
     const meta = byId(D.GLITCHES, id);
     if (meta && !effectAvailable(meta)) {
-      el.statStatus.textContent = 'Install ' + (meta.plugin === 'shape-press' ? 'Shape Press' : meta.plugin) + ' from the Plugin Manager first';
+      el.statStatus.textContent = 'Install this effect\'s plugin from the Plugin Manager first';
       return;
     }
     if (!meta || glitches.on[id]) return;
     glitches.on[id] = true;
     if (!glitches.amount[id]) glitches.amount[id] = 50;
     if (meta.modes && !glitches.mode[id]) glitches.mode[id] = meta.modes[0].id;
+    if (meta.origin && !glitches.origin[id]) glitches.origin[id] = { x: meta.origin.x, y: meta.origin.y };
     // Appended, so a new effect lands at the end of the pipeline.
     glitches.order = glitches.order.filter(function (x) { return x !== id; }).concat([id]);
     buildEffectList();
@@ -1140,7 +1202,7 @@
   function applySettings(next, label) {
     endHistoryGroup();
     state.settings = D.mergeSettings(next);
-    readGlitchState(next && next.glitches);
+    readGlitchState(state.settings.glitches);
     syncUI();
     render(true);
     if (label) el.statStatus.textContent = label;
@@ -2843,6 +2905,7 @@
         name: meta.name,
         amount: glitches.amount[id],
         mode: modeMeta ? modeMeta.name : '',
+        origin: meta.origin ? glitches.origin[id] : null,
       };
     });
     const presets = PRESETS_SORTED.map(function (preset) {

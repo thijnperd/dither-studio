@@ -422,7 +422,7 @@ fails the run and names itself.
 cd desktop
 npm test                                       # core, tour and updater: 67 checks, no window
 npm run smoke                                  # quick boot, chrome and a live proof
-npm run smoke:plugins                          # plugin store, Shape Press, presets, palette packs, Ink Extractor, Color Scheme Maker
+npm run smoke:plugins                          # plugin store, Shape Press, the four effect tools, presets, palette packs, Ink Extractor, Color Scheme Maker
 npm run smoke:animation                        # timeline, seed drift, WebM duration and still restore
 npm run smoke:menu                             # studio menu routes, counts and icons
 npm run smoke:help                             # shortcut editor, guide page, update row and Learn toggle

@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "id": "riso-misprint",
+  "name": "Riso Misprint",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "riso-misprint",
+  "summary": "Overprint two rotated halftone plates with a small registration slip and a warm paper stock.",
+  "author": "Dither Studio",
+  "homepage": "https://www.adobe.com/products/postscript/pdfs/PLRM.pdf",
+  "data": {}
+}

@@ -319,6 +319,17 @@ Studio.
 - **Shape Press** (tool) adds one effect to the stack: barcode, cross-stitch,
   halftone or bitmap shapes. It is hidden from the effect picker until the tool
   is installed; a recipe that names it still renders through the engine.
+- **Crepuscular Rays** (tool) adds the *Crepuscular rays* effect: a radial
+  gather through the proof's bright areas, with an Origin X/Y row so the shafts
+  can converge anywhere, from a figure's chest to a point outside the frame.
+- **Riso Misprint** (tool) adds a two-plate riso screen with rotated halftone
+  dots, a deliberate registration slip and warm paper. Its modes are Duotone
+  and Black ink.
+- **Phosphor Mask** (tool) adds scanlines, an RGB triad and a little chroma
+  bleed, with Aperture grille and Shadow mask variants.
+- **Guilloche Plate** (tool) engraves banknote rosettes in fine light and dark
+  lines. Its Origin X/Y row places the centre, and its amount controls how
+  strongly the engraving sits over the proof.
 - **Palette packs** add colour schemes to the palette picker. A pack exported
   from the Color Scheme Maker is one; removing the pack removes its inks and
   falls back to the built-in palette if one was selected.

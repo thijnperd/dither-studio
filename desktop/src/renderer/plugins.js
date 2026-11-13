@@ -1,8 +1,8 @@
 /* plugins.js - the declarative plugin manager.
  *
  * A plugin is a JSON package, never a script. The app ships the capabilities
- * (the Ink Extractor and Color Scheme Maker dialogs, the Shape Press effect) and
- * a package switches one on, or contributes presets. That keeps the offline
+ * (the Ink Extractor and Color Scheme Maker dialogs, Shape Press and the four
+ * effect tools) and a package switches one on, or contributes presets. That keeps the offline
  * renderer intact even when a package comes from a repository nobody has reviewed.
  *
  * The desktop process does the HTTPS fetch (electron/plugins.js); this file
