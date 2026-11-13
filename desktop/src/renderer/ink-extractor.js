@@ -173,6 +173,7 @@
     if (sourceLine) sourceLine.textContent = '';
     if (global.DitherPalette && global.DitherPalette.isOpen && global.DitherPalette.isOpen()) global.DitherPalette.close();
     if (global.DitherPaletteImport && global.DitherPaletteImport.isOpen && global.DitherPaletteImport.isOpen()) global.DitherPaletteImport.close();
+    if (global.DitherColorScheme && global.DitherColorScheme.isOpen && global.DitherColorScheme.isOpen()) global.DitherColorScheme.close();
     overlay.hidden = false;
     restoreFocus = document.activeElement;
     global.requestAnimationFrame(function () { overlay.classList.add('is-in'); });

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "color-scheme-maker",
+  "name": "Color Scheme Maker",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "color-scheme-maker",
+  "summary": "Draft a palette with lockable inks, harmony rules, tone and hue sorting, and generated names.",
+  "author": "Dither Studio",
+  "data": {
+    "defaultCount": 6,
+    "defaultHarmony": "analogous"
+  }
+}

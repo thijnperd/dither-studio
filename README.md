@@ -70,11 +70,16 @@ shelf and the download links, is
   the proof: 1–12 seconds at 6–30 fps, tracks for eleven settings, four eases,
   loop and scrub, and a WebM export of the take.
 - **Plugins, as data.** File ▸ Plugin Manager installs declarative JSON packages
-  from this repository's GitHub (with a bundled fallback when offline). A
-  package switches on a capability or adds recipes; installed packages stay on
-  the machine. The Ink Extractor pulls a palette out of the open photo, Shape
-  Press redraws the proof as barcode, cross-stitch, halftone or bitmap sets, and
-  preset packs add whole recipes. No downloaded JavaScript is ever executed.
+  from this repository's GitHub (with a bundled fallback when offline), grouped
+  into **Functionality** and **Presets & color schemes** with each package's
+  size written on its row and the installed total below the list. A package
+  switches on a capability or adds recipes; installed packages stay on the
+  machine, and a declarative palette pack can also be installed from a file.
+  The Ink Extractor pulls a palette out of the open photo, Shape Press redraws
+  the proof as barcode, cross-stitch, halftone or bitmap sets, Color Scheme
+  Maker drafts lockable palettes from harmony rules (or a Lospec palette, the
+  open image, or pasted hex) and exports them as shareable packs, and preset
+  packs add whole recipes. No downloaded JavaScript is ever executed.
 - **25 built-in recipes.** Whole setups — algorithm, palette, grading, effects
   and glow — applied in one pick, from Newsprint and Halftone Noir to VHS Decay,
   Sweetie Postcard, Tape Deck and the three structure-aware looks. The bundled
@@ -285,19 +290,21 @@ and the video rules.
 | Text | **Text mode** on, then **Export .txt** — the character grid itself |
 | WebM | **Record** in video mode, which stops itself after 60 s |
 | Recipe | **Presets → Export JSON** writes the current settings; importing merges them over the defaults |
+| Palette pack | **Color Scheme Maker → Export pack…** writes a declarative plugin package that installs through **Plugin Manager → Install from file…** |
 
 Nothing leaves the machine. The web builds are static files — one page, one
 stylesheet, three scripts, no analytics and no request to anywhere — so they
 keep working from `file://`, from a share, or from the published site. The
 desktop app reads and writes files only through the system's own dialogs, keeps
 its state in its own profile folder, and talks to no server except the public
-GitHub release check: no account, no telemetry, no analytics. You can update
-from *Help ▸ Check for Updates…*, and the press works with no connection.
+GitHub release check and, when you ask it to import one, `lospec.com` for that
+palette's JSON: no account, no telemetry, no analytics. You can update from
+*Help ▸ Check for Updates…*, and the press works with no connection.
 
 ## Checks
 
 ```bash
-node launcher/test.js                                        # 87 engine tests
+node launcher/test.js                                        # 96 engine tests
 bash tools/check.sh launcher/index.html --expect canvas       # a page in a real browser
 node tools/check-examples.js                                 # examples/ against its own manifest
 cd desktop && npm test && npm run smoke:all                   # core, tour and updater checks, then the full window run

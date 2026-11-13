@@ -10,6 +10,30 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.5.0 — Schemes that travel (2026-11-13)
+
+**Lospec import, image-seeded schemes, a safety meter and shareable palette
+packs.**
+
+- **Lospec in one field.** The Color Scheme Maker now takes a Lospec palette
+  link or slug (or its `.json`), fetches it through the main process, and loads
+  the inks. Paste palette JSON or a plain hex list instead and the same field
+  reads it. The fetch accepts only `lospec.com/palette-list/…` and is bounded;
+  no downloaded code is involved.
+- **A scheme from the open image.** *Seed from image* asks the installed Ink
+  Extractor for the open photo's inks and fills the draft with them, leaving the
+  locks and the rest of the drafting table alone.
+- **A safety meter under the swatches.** It reports the smallest tone step, the
+  widest contrast and whether the inks run dark to light, and marks a too-tight
+  or duplicated pair **Muddy** before it lands in the palette menu.
+- **Palette packs you can share.** *Export pack…* writes the draft as a
+  declarative `palette-pack` plugin. The Plugin Manager can install one from a
+  local JSON file; removing the pack removes its inks and falls back to the
+  built-in palette if it was selected. Still JSON, never JavaScript.
+- **Schemes now hold up to 32 inks**, so the larger Lospec lists fit without
+  being cut to twelve. The manager also labels palette packs alongside preset
+  packs and functionality tools.
+
 ## 0.4.0 — The press moves (2026-11-13)
 
 **A timeline for stills, data-only plugins, and more inks and recipes.**

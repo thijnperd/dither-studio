@@ -131,7 +131,8 @@ web page:
 
 **File** — open an image or a clip, the next built-in source (`Ctrl+D`), save the
 proof as a PNG, copy it to the clipboard, export a text proof, import and export
-presets, import a color palette, open the Plugin Manager, quit.
+presets, import a color palette, extract one from an image, open the Color
+Scheme Maker, open the Plugin Manager, quit.
 
 **Edit** — undo and redo recipe changes (`Ctrl+Z` / `Ctrl+Shift+Z`), roll a
 fresh recipe (`Ctrl+R`, the equivalent of the Random tool), a new seed
@@ -276,21 +277,42 @@ you did not point it at.
   captures the playback to a WebM — the recording pulses in the accent colour
   while it runs, and the file lands through the same system save dialog.
 
-## 9. Plugins and the animation timeline
+## 9. Plugins, the Color Scheme Maker and the animation timeline
 
 **Plugins are packages, not scripts.** *File ▸ Plugin Manager…* fetches the
 catalogue over HTTPS from this repository (falling back to the copy bundled in
-the app when GitHub is unreachable), lists what each package does, and installs
-or removes it. Installed packages are kept in this app's local settings. A
-package is declarative JSON — a tool capability or a set of recipes — and no
-downloaded JavaScript is ever executed.
+the app when GitHub is unreachable), groups it into **Functionality** and
+**Presets & color schemes**, and installs or removes a package. Every row says
+how much space the package takes; the line below the list totals what is stored
+on this machine. Installed packages are kept in this app's local settings. A
+package is declarative JSON — a tool capability, a set of recipes or a palette
+pack — and no downloaded JavaScript is ever executed. **Install from file…**
+loads a package someone exported, including a palette pack from another Dither
+Studio.
 
 - **Ink Extractor** (tool) opens a dialog that pulls a limited palette out of the
   open image with CINS, median-cut, octree or polarity clustering; the result is
   previewed and can be imported as a palette.
+- **Color Scheme Maker** (tool) opens *File ▸ Color Scheme Maker…*. Start from a
+  base ink and choose Free, Analogous, Complementary, Split complementary,
+  Triadic, Tetradic or Monochrome. Generate the unlocked swatches, lock the ones
+  you want to keep, sort by tone or hue, add or remove inks (2–32), name the
+  result from its colours, copy the hex list, or save it straight into the
+  palette menu. Press **Space** to generate again without reaching for the
+  button. The import field takes a Lospec palette link or slug, palette JSON
+  (including Lospec's own `.json`), or a pasted hex list; **Seed from image**
+  pulls its inks from the open photo through Ink Extractor. The safety meter
+  below the swatches reports the smallest tone step, the widest contrast and
+  whether the inks run dark to light, and calls a too-tight pair muddy.
+  **Export pack…** writes the scheme as a declarative palette plugin that can be
+  installed through the Plugin Manager. It is the Coolors/Lospec-shaped drafting
+  table, built on the app's own palette store rather than a second format.
 - **Shape Press** (tool) adds one effect to the stack: barcode, cross-stitch,
   halftone or bitmap shapes. It is hidden from the effect picker until the tool
   is installed; a recipe that names it still renders through the engine.
+- **Palette packs** add colour schemes to the palette picker. A pack exported
+  from the Color Scheme Maker is one; removing the pack removes its inks and
+  falls back to the built-in palette if one was selected.
 - **Preset packs** add whole recipes to the Presets station. The bundled
   catalogue includes Niko's Glitch Universe, Caroline's Undead Dithering,
   2_s0ur's Broken Signal and Dreamy Cyberpunk, the last adapted from Studio
@@ -364,3 +386,9 @@ its own shell (`src/renderer/app.js`); what is copied from the shared engine is
 just the engine, and `desktop/tools/sync-renderer.js --check` — which CI runs —
 fails if those copies drift. If you want to change something that is about
 *dithering*, change it once, in `dither.js`, and all three builds get it.
+
+**Every published build is made by GitHub Actions.** Push the commit and let
+`.github/workflows/build.yml` run the tests and full smoke set on Windows and
+macOS; a `v<version>` tag makes the release job attach those artifacts. Do not
+package a release locally or upload a workstation build — a local `npm run build`
+is only a diagnostic.

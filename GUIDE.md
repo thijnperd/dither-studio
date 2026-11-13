@@ -546,6 +546,12 @@ bash tools/check.sh launcher/index.html --expect canvas --wait 1200 \
   --screenshot /tmp/dither.png --eval "JSON.stringify(window.__dither.stats())"
 ```
 
+**Builds and releases go through GitHub Actions.** Do not package a release on
+a workstation. Push the commit and, when it is time to release, push a
+`v<version>` tag; `.github/workflows/build.yml` runs the tests and full smoke
+set, builds Windows and macOS artifacts, and attaches them to the release. A
+local `npm run build` is only a diagnostic and its output is never published.
+
 The page exposes `window.__dither` so a check can drive the app without clicking:
 `stats()`, `applyPreset(id)`, `setSetting(path, value)`, `randomize()`,
 `setText(on, ramp, size)`, `textGrid()`, `alphaStats()`, `canvasColors()`,

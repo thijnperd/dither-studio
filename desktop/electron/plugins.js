@@ -57,7 +57,7 @@ function isEntry(entry) {
   return entry && typeof entry === 'object'
     && /^[a-z][a-z0-9-]{1,47}$/.test(String(entry.id || ''))
     && /^[a-z0-9-]+\.json$/.test(String(entry.file || ''))
-    && (entry.kind === 'tool' || entry.kind === 'preset-pack');
+    && (entry.kind === 'tool' || entry.kind === 'preset-pack' || entry.kind === 'palette-pack');
 }
 
 function cleanCatalogue(raw) {
@@ -74,29 +74,44 @@ function cleanCatalogue(raw) {
         capability: typeof entry.capability === 'string' ? entry.capability.slice(0, 40) : '',
         summary: typeof entry.summary === 'string' ? entry.summary.slice(0, 240) : '',
         author: typeof entry.author === 'string' ? entry.author.slice(0, 60) : '',
+        bytes: Number.isFinite(entry.bytes) && entry.bytes > 0 ? Math.round(entry.bytes) : 0,
         file: entry.file,
       };
     }),
   };
 }
 
+// The manager writes down how much each package takes. The catalogue itself
+// does not need to carry a size: every package the app can install has a
+// bundled file, and its length on this machine is the honest number. A package
+// only present in a newer remote catalogue has no local size until installed.
+function addLocalSizes(catalogue) {
+  if (!catalogue || !Array.isArray(catalogue.plugins)) return catalogue;
+  catalogue.plugins.forEach(function (entry) {
+    try {
+      entry.bytes = fs.statSync(path.join(BUNDLED, entry.file)).size;
+    } catch (err) { /* remote-only package: the row will show its size after install */ }
+  });
+  return catalogue;
+}
+
 async function getCatalogue(force, localOnly) {
   if (!force && cached && Date.now() - cachedAt < 5 * 60 * 1000) return cached;
   if (localOnly) {
     try {
-      return { catalogue: cleanCatalogue(localJson('catalogue.json')), source: 'bundled', error: '' };
+      return { catalogue: addLocalSizes(cleanCatalogue(localJson('catalogue.json'))), source: 'bundled', error: '' };
     } catch (localErr) {
       return { catalogue: null, source: '', error: (localErr && localErr.message) || 'The bundled catalogue could not be read' };
     }
   }
   try {
-    const remote = cleanCatalogue(await fetchJson(REMOTE + 'catalogue.json', MAX_CATALOGUE_BYTES));
+    const remote = addLocalSizes(cleanCatalogue(await fetchJson(REMOTE + 'catalogue.json', MAX_CATALOGUE_BYTES)));
     cached = { catalogue: remote, source: 'github', error: '' };
     cachedAt = Date.now();
     return cached;
   } catch (err) {
     try {
-      const bundled = cleanCatalogue(localJson('catalogue.json'));
+      const bundled = addLocalSizes(cleanCatalogue(localJson('catalogue.json')));
       cached = { catalogue: bundled, source: 'bundled', error: '' };
       cachedAt = Date.now();
       return cached;

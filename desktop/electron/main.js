@@ -32,6 +32,7 @@ const fsSync = require('fs');
 const path = require('path');
 const updates = require('./update');
 const plugins = require('./plugins');
+const lospec = require('./lospec');
 
 const APP_ROOT = path.join(__dirname, '..');
 // The splash plays a fixed animation and this is what the window waits for
@@ -342,10 +343,13 @@ ipcMain.handle('ds:save-blob', function (_event, payload) {
 
 ipcMain.handle('ds:save-text', function (_event, payload) {
   if (!payload || !payload.name) return null;
+  const json = payload.mime === 'application/json';
   return saveRoute({
-    title: 'Save the text proof',
+    title: json ? 'Export the palette plugin pack' : 'Save the text proof',
     defaultPath: payload.name,
-    filters: [{ name: 'Text', extensions: ['txt'] }],
+    filters: json
+      ? [{ name: 'Dither Studio plugin', extensions: ['json'] }]
+      : [{ name: 'Text', extensions: ['txt'] }],
   }, function (target) { return fs.writeFile(target, String(payload.text), 'utf8'); });
 });
 
@@ -657,6 +661,7 @@ if (!gotLock) {
   app.whenReady().then(function () {
     updates.wire();
     plugins.wire();
+    lospec.wire();
     if (process.platform === 'win32') app.setAppUserModelId('com.thijnperd.ditherstudio');
     // Electron installs a default menu (File > Exit, Edit > Copy...) until
     // one is set. The app draws its own menu bar and sends the tree a moment

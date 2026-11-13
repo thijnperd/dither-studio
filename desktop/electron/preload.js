@@ -68,6 +68,8 @@ const api = {
   // Main owns the URL; the renderer never sees a fetch it can point elsewhere.
   pluginsCatalogue: function (force, localOnly) { return ipcRenderer.invoke('ds:plugins-catalogue', !!force, !!localOnly); },
   pluginsPackage: function (id, localOnly) { return ipcRenderer.invoke('ds:plugins-package', id, !!localOnly); },
+  // One Lospec palette's .json, bounded and host-checked in main.
+  fetchLospec: function (value) { return ipcRenderer.invoke('ds:lospec-fetch', value); },
   // The notes for this installed build; the Help window draws them.
   whatsNew: function () { return ipcRenderer.invoke('ds:whats-new'); },
 

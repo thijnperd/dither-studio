@@ -1043,6 +1043,22 @@
     return entry;
   }
 
+  // Plugin palette packs are registered as custom entries for the session, then
+  // removed when their pack goes. Built-ins are never removable, and the same
+  // two caches that a replacement clears are cleared here.
+  function unregisterPalette(id) {
+    const entry = PALETTE_BY_ID.get(String(id || ''));
+    if (!entry || !entry.custom) return false;
+    const at = PALETTES.findIndex(function (candidate) { return candidate.id === entry.id; });
+    if (at >= 0) PALETTES.splice(at, 1);
+    PALETTE_BY_ID.delete(entry.id);
+    LUT_CACHE.delete(entry.id);
+    Array.from(YLL_CACHE.keys()).forEach(function (key) {
+      if (key.indexOf(entry.id + '|') === 0) YLL_CACHE.delete(key);
+    });
+    return true;
+  }
+
   // The plan metric is the squared distance between the target and the plan's
   // mean: every entry of a plan lands the same number of times across a screen
   // tile, so the plan's mean is exactly the tone the tile renders.
@@ -2345,6 +2361,7 @@
     blueNoiseRanks: blueNoiseRanks,
     paletteLut: paletteLut,
     registerPalette: registerPalette,
+    unregisterPalette: unregisterPalette,
     snapIndex: snapIndex,
     // mixing plans (Yliluoma)
     mixingPlan: function (paletteId, option, target) {

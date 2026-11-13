@@ -1417,6 +1417,16 @@ test('registerPalette adds a custom ink set and can replace it', function () {
   });
 });
 
+test('unregisterPalette removes a plugin palette but never a built-in', function () {
+  const before = D.PALETTES.length;
+  D.registerPalette({ id: 'plugin-demo-pack-main', name: 'Pack Main', colors: [[0, 0, 0], [0, 255, 0]] });
+  assert.strictEqual(D.unregisterPalette('plugin-demo-pack-main'), true);
+  assert.strictEqual(D.PALETTES.length, before);
+  assert.strictEqual(D.PALETTES.some(function (palette) { return palette.id === 'plugin-demo-pack-main'; }), false);
+  assert.strictEqual(D.unregisterPalette('bw'), false);
+  assert.strictEqual(D.unregisterPalette('does-not-exist'), false);
+});
+
 test('registerPalette refuses reserved ids and malformed colours', function () {
   assert.throws(function () {
     D.registerPalette({ id: 'bw', name: 'Shadow', colors: [[0, 0, 0], [255, 255, 255]] });

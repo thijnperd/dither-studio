@@ -551,14 +551,17 @@
       <header class="pimport-head">
         <span class="pimport-kicker">File · Plugins</span>
         <h2 class="pimport-title" id="plugin-title">Plugin manager</h2>
-        <p class="pimport-note">Install declarative packs pulled from the project on GitHub. A package can add presets or switch on a built-in tool; it never runs downloaded code.</p>
+        <p class="pimport-note">Functionality tools switch on a built-in capability; preset and palette packs add recipes or color schemes. Every package is declarative JSON, never downloaded code, and its size on disk is shown before you install it. You can also install a pack exported by another Dither Studio.</p>
       </header>
       <div class="pimport-body">
         <div class="plugin-bar">
           <button class="btn" id="plugin-refresh" type="button">Refresh from GitHub</button>
+          <button class="btn" id="plugin-file" type="button">Install from file…</button>
           <span class="pimport-hint" id="plugin-status" role="status" aria-live="polite"></span>
+          <input type="file" id="plugin-file-input" accept="application/json,.json" hidden />
         </div>
         <div class="plugin-list" id="plugin-list"></div>
+        <p class="plugin-storage" id="plugin-storage"></p>
         <p class="plugin-note">Installed packages stay on this machine. The catalogue is fetched over HTTPS from
           <b>thijnperd/dither-studio</b>; the app ships a fallback copy so the manager still works offline.</p>
       </div>
@@ -602,6 +605,68 @@
         <button class="btn" id="ink-cancel" type="button">Cancel</button>
         <span class="pimport-grow"></span>
         <button class="btn btn-primary" id="ink-import" type="button" disabled>Import palette</button>
+      </footer>
+    </section>
+  </div>
+
+  <!-- Color Scheme Maker: a harmony-first palette drafting table. The plugin
+       gates the menu command; the core owns the colour rules. -->
+  <div class="pimport" id="color-scheme" hidden>
+    <section class="pimport-card scheme-card" role="dialog" aria-modal="true" aria-labelledby="scheme-title">
+      <header class="pimport-head">
+        <span class="pimport-kicker">Plugins · Color Scheme Maker</span>
+        <h2 class="pimport-title" id="scheme-title">Draft a color scheme</h2>
+        <p class="pimport-note">Start from a base ink and a harmony rule. Lock the colors you want to keep,
+          generate the rest, then sort, copy or save the set into the palette menu.</p>
+      </header>
+      <div class="pimport-body">
+        <div class="scheme-controls">
+          <label class="pimport-field scheme-name-field">
+            <span>Name</span>
+            <div class="scheme-name-row">
+              <input id="scheme-name" type="text" maxlength="60" autocomplete="off" spellcheck="false"
+                placeholder="Violet Dusk" />
+              <button class="btn" id="scheme-name-idea" type="button" title="Name the palette from its colors">Suggest</button>
+            </div>
+          </label>
+          <label class="pimport-field">
+            <span>Harmony</span>
+            <select id="scheme-harmony"></select>
+          </label>
+        </div>
+        <div class="scheme-import-row">
+          <input id="scheme-import" type="text" autocomplete="off" spellcheck="false"
+            placeholder="Lospec link or slug, or paste palette JSON / hex" aria-label="Import a palette" />
+          <button class="btn" id="scheme-import-load" type="button">Import</button>
+        </div>
+        <div class="scheme-actions">
+          <button class="btn btn-primary" id="scheme-generate" type="button" title="Generate unlocked inks (Space)">Generate</button>
+          <button class="btn" id="scheme-roll" type="button">Roll a base</button>
+          <button class="btn" id="scheme-load" type="button">Use current inks</button>
+          <button class="btn" id="scheme-image" type="button" title="Pull a seed from the open image (Ink Extractor)">Seed from image</button>
+          <span class="pimport-grow"></span>
+          <button class="btn" id="scheme-sort-tone" type="button">Sort by tone</button>
+          <button class="btn" id="scheme-sort-hue" type="button">Sort by hue</button>
+        </div>
+        <div class="scheme-list" id="scheme-list" role="list" aria-label="Scheme inks"></div>
+        <div class="scheme-safety" id="scheme-safety" data-level="safe">
+          <span class="scheme-meter" aria-hidden="true"><span id="scheme-meter-fill"></span></span>
+          <span id="scheme-safety-text">Checking the ink spacing…</span>
+        </div>
+        <div class="scheme-footer-row">
+          <button class="btn" id="scheme-add" type="button">+ Add ink</button>
+          <span class="plugin-meta" id="scheme-count">6 inks · 0 locked</span>
+          <span class="pimport-grow"></span>
+          <button class="btn" id="scheme-copy" type="button">Copy hex</button>
+        </div>
+        <p class="scheme-status" id="scheme-status" role="status" aria-live="polite"></p>
+        <p class="pimport-error" id="scheme-error" role="alert" hidden></p>
+      </div>
+      <footer class="pimport-foot">
+        <button class="btn" id="scheme-cancel" type="button">Cancel</button>
+        <button class="btn" id="scheme-pack" type="button" title="Export a shareable palette plugin pack">Export pack…</button>
+        <span class="pimport-grow"></span>
+        <button class="btn btn-primary" id="scheme-save" type="button">Save to palettes</button>
       </footer>
     </section>
   </div>
@@ -736,6 +801,7 @@
   <script src="renderer/app.js"></script>
   <script src="renderer/palette-import.js"></script>
   <script src="renderer/ink-extractor.js"></script>
+  <script src="renderer/color-scheme.js"></script>
   <script src="renderer/palette.js"></script>
   <script src="renderer/help.js"></script>
   <script src="renderer/shell.js"></script>

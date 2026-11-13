@@ -734,7 +734,7 @@
 
   const bundledCatalogue = pluginApi ? await pluginApi.refresh(true, true) : null;
   check('the app ships a fallback catalogue', !!bundledCatalogue &&
-    bundledCatalogue.plugins.length >= 5, bundledCatalogue ? bundledCatalogue.plugins.length : 0);
+    bundledCatalogue.plugins.length >= 7, bundledCatalogue ? bundledCatalogue.plugins.length : 0);
   const inkPack = pluginApi ? await pluginApi.install('ink-extractor', true) : null;
   check('the GitHub pull path installs the Ink Extractor', !!inkPack && inkPack.id === 'ink-extractor', inkPack && inkPack.id);
   const shapePack = pluginApi ? await pluginApi.install('shape-press', true) : null;
@@ -777,9 +777,17 @@
 
   DS.command('file-plugin-manager');
   await wait(300);
+  const managerRows = document.querySelectorAll('#plugin-list .plugin-row');
   check('the Plugin Manager lists the catalogue',
-    window.DitherPlugins.isOpen() && document.querySelectorAll('#plugin-list .plugin-row').length >= 5,
-    document.querySelectorAll('#plugin-list .plugin-row').length);
+    window.DitherPlugins.isOpen() && managerRows.length >= 7,
+    managerRows.length);
+  check('the Plugin Manager is split into two sections',
+    document.querySelectorAll('#plugin-list .plugin-section').length === 2,
+    document.querySelectorAll('#plugin-list .plugin-section').length);
+  check('every plugin row states its package size',
+    Array.prototype.every.call(managerRows, function (row) {
+      return Number(row.dataset.bytes) > 0;
+    }));
   window.DitherPlugins.close();
 
   /* ---- the animation timeline ------------------------------------- */

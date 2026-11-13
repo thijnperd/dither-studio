@@ -50,6 +50,7 @@
           { label: 'Import Preset…', command: 'file-import-preset' },
           { label: 'Import Color Palette…', command: 'file-import-palette' },
           { label: 'Extract Palette from Image…', command: 'file-extract-palette' },
+          { label: 'Color Scheme Maker…', command: 'file-color-scheme' },
           { label: 'Plugin Manager…', command: 'file-plugin-manager' },
           { type: 'sep' },
           { label: 'Quit Dither Studio', command: 'file-quit', accel: 'CmdOrCtrl+Q' },

@@ -101,6 +101,9 @@ builds.
 | [`src/renderer/video.js`](desktop/src/renderer/video.js) | the video source, clock and recorder |
 | [`src/renderer/samples.js`](desktop/src/renderer/samples.js) | the built-in source table — generated from the launcher build, like the engine |
 | [`src/renderer/app.js`](desktop/src/renderer/app.js) | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
+| [`src/renderer/plugins.js`](desktop/src/renderer/plugins.js) | the plugin manager: package validation and storage, file install, the Functionality / Presets & color schemes sections, and disk sizes |
+| [`src/renderer/ink-extractor.js`](desktop/src/renderer/ink-extractor.js), [`src/renderer/color-scheme.js`](desktop/src/renderer/color-scheme.js) | the two dialog tools a plugin package can switch on; the scheme dialog also imports Lospec palettes, seeds from the image, measures ink safety and exports palette packs |
+| [`electron/lospec.js`](desktop/electron/lospec.js) | the bounded, host-checked Lospec palette reader used by the scheme dialog |
 | [`src/renderer/shell.js`](desktop/src/renderer/shell.js) | the chrome: menus, tool rail, caption, slider fills, window verbs |
 | [`src/renderer/tour.js`](desktop/src/renderer/tour.js) | the tutorial's runner: the Learn panel's list, the coach mark, step navigation, Skip, the first-run intro and progress |
 | [`src/styles/tokens.css`](desktop/src/styles/tokens.css) | tokens, the page grid, every element-level control |
@@ -196,21 +199,28 @@ running version is written to `last-version` in the app's userData folder; a
 mismatch on the next launch opens the matching changelog section once. *Help ▸
 Check for Updates…* and *Help ▸ What's New…* expose the same paths by hand.
 
-## Build the installer
+## Build in GitHub Actions
+
+**Always build through GitHub Actions.** `.github/workflows/build.yml` is the
+only supported packaging and release path. It runs the tests and the full smoke
+set on Windows and macOS, builds the installer and disk images, and the release
+job attaches those artifacts to a `v<version>` tag. Do not package a release on
+a workstation, and never upload a local `dist/` output.
+
+Validate locally with the checks, not with a release build:
 
 ```bash
 cd desktop
-npm run build    # the checks, then dist/Dither-Studio-Setup-<version>.exe + the portable exe
-npm run dist     # the Windows packaging step on its own, once the checks have run
-npm run dist:mac # the macOS disk images, x64 and arm64 (run it on macOS)
-npm run pack     # dist/win-unpacked/ only, much faster while iterating
+npm install
+npm test
+node tools/sync-renderer.js --check
+npm run smoke:all
 ```
 
-`npm run build` is the local half of the release workflow — the same checks in
-the same order, then packaging (`node tools/build-checks.js`; `--skip-smoke`
-drops the window-driven run when no desktop can be spared) — so a setup built
-here carries what a released one does. It prints both executables and their
-sizes when it is done.
+A local `npm run build` exists as a diagnostic (`node tools/build-checks.js`
+followed by electron-builder), but its output is not a release. The workflow
+prints the artifact names and uploads them; the release job is what publishes
+them.
 
 electron-builder writes an NSIS installer (per-user, choose the folder, Start
 menu shortcut) and a portable single-file executable on Windows, and one
@@ -410,7 +420,7 @@ fails the run and names itself.
 cd desktop
 npm test                                       # core, tour and updater: 54 checks, no window
 npm run smoke                                  # quick boot, chrome and a live proof
-npm run smoke:plugins                          # plugin store, Shape Press, presets, Ink Extractor
+npm run smoke:plugins                          # plugin store, Shape Press, presets, palette packs, Ink Extractor, Color Scheme Maker
 npm run smoke:animation                        # animation timeline and still restore
 npm run smoke:all                              # the full in-page set; exit 0/1
 ```
@@ -429,8 +439,9 @@ ready, then lets the harness print one JSON report and exit non-zero on any
 console error, page error, failed check or failed command — the page's own
 verdict is part of the run's, not a footnote beside it. `tools/smoke-quick.js`
 checks the boot surface and one live render; `tools/smoke-plugins.js` installs
-from the bundled package path and checks the Shape Press gate, a preset pack and
-the Ink Extractor; `tools/smoke-animation.js` scrubs the timeline and restores
+from the bundled package path and checks the Shape Press gate, a preset pack,
+the Ink Extractor, the manager's sections and disk sizes, and a generated Color
+Scheme Maker palette; `tools/smoke-animation.js` scrubs the timeline and restores
 the still. The focused suites set `DITHER_NO_SPLASH=1`, so they take seconds.
 `npm run smoke:all` runs `tools/smoke-in-page.js`, the complete set, and is what
 CI and a release use.

@@ -1020,7 +1020,7 @@
   }
 
   function saveCustomPalettes() {
-    const list = D.PALETTES.filter(function (palette) { return palette.custom; })
+    const list = D.PALETTES.filter(function (palette) { return palette.custom && !palette.plugin; })
       .map(function (palette) {
         return { id: palette.id, name: palette.name, colors: palette.colors };
       });
@@ -1037,6 +1037,28 @@
   }
 
   loadStoredPalettes();
+
+  // Palette packs are session entries like imports, but they belong to a
+  // plugin. Their prefixed ids keep them apart from built-ins and custom inks.
+  function pluginPaletteEntries() {
+    return window.DitherPlugins && window.DitherPlugins.palettes ? window.DitherPlugins.palettes() : [];
+  }
+
+  function registerPluginPalettes() {
+    pluginPaletteEntries().forEach(function (palette) {
+      try {
+        const entry = D.registerPalette({
+          id: palette.id,
+          name: palette.name,
+          colors: palette.colors,
+        });
+        entry.plugin = palette.plugin;
+        entry.pluginName = palette.pluginName;
+      } catch (err) { /* a pack that cannot be registered must not stop boot */ }
+    });
+  }
+
+  registerPluginPalettes();
 
   // The pickers, menus and command palette all read these sorted views, so a
   // catalogue cannot be alphabetical in one place and authored in another.
@@ -1096,6 +1118,24 @@
   // the menus and the command palette hold references to these arrays, so a
   // fresh array would leave half the chrome reading the old list.
   function syncPluginCatalogues() {
+    // Take every plugin palette out first, then re-register the packs that are
+    // still installed. A removed pack must not leave its inks in the picker.
+    D.PALETTES.filter(function (palette) { return palette.plugin; }).forEach(function (palette) {
+      try { D.unregisterPalette(palette.id); } catch (err) { /* already gone */ }
+    });
+    registerPluginPalettes();
+    PALETTES_SORTED.length = 0;
+    D.PALETTES.slice().sort(byName).forEach(function (palette) { PALETTES_SORTED.push(palette); });
+    const currentPalette = paletteById(state.settings.palette);
+    rebuildPaletteSelect();
+    if (!currentPalette || currentPalette.id !== state.settings.palette) {
+      state.settings.palette = 'bw';
+      el.palette.value = 'bw';
+      el.thresholdRow.hidden = false;
+      buildSwatches();
+    }
+    if (window.DitherPalette && window.DitherPalette.refresh) window.DitherPalette.refresh();
+
     PRESETS.length = 0;
     BASE_PRESETS.forEach(function (preset) { PRESETS.push(preset); });
     pluginPresetEntries().forEach(function (preset) {
@@ -2430,17 +2470,25 @@
     applyPreset: function (id) { applyPreset(id); },
     randomize: randomize,
     exportTxt: exportTXT,
-    // --- plugins, animation and the Ink Extractor -------------------------
+    // --- plugins, animation and the plugin tools --------------------------
     pluginsOpen: openPluginManager,
     pluginsInstall: function (id) { return window.DitherPlugins ? window.DitherPlugins.install(id) : null; },
     pluginsRemove: function (id) { return window.DitherPlugins ? window.DitherPlugins.remove(id) : false; },
     pluginsInstalled: function () { return window.DitherPlugins ? window.DitherPlugins.installed() : []; },
     pluginPresets: function () { return window.DitherPlugins ? window.DitherPlugins.presets() : []; },
+    pluginPalettes: function () { return window.DitherPlugins ? window.DitherPlugins.palettes() : []; },
     extractPalette: function (count, method) {
       if (!state.original) return null;
       return Core.extractPalette(state.original.data, state.original.width, state.original.height, count, method);
     },
     inkExtractorOpen: openInkExtractor,
+    colorSchemeOpen: openColorSchemeMaker,
+    colorSchemeState: function () { return window.DitherColorScheme ? window.DitherColorScheme.state() : null; },
+    colorSchemeGenerate: function () { return window.DitherColorScheme ? window.DitherColorScheme.generate() : null; },
+    colorSchemeSave: function () { return window.DitherColorScheme ? window.DitherColorScheme.save() : false; },
+    colorSchemeImport: function () { return window.DitherColorScheme ? window.DitherColorScheme.importValue() : false; },
+    colorSchemeSeed: function () { return window.DitherColorScheme ? window.DitherColorScheme.seedFromImage() : false; },
+    colorSchemePack: function () { return window.DitherColorScheme ? window.DitherColorScheme.pack() : null; },
     animationStart: startAnimation,
     animationStop: function () { return animation ? animation.stop() : false; },
     animationPlay: function () { return animation ? animation.play() : false; },
@@ -2661,6 +2709,50 @@
     });
   }
 
+  function openColorSchemeMaker() {
+    const pkg = window.DitherPlugins && window.DitherPlugins.tool('color-scheme-maker');
+    if (!pkg) {
+      el.statStatus.textContent = 'Install Color Scheme Maker from File › Plugin Manager first';
+      return false;
+    }
+    if (!window.DitherColorScheme) {
+      el.statStatus.textContent = 'The Color Scheme Maker dialog is not available';
+      return false;
+    }
+    return window.DitherColorScheme.open({
+      count: pkg.data.defaultCount || 6,
+      harmony: pkg.data.defaultHarmony || 'analogous',
+      getCurrent: function () { return paletteById(state.settings.palette); },
+      onSave: importPalette,
+      getImageColors: function (count, method) {
+        if (!window.DitherPlugins || !window.DitherPlugins.tool('ink-extractor')) {
+          return { error: 'Install Ink Extractor from File › Plugin Manager to seed from an image' };
+        }
+        if (!state.original) return { error: 'Open an image first, then seed the scheme from it' };
+        try {
+          return Core.extractPalette(state.original.data, state.original.width, state.original.height, count, method);
+        } catch (err) {
+          return { error: err && err.message ? err.message : 'The open image did not yield a palette' };
+        }
+      },
+      onExport: function (pack) {
+        const text = JSON.stringify(pack, null, 2) + '\n';
+        const name = pack.id + '.json';
+        if (desktop && desktop.saveText) {
+          return desktop.saveText({ name: name, text: text, mime: 'application/json' }).then(function (out) {
+            if (out && out.path) {
+              state.savedPath = out.path;
+              window.dispatchEvent(new CustomEvent('ds:saved', { detail: { path: out.path, name: out.name } }));
+            }
+            return out;
+          });
+        }
+        download(new Blob([text], { type: 'application/json' }), name);
+        return { name: name, downloaded: true };
+      },
+    });
+  }
+
   function animationCommand(action) {
     if (!animation) {
       el.statStatus.textContent = 'The animation controller did not load';
@@ -2682,6 +2774,7 @@
     'file-open': function () { openImageDialog(); },
     'file-plugin-manager': openPluginManager,
     'file-extract-palette': openInkExtractor,
+    'file-color-scheme': openColorSchemeMaker,
     'file-import-palette': function () {
       if (!window.DitherPaletteImport) {
         el.statStatus.textContent = 'The palette importer is not available';

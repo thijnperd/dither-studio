@@ -1,7 +1,7 @@
 /* smoke.js - run one small smoke suite, or the full in-page set.
  *
  *     node tools/smoke.js quick      # boot, chrome and a live proof (default)
- *     node tools/smoke.js plugins    # installer, Shape Press, presets, Ink Extractor
+ *     node tools/smoke.js plugins    # manager, sizes, Shape Press, presets, both dialogs
  *     node tools/smoke.js animation  # timeline, playhead and transport
  *     node tools/smoke.js all        # every in-page check; slower, for CI/release
  *     node tools/smoke.js list       # what is available
@@ -21,7 +21,7 @@ const SUITES = {
   },
   plugins: {
     script: 'smoke-plugins.js',
-    blurb: 'plugin store, Shape Press gate, preset packs, Ink Extractor',
+    blurb: 'plugin manager/sections/sizes, Shape Press, presets, Ink Extractor, Color Scheme Maker',
   },
   animation: {
     script: 'smoke-animation.js',

@@ -81,10 +81,104 @@ test('hexToRgb is black for anything it cannot read', function () {
   assert.deepStrictEqual(Core.hexToRgb(undefined), [0, 0, 0]);
 });
 
+test('parseHexColour accepts six digits and three, and rejects the rest', function () {
+  assert.deepStrictEqual(Core.parseHexColour('#ff8800'), [255, 136, 0]);
+  assert.deepStrictEqual(Core.parseHexColour('f80'), [255, 136, 0]);
+  assert.strictEqual(Core.parseHexColour('#12345'), null);
+  assert.strictEqual(Core.parseHexColour('not a colour'), null);
+});
+
 test('the pair round-trips every byte value', function () {
   for (let v = 0; v < 256; v++) {
     assert.deepStrictEqual(Core.hexToRgb(Core.rgbToHex([v, 255 - v, v])), [v, 255 - v, v]);
   }
+});
+
+// ---- colour schemes ----
+
+group('colour schemes');
+
+test('rgbToHsl and hslToRgb round-trip the primaries', function () {
+  [[255, 0, 0], [0, 255, 0], [0, 0, 255], [128, 128, 128], [255, 255, 255]].forEach(function (rgb) {
+    const hsl = Core.rgbToHsl(rgb);
+    const back = Core.hslToRgb(hsl.h, hsl.s, hsl.l);
+    assert.ok(back.every(function (v, i) { return Math.abs(v - rgb[i]) <= 2; }), rgb + ' -> ' + back);
+  });
+});
+
+test('schemeColours returns the requested number of valid, distinct inks', function () {
+  Core.SCHEME_HARMONIES.forEach(function (mode) {
+    const colors = Core.schemeColours([210, 80, 40], 6, mode, 1234);
+    assert.strictEqual(colors.length, 6, mode);
+    colors.forEach(function (rgb) {
+      assert.ok(rgb.length === 3 && rgb.every(function (v) { return v >= 0 && v <= 255; }), mode + ' channel');
+    });
+    const keys = new Set(colors.map(function (rgb) { return rgb.join(','); }));
+    assert.strictEqual(keys.size, 6, mode + ' duplicates');
+  });
+});
+
+test('a scheme can hold up to 32 inks for Lospec-sized palettes', function () {
+  assert.strictEqual(Core.schemeColours([255, 107, 53], 32, 'free', 4).length, 32);
+});
+
+test('a scheme is deterministic for a seed and changes with it', function () {
+  const a = Core.schemeColours([40, 140, 210], 7, 'analogous', 99);
+  const b = Core.schemeColours([40, 140, 210], 7, 'analogous', 99);
+  const c = Core.schemeColours([40, 140, 210], 7, 'analogous', 100);
+  assert.deepStrictEqual(a, b);
+  assert.notDeepStrictEqual(a, c);
+});
+
+test('harmony rules keep their promise around the base hue', function () {
+  const base = [255, 0, 0];
+  const analogous = Core.schemeColours(base, 6, 'analogous', 7).map(function (rgb) { return Core.rgbToHsl(rgb).h; });
+  analogous.forEach(function (hue) {
+    const distance = Math.min(Math.abs(hue), 360 - Math.abs(hue));
+    assert.ok(distance <= 64, 'analogous hue ' + hue);
+  });
+  const complements = Core.schemeColours(base, 4, 'complement', 7).map(function (rgb) { return Core.rgbToHsl(rgb).h; });
+  assert.ok(complements.some(function (hue) { return Math.abs(hue) <= 8 || Math.abs(hue - 360) <= 8; }));
+  assert.ok(complements.some(function (hue) { return Math.abs(hue - 180) <= 10; }));
+});
+
+test('sortSchemeColours sorts by luma or around the wheel', function () {
+  const colors = [[255, 255, 255], [0, 0, 0], [120, 40, 20], [30, 90, 200]];
+  const luma = Core.sortSchemeColours(colors, 'tone');
+  const lumaOf = function (c) { return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  for (let i = 1; i < luma.length; i++) assert.ok(lumaOf(luma[i]) >= lumaOf(luma[i - 1]));
+  const wheel = Core.sortSchemeColours(colors, 'hue').map(function (c) { return Core.rgbToHsl(c).h; });
+  for (let i = 1; i < wheel.length; i++) assert.ok(wheel[i] >= wheel[i - 1]);
+});
+
+test('schemeSafety measures neighbour separation, contrast and order', function () {
+  const safe = Core.schemeSafety([[0, 0, 0], [128, 128, 128], [255, 255, 255]]);
+  assert.strictEqual(safe.level, 'safe');
+  assert.strictEqual(safe.ordered, true);
+  assert.ok(safe.minStep > 100 && safe.maxContrast > 20, JSON.stringify(safe));
+  const muddy = Core.schemeSafety([[100, 100, 100], [104, 104, 104], [200, 200, 200]]);
+  assert.strictEqual(muddy.level, 'muddy');
+  assert.ok(muddy.minStep < 6);
+  const unordered = Core.schemeSafety([[255, 255, 255], [0, 0, 0]]);
+  assert.strictEqual(unordered.ordered, false);
+  const duplicate = Core.schemeSafety([[0, 0, 0], [0, 0, 0], [255, 255, 255]]);
+  assert.strictEqual(duplicate.duplicates, 1);
+});
+
+test('lospecPaletteUrl accepts a slug or palette URL and rejects other hosts', function () {
+  assert.strictEqual(Core.lospecPaletteUrl('greyt-bit'), 'https://lospec.com/palette-list/greyt-bit.json');
+  assert.strictEqual(Core.lospecPaletteUrl('https://lospec.com/palette-list/greyt-bit'),
+    'https://lospec.com/palette-list/greyt-bit.json');
+  assert.strictEqual(Core.lospecPaletteUrl('https://lospec.com/palette-list/greyt-bit.json?ref=x'),
+    'https://lospec.com/palette-list/greyt-bit.json');
+  assert.strictEqual(Core.lospecPaletteUrl('https://example.com/palette-list/greyt-bit'), '');
+  assert.strictEqual(Core.lospecPaletteUrl('javascript:alert(1)'), '');
+});
+
+test('schemeName is a readable two-word name built from the inks', function () {
+  assert.strictEqual(Core.schemeName([]), 'Untitled scheme');
+  const name = Core.schemeName([[40, 70, 180], [255, 90, 40], [245, 220, 180]]);
+  assert.ok(/^[A-Z][a-z]+ [A-Z][a-z]+$/.test(name), name);
 });
 
 // ---- palette import ----
@@ -101,6 +195,12 @@ test('a JSON object carries its own name and colours', function () {
   const parsed = Core.parsePaletteText('{"name":"Lospec 4","colors":["#000","#f00","#fff","#0f0"]}');
   assert.strictEqual(parsed.name, 'Lospec 4');
   assert.deepStrictEqual(parsed.colors, [[0, 0, 0], [255, 0, 0], [255, 255, 255], [0, 255, 0]]);
+});
+
+test('a Lospec JSON palette without hashes is read', function () {
+  const parsed = Core.parsePaletteText('{"name":"Greyt-bit","author":"Sam Keddy","colors":["574368","8488d3"]}', 'Lospec');
+  assert.strictEqual(parsed.name, 'Greyt-bit');
+  assert.deepStrictEqual(parsed.colors, [[0x57, 0x43, 0x68], [0x84, 0x88, 0xd3]]);
 });
 
 test('a plain hex list takes commas, spaces, semicolons and lines', function () {
@@ -179,6 +279,40 @@ test('a plugin package is normalised and unknown fields are dropped', function (
   assert.strictEqual(pkg.id, 'demo-tool');
   assert.deepStrictEqual(pkg.data.methods, ['cins']);
   assert.strictEqual(pkg.main, undefined);
+});
+
+test('a palette pack validates names, ids and hex colours', function () {
+  const pkg = Core.validatePluginPackage({
+    schema: 1,
+    id: 'demo-palette-pack',
+    name: 'Demo Palette Pack',
+    version: '1.0.0',
+    kind: 'palette-pack',
+    summary: 'A test pack',
+    data: { palettes: [{ id: 'main', name: 'Main', colors: ['#000000', '#ff0000'] }] },
+  });
+  assert.strictEqual(pkg.kind, 'palette-pack');
+  assert.deepStrictEqual(pkg.data.palettes[0].colors, [[0, 0, 0], [255, 0, 0]]);
+  assert.throws(function () {
+    Core.validatePluginPackage({ schema: 1, id: 'bad-pack', name: 'Bad', version: '1.0.0', kind: 'palette-pack', summary: 'x', data: { palettes: [{ id: 'main', name: 'Main', colors: ['#000'] }] } });
+  }, /2–64/);
+});
+
+test('a scheme-maker package keeps only its harmony defaults', function () {
+  const pkg = Core.validatePluginPackage({
+    schema: 1,
+    id: 'scheme-tool',
+    name: 'Scheme Tool',
+    version: '1.0.0',
+    kind: 'tool',
+    capability: 'color-scheme-maker',
+    summary: 'A test package',
+    data: { defaultCount: 99, defaultHarmony: 'not-a-harmony', methods: ['cins'], main: 'evil.js' },
+  });
+  assert.strictEqual(pkg.capability, 'color-scheme-maker');
+  assert.strictEqual(pkg.data.defaultCount, 32);
+  assert.strictEqual(pkg.data.defaultHarmony, 'analogous');
+  assert.strictEqual(pkg.data.methods, undefined);
 });
 
 test('a plugin package cannot smuggle a script or a bad preset', function () {

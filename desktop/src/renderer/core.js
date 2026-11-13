@@ -179,6 +179,236 @@
 
   // ---- catalogues ----
 
+  // ---- colour schemes (Color Scheme Maker) ----
+
+  // A scheme is a small set of inks generated from one base colour. These are
+  // pure functions, like the palette parser: the dialog owns the locks and the
+  // editing, while the harmony rules and the naming live here where the Node
+  // tests can hold them still.
+  const SCHEME_HARMONIES = ['free', 'analogous', 'complement', 'split', 'triad', 'tetrad', 'mono'];
+  const SCHEME_OFFSETS = {
+    analogous: [0, -28, 28, -56, 56, -14, 14],
+    complement: [0, 180],
+    split: [0, 150, 210],
+    triad: [0, 120, 240],
+    tetrad: [0, 90, 180, 270],
+    mono: [0],
+  };
+
+  function clampUnit(value) {
+    return Math.max(0, Math.min(1, Number(value) || 0));
+  }
+
+  function normaliseHue(value) {
+    const hue = Number(value) || 0;
+    return ((hue % 360) + 360) % 360;
+  }
+
+  function rgbToHsl(rgb) {
+    const r = clampByte(rgb[0]) / 255;
+    const g = clampByte(rgb[1]) / 255;
+    const b = clampByte(rgb[2]) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+    const l = (max + min) / 2;
+    let h = 0;
+    let s = 0;
+    if (delta) {
+      s = delta / (1 - Math.abs(2 * l - 1));
+      if (max === r) h = ((g - b) / delta) % 6;
+      else if (max === g) h = (b - r) / delta + 2;
+      else h = (r - g) / delta + 4;
+      h *= 60;
+    }
+    return { h: normaliseHue(h), s: clampUnit(s), l: clampUnit(l) };
+  }
+
+  function hslToRgb(hue, saturation, lightness) {
+    const h = normaliseHue(hue) / 360;
+    const s = clampUnit(saturation);
+    const l = clampUnit(lightness);
+    if (!s) {
+      const grey = clampByte(l * 255);
+      return [grey, grey, grey];
+    }
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    function channel(t) {
+      let value = t;
+      if (value < 0) value += 1;
+      if (value > 1) value -= 1;
+      if (value < 1 / 6) return p + (q - p) * 6 * value;
+      if (value < 1 / 2) return q;
+      if (value < 2 / 3) return p + (q - p) * (2 / 3 - value) * 6;
+      return p;
+    }
+    return [channel(h + 1 / 3), channel(h), channel(h - 1 / 3)].map(function (value) {
+      return clampByte(value * 255);
+    });
+  }
+
+  function schemeRandom(seed) {
+    let state = (Number(seed) || 0) >>> 0;
+    if (!state) state = 0x9e3779b9;
+    return function () {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function sameColour(a, b) {
+    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+  }
+
+  // The base hue is repeated with the harmony's offsets; lightness climbs so a
+  // palette is useful as a ramp without sorting it first. Randomness is seeded
+  // so Generate and the tests can reproduce exactly the same inks.
+  function schemeColours(base, count, harmony, seed) {
+    const total = Math.max(2, Math.min(32, Math.round(Number(count) || 6)));
+    const mode = SCHEME_HARMONIES.indexOf(harmony) >= 0 ? harmony : 'analogous';
+    const baseRgb = Array.isArray(base) && base.length >= 3
+      ? [clampByte(base[0]), clampByte(base[1]), clampByte(base[2])]
+      : [255, 107, 53];
+    const baseHsl = rgbToHsl(baseRgb);
+    const offsets = SCHEME_OFFSETS[mode] || SCHEME_OFFSETS.analogous;
+    const random = schemeRandom(seed);
+    const out = [];
+    for (let i = 0; i < total; i++) {
+      const at = total === 1 ? 0.5 : i / (total - 1);
+      let hue;
+      if (mode === 'free') hue = random() * 360;
+      else hue = baseHsl.h + offsets[i % offsets.length] + (random() - 0.5) * 10;
+      let saturation = Math.max(0.3, Math.min(0.96, baseHsl.s + (random() - 0.5) * 0.2));
+      let lightness = 0.12 + at * 0.76 + (random() - 0.5) * 0.06;
+      if (mode === 'mono') saturation = Math.max(0.16, Math.min(0.92, baseHsl.s * (0.5 + at * 0.7)));
+      if (mode === 'free') lightness = 0.14 + random() * 0.72;
+      let rgb = hslToRgb(hue, saturation, lightness);
+      let tries = 0;
+      while (out.some(function (seen) { return sameColour(seen, rgb); }) && tries < 24) {
+        lightness = clampUnit(lightness + (tries % 2 ? -0.045 : 0.045));
+        rgb = hslToRgb(hue + tries * 3, saturation, lightness);
+        tries++;
+      }
+      out.push(rgb);
+    }
+    return out;
+  }
+
+  function sortSchemeColours(colors, mode) {
+    const list = (Array.isArray(colors) ? colors : []).slice();
+    if (mode === 'hue') {
+      list.sort(function (a, b) {
+        const ha = rgbToHsl(a).h;
+        const hb = rgbToHsl(b).h;
+        return ha === hb ? lumaOf(a) - lumaOf(b) : ha - hb;
+      });
+    } else {
+      list.sort(function (a, b) { return lumaOf(a) - lumaOf(b); });
+    }
+    return list;
+  }
+
+  // A Coolors-shaped name, read off the palette instead of a random word list.
+  // The darkest ink gives the tone, the most saturated ink gives the family.
+  function relativeLuminance(rgb) {
+    const channels = [rgb[0], rgb[1], rgb[2]].map(function (value) {
+      const channel = clampByte(value) / 255;
+      return channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  }
+
+  function contrastRatio(a, b) {
+    const first = relativeLuminance(a);
+    const second = relativeLuminance(b);
+    const lighter = Math.max(first, second);
+    const darker = Math.min(first, second);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  // The Color Scheme Maker's safety meter. It measures the inks after a tone
+  // sort: the smallest step between neighbours and the contrast at the two
+  // ends. Dithering can survive a tight pair, but two inks that are nearly the
+  // same tone waste a slot, and an unsorted palette makes the picker harder to
+  // read. The thresholds are deliberately conservative, not WCAG claims.
+  function schemeSafety(colors) {
+    const list = (Array.isArray(colors) ? colors : []).filter(function (rgb) {
+      return Array.isArray(rgb) && rgb.length >= 3;
+    });
+    if (list.length < 2) {
+      return { count: list.length, minStep: 0, minContrast: 0, maxContrast: 0, ordered: true, duplicates: 0, level: 'muddy' };
+    }
+    const byTone = list.slice().sort(function (a, b) { return lumaOf(a) - lumaOf(b); });
+    let minStep = Infinity;
+    let minContrast = Infinity;
+    const seen = [];
+    let duplicates = 0;
+    list.forEach(function (rgb) {
+      if (seen.some(function (other) { return sameColour(other, rgb); })) duplicates++;
+      else seen.push(rgb);
+    });
+    for (let i = 1; i < byTone.length; i++) {
+      minStep = Math.min(minStep, lumaOf(byTone[i]) - lumaOf(byTone[i - 1]));
+      minContrast = Math.min(minContrast, contrastRatio(byTone[i], byTone[i - 1]));
+    }
+    let ordered = true;
+    for (let i = 1; i < list.length; i++) {
+      if (lumaOf(list[i]) < lumaOf(list[i - 1])) { ordered = false; break; }
+    }
+    const maxContrast = contrastRatio(byTone[0], byTone[byTone.length - 1]);
+    const level = duplicates || minStep < 6 ? 'muddy' : minStep < 12 ? 'tight' : 'safe';
+    return {
+      count: list.length,
+      minStep: Math.round(minStep * 10) / 10,
+      minContrast: Math.round(minContrast * 100) / 100,
+      maxContrast: Math.round(maxContrast * 100) / 100,
+      ordered: ordered,
+      duplicates: duplicates,
+      level: level,
+    };
+  }
+
+  function lospecPaletteUrl(value) {
+    const raw = String(value == null ? '' : value).trim();
+    const slug = /^([a-z0-9][a-z0-9-]{0,63})$/i.exec(raw);
+    if (slug) return 'https://lospec.com/palette-list/' + slug[1].toLowerCase() + '.json';
+    const match = /^https?:\/\/(?:www\.)?lospec\.com\/palette-list\/([a-z0-9][a-z0-9-]{0,63})(?:\.json)?\/?(?:[?#].*)?$/i.exec(raw);
+    if (!match) return '';
+    return 'https://lospec.com/palette-list/' + match[1].toLowerCase() + '.json';
+  }
+
+  function schemeName(colors) {
+    const list = (Array.isArray(colors) ? colors : []).filter(function (rgb) {
+      return Array.isArray(rgb) && rgb.length >= 3;
+    });
+    if (!list.length) return 'Untitled scheme';
+    let family = list[0];
+    let best = -1;
+    list.forEach(function (rgb) {
+      const saturation = rgbToHsl(rgb).s;
+      if (saturation > best) { best = saturation; family = rgb; }
+    });
+    const hue = rgbToHsl(family).h;
+    const families = [
+      [18, 'Ember'], [45, 'Amber'], [70, 'Moss'], [105, 'Fern'],
+      [150, 'Jade'], [185, 'Tide'], [220, 'Cobalt'], [255, 'Indigo'],
+      [290, 'Violet'], [325, 'Magenta'], [350, 'Rose'], [361, 'Ember'],
+    ];
+    const familyName = families.find(function (entry) { return hue < entry[0]; })[1];
+    let tone = 'Midnight';
+    const middle = list.slice().sort(function (a, b) { return lumaOf(a) - lumaOf(b); })[Math.floor((list.length - 1) / 2)];
+    const luma = lumaOf(middle);
+    if (luma >= 80) tone = 'Dusk';
+    if (luma >= 120) tone = 'Static';
+    if (luma >= 160) tone = 'Dawn';
+    if (luma >= 200) tone = 'Bloom';
+    return familyName + ' ' + tone;
+  }
+
   // ---- palette extraction (Ink Extractor) ----
 
   // A palette extracted from a photograph should look like it came off old
@@ -328,8 +558,8 @@
   // payload. There is no `main`, no `eval` and no code path that could run one.
   // Validation is strict for the fields the app consumes, and drops everything
   // else, so a package cannot smuggle settings into a prototype or a DOM call.
-  const PLUGIN_KINDS = ['tool', 'preset-pack'];
-  const PLUGIN_CAPABILITIES = ['ink-extractor', 'shape-press'];
+  const PLUGIN_KINDS = ['tool', 'preset-pack', 'palette-pack'];
+  const PLUGIN_CAPABILITIES = ['ink-extractor', 'shape-press', 'color-scheme-maker'];
   const EXTRACT_LABELS = { cins: 'CINS', median: 'Median cut', octree: 'Octree', polarity: 'Polarity' };
 
   function pluginSlug(value) {
@@ -359,11 +589,44 @@
       if (PLUGIN_CAPABILITIES.indexOf(pkg.capability) < 0) throw new Error('Unknown plugin capability');
       out.capability = pkg.capability;
       if (pkg.data && typeof pkg.data === 'object') {
-        if (Array.isArray(pkg.data.methods)) {
-          out.data.methods = pkg.data.methods.filter(function (m) { return EXTRACT_METHODS.indexOf(m) >= 0; });
+        if (pkg.capability === 'color-scheme-maker') {
+          out.data.defaultCount = Math.max(2, Math.min(32, Math.round(pkg.data.defaultCount || 6)));
+          out.data.defaultHarmony = SCHEME_HARMONIES.indexOf(pkg.data.defaultHarmony) >= 0
+            ? pkg.data.defaultHarmony : 'analogous';
+        } else {
+          if (Array.isArray(pkg.data.methods)) {
+            out.data.methods = pkg.data.methods.filter(function (m) { return EXTRACT_METHODS.indexOf(m) >= 0; });
+          }
+          if (pkg.data.defaultCount) out.data.defaultCount = Math.max(2, Math.min(32, Math.round(pkg.data.defaultCount)));
         }
-        if (pkg.data.defaultCount) out.data.defaultCount = Math.max(2, Math.min(32, Math.round(pkg.data.defaultCount)));
       }
+      return out;
+    }
+    if (pkg.kind === 'palette-pack') {
+      if (!pkg.data || !Array.isArray(pkg.data.palettes) || !pkg.data.palettes.length || pkg.data.palettes.length > 24) {
+        throw new Error('A palette pack needs 1–24 palettes');
+      }
+      out.data.palettes = pkg.data.palettes.map(function (palette, index) {
+        if (!palette || typeof palette !== 'object') throw new Error('Palette ' + (index + 1) + ' is not an object');
+        if (!pluginSlug(palette.id)) throw new Error('Palette ' + (index + 1) + ' needs a lower-case id');
+        if (typeof palette.name !== 'string' || !palette.name.trim() || palette.name.length > 60) {
+          throw new Error('Palette ' + (index + 1) + ' needs a name of 60 characters or fewer');
+        }
+        if (!Array.isArray(palette.colors) || palette.colors.length < 2 || palette.colors.length > 64) {
+          throw new Error('Palette ' + (index + 1) + ' needs 2–64 colours');
+        }
+        const colors = [];
+        palette.colors.forEach(function (color) {
+          let rgb;
+          try { rgb = parseSingleColour(color); }
+          catch (err) { throw new Error('Palette ' + (index + 1) + ' has a colour that is not hex or RGB'); }
+          if (!colors.some(function (seen) { return sameColour(seen, rgb); })) colors.push(rgb);
+        });
+        if (colors.length < 2) throw new Error('Palette ' + (index + 1) + ' needs at least two different colours');
+        const fullId = 'plugin-' + pkg.id + '-' + palette.id;
+        if (fullId.length > 64) throw new Error('Palette ' + (index + 1) + ' has an id that is too long');
+        return { id: palette.id, name: palette.name.trim(), colors: colors };
+      });
       return out;
     }
     if (!pkg.data || !Array.isArray(pkg.data.presets) || !pkg.data.presets.length || pkg.data.presets.length > 24) {
@@ -471,9 +734,20 @@
     clampByte: clampByte,
     rgbToHex: rgbToHex,
     hexToRgb: hexToRgb,
+    parseHexColour: parseHexColour,
     parsePaletteText: parsePaletteText,
     paletteId: paletteId,
     cleanPaletteName: cleanPaletteName,
+    rgbToHsl: rgbToHsl,
+    hslToRgb: hslToRgb,
+    schemeColours: schemeColours,
+    sortSchemeColours: sortSchemeColours,
+    schemeName: schemeName,
+    schemeSafety: schemeSafety,
+    relativeLuminance: relativeLuminance,
+    contrastRatio: contrastRatio,
+    lospecPaletteUrl: lospecPaletteUrl,
+    SCHEME_HARMONIES: SCHEME_HARMONIES,
     extractPalette: extractPalette,
     EXTRACT_METHODS: EXTRACT_METHODS,
     EXTRACT_LABELS: EXTRACT_LABELS,
