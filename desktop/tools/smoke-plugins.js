@@ -42,6 +42,21 @@
   check('its two recipes join the picker',
     optionNames('preset').indexOf('Dreamy Cyberpunk · Glitch 1') >= 0 &&
       optionNames('preset').indexOf('Dreamy Cyberpunk · Glitch 2') >= 0);
+  const presetGroups = Array.prototype.slice.call(document.querySelectorAll('#preset optgroup')).map(function (group) {
+    return group.label;
+  });
+  check('the preset picker groups built-ins before packs',
+    presetGroups[0] === 'Built-in recipes' &&
+      presetGroups.filter(function (name) { return name === 'Built-in recipes'; }).length === 1 &&
+      presetGroups.indexOf('Dreamy Cyberpunk') > 0,
+    presetGroups.join('|'));
+  const dreamyGroup = document.querySelector('#preset optgroup[label="Dreamy Cyberpunk"]');
+  check('a pack keeps only its own recipes in its section',
+    !!dreamyGroup && dreamyGroup.querySelectorAll('option').length === 2 &&
+      Array.prototype.every.call(dreamyGroup.querySelectorAll('option'), function (option) {
+        return option.textContent.indexOf('Dreamy Cyberpunk · ') === 0;
+      }),
+    dreamyGroup ? dreamyGroup.querySelectorAll('option').length : null);
   window.__dither.applyPreset('dreamy-cyberpunk-1');
   await wait(120);
   const dreamy = window.__dither.stats();
@@ -112,6 +127,81 @@
     !window.DS.catalogues.PALETTES.some(function (palette) { return palette.id === packPaletteId; }));
   check('removing the selected pack falls back to a built-in palette',
     window.__dither.stats().palette === 'bw' && document.getElementById('palette').value === 'bw');
+
+  // The saved-scheme manager is the other half of the maker's store. Use a
+  // second scheme so the original Smoke Scheme still covers the save path.
+  window.__dither.colorSchemeOpen();
+  await wait(100);
+  document.getElementById('scheme-name').value = 'Manager Scheme';
+  const managerSaved = window.__dither.colorSchemeSave();
+  await wait(100);
+  const managerEntry = window.__dither.customPalettes().find(function (p) { return p.name === 'Manager Scheme'; });
+  const managerPaletteId = managerEntry ? managerEntry.id : null;
+  check('a scheme can be saved for the manager to edit',
+    managerSaved === true && !!managerPaletteId, managerPaletteId);
+
+  window.DS.command('file-manage-palettes');
+  await wait(100);
+  let managerState = window.__dither.paletteManagerState();
+  let managerRow = managerPaletteId
+    ? document.querySelector('#palette-manager-list .palette-manager-row[data-id="' + managerPaletteId + '"]')
+    : null;
+  check('Manage Color Schemes lists the saved schemes',
+    managerState && managerState.open && managerState.count >= 2, managerState && managerState.count);
+  check('a manager row shows the scheme inks',
+    !!managerRow && managerRow.querySelectorAll('.palette-manager-swatch').length >= 2,
+    managerRow ? managerRow.querySelectorAll('.palette-manager-swatch').length : null);
+
+  const managerName = managerRow.querySelector('.palette-manager-name');
+  managerName.value = 'Manager Scheme Renamed';
+  managerName.dispatchEvent(new Event('input', { bubbles: true }));
+  managerRow.querySelector('[data-action="rename"]').click();
+  await wait(100);
+  const renamedEntry = window.__dither.customPalettes().find(function (p) { return p.id === managerPaletteId; });
+  check('Rename changes the scheme in place',
+    !!renamedEntry && renamedEntry.name === 'Manager Scheme Renamed', renamedEntry && renamedEntry.name);
+  check('Rename reaches the palette picker',
+    optionNames('palette').some(function (name) { return name.indexOf('Manager Scheme Renamed') === 0; }));
+
+  managerRow = document.querySelector('#palette-manager-list .palette-manager-row[data-id="' + managerPaletteId + '"]');
+  managerRow.querySelector('[data-action="edit"]').click();
+  await wait(120);
+  const editState = window.__dither.colorSchemeState();
+  check('Edit reopens the maker with the same saved scheme',
+    editState.open && editState.editId === managerPaletteId && editState.name === 'Manager Scheme Renamed',
+    editState && editState.editId);
+  const editedInkCount = editState.colors.length;
+  window.DitherColorScheme.add();
+  document.getElementById('scheme-name').value = 'Manager Scheme Edited';
+  const editSaved = window.__dither.colorSchemeSave();
+  await wait(100);
+  const editedEntry = window.__dither.customPalettes().find(function (p) { return p.id === managerPaletteId; });
+  check('Save changes updates the same scheme',
+    editSaved === true && !!editedEntry && editedEntry.name === 'Manager Scheme Edited' &&
+      editedEntry.colors.length === editedInkCount + 1,
+    editedEntry ? editedEntry.name + ' · ' + editedEntry.colors.length : null);
+
+  window.DS.command('press-palette', managerPaletteId);
+  check('the edited scheme can be selected', window.__dither.stats().palette === managerPaletteId);
+  window.DS.command('file-manage-palettes');
+  await wait(100);
+  const beforeDelete = window.__dither.paletteManagerState();
+  const deleteRow = document.querySelector('#palette-manager-list .palette-manager-row[data-id="' + managerPaletteId + '"]');
+  const deleteBtn = deleteRow && deleteRow.querySelector('[data-action="delete"]');
+  if (deleteBtn) deleteBtn.click();
+  managerState = window.__dither.paletteManagerState();
+  check('the first Delete asks for confirmation',
+    managerState.confirming === managerPaletteId && deleteBtn.textContent === 'Delete?',
+    managerState.confirming);
+  if (deleteBtn) deleteBtn.click();
+  await wait(100);
+  check('the second Delete removes the scheme and falls back',
+    !window.__dither.customPalettes().some(function (p) { return p.id === managerPaletteId; }) &&
+      window.__dither.stats().palette === 'bw' && document.getElementById('palette').value === 'bw');
+  check('the manager refreshes after a delete',
+    window.__dither.paletteManagerState().count === beforeDelete.count - 1,
+    window.__dither.paletteManagerState().count);
+  document.getElementById('palette-manager-close').click();
 
   window.DS.command('file-plugin-manager');
   await wait(250);

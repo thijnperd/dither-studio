@@ -3,7 +3,7 @@
 Dither Studio is a print shop for pixels that lives in a folder. You load an
 image or a video, choose a press and an ink set, grade and stack a few effects,
 and pull a proof — as pixels, as characters, as a PNG, or as a WebM recording.
-Forty-six dither algorithms, thirty palettes, twenty-five presets, fifteen
+Forty-six dither algorithms, thirty palettes, twenty-five presets, seventeen
 effects. No install, no build step, no uploads; the press works offline.
 
 The five-minute path: **open the web demo** at

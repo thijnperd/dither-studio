@@ -43,6 +43,7 @@
   let opts = {};
   let slots = [];
   let seed = 1;
+  let editId = null;
 
   function hex(rgb) {
     return Core.rgbToHex(rgb);
@@ -413,7 +414,7 @@
       return false;
     }
     const name = Core.cleanPaletteName(nameInput && nameInput.value, Core.schemeName(colors()));
-    const result = opts.onSave({ name: name, colors: colors() });
+    const result = opts.onSave({ id: editId || undefined, name: name, colors: colors() });
     if (result && result.ok === false) {
       setError(result.error || 'That palette could not be saved');
       return false;
@@ -482,6 +483,7 @@
   function open(options) {
     if (!overlay && !build()) return false;
     opts = options || {};
+    editId = opts.editId || null;
     seed = (Date.now() ^ 0x9e3779b9) >>> 0;
     const defaultHarmony = Core.SCHEME_HARMONIES.indexOf(opts.harmony) >= 0 ? opts.harmony : 'analogous';
     harmonySelect.value = defaultHarmony;
@@ -491,13 +493,15 @@
     setSlots(startColors);
     nameInput.value = opts.name || Core.schemeName(colors());
     if (importInput) importInput.value = '';
+    if (saveBtn) saveBtn.textContent = editId ? 'Save changes' : 'Save to palettes';
     renderList();
     setError('');
-    setStatus('Start from these inks, or press Generate');
+    setStatus(editId ? 'Editing a saved scheme · Save changes keeps its place in the palette menu' : 'Start from these inks, or press Generate');
     if (global.DitherPlugins && global.DitherPlugins.isOpen && global.DitherPlugins.isOpen()) global.DitherPlugins.close();
     if (global.DitherPalette && global.DitherPalette.isOpen && global.DitherPalette.isOpen()) global.DitherPalette.close();
     if (global.DitherPaletteImport && global.DitherPaletteImport.isOpen && global.DitherPaletteImport.isOpen()) global.DitherPaletteImport.close();
     if (global.DitherInkExtractor && global.DitherInkExtractor.isOpen && global.DitherInkExtractor.isOpen()) global.DitherInkExtractor.close();
+    if (global.DitherPaletteManager && global.DitherPaletteManager.isOpen && global.DitherPaletteManager.isOpen()) global.DitherPaletteManager.close();
     overlay.hidden = false;
     restoreFocus = document.activeElement;
     global.requestAnimationFrame(function () {
@@ -512,6 +516,7 @@
     if (!overlay) return;
     overlay.classList.remove('is-in');
     overlay.hidden = true;
+    editId = null;
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }
@@ -523,6 +528,7 @@
   function state() {
     return {
       open: isOpen(),
+      editId: editId,
       name: nameInput ? nameInput.value : '',
       harmony: harmonySelect ? harmonySelect.value : '',
       colors: colors(),

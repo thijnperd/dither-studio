@@ -132,7 +132,7 @@ web page:
 **File** — open an image or a clip, the next built-in source (`Ctrl+D`), save the
 proof as a PNG, copy it to the clipboard, export a text proof, import and export
 presets, import a color palette, extract one from an image, open the Color
-Scheme Maker, open the Plugin Manager, quit.
+Scheme Maker, manage saved schemes, open the Plugin Manager, quit.
 
 **Edit** — undo and redo recipe changes (`Ctrl+Z` / `Ctrl+Shift+Z`), roll a
 fresh recipe (`Ctrl+R`, the equivalent of the Random tool), a new seed
@@ -305,19 +305,24 @@ Studio.
   below the swatches reports the smallest tone step, the widest contrast and
   whether the inks run dark to light, and calls a too-tight pair muddy.
   **Export pack…** writes the scheme as a declarative palette plugin that can be
-  installed through the Plugin Manager. It is the Coolors/Lospec-shaped drafting
-  table, built on the app's own palette store rather than a second format.
+  installed through the Plugin Manager. *File ▸ Manage Color Schemes…* lists the
+  schemes you saved or imported: rename one in place, reopen it here (Save
+  changes keeps the same palette, even if the name changed), or delete it with a
+  second confirmation. It is the Coolors/Lospec-shaped drafting table, built on
+  the app's own palette store rather than a second format.
 - **Shape Press** (tool) adds one effect to the stack: barcode, cross-stitch,
   halftone or bitmap shapes. It is hidden from the effect picker until the tool
   is installed; a recipe that names it still renders through the engine.
 - **Palette packs** add colour schemes to the palette picker. A pack exported
   from the Color Scheme Maker is one; removing the pack removes its inks and
   falls back to the built-in palette if one was selected.
-- **Preset packs** add whole recipes to the Presets station. The bundled
-  catalogue includes Niko's Glitch Universe, Caroline's Undead Dithering,
-  2_s0ur's Broken Signal and Dreamy Cyberpunk, the last adapted from Studio
-  AAA's Dither Boy download. Removing a pack removes its recipes and leaves
-  the rest of the catalogue alone.
+- **Preset packs** add whole recipes to the Presets station. The picker keeps
+  the built-ins under **Built-in recipes** and gives each installed pack its own
+  heading, so it is clear where a recipe came from. The bundled catalogue
+  includes Niko's Glitch Universe, Caroline's Undead Dithering, 2_s0ur's Broken
+  Signal and Dreamy Cyberpunk, the last adapted from Studio AAA's Dither Boy
+  download. Removing a pack removes its heading and recipes and leaves the rest
+  of the catalogue alone.
 
 **Animate the still.** *Effects ▸ Animate the Still* puts a timeline over the
 proof. Set the duration (1–12 s) and frame rate (6–30 fps), then add tracks for

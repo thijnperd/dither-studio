@@ -23,6 +23,7 @@ Two rules were kept throughout:
 | [dither-guy](https://github.com/manoelpiovesan/dither-guy) (Python, GPL) | The pipeline order — adjust → downscale by pixel size → dither → post effects → nearest-neighbour upscale — and the preset/recipe shape. Behaviour only; no code taken. |
 | [didder](https://github.com/makew0rld/didder) (Go, MIT) | The breadth of the algorithm list: Bayer tile sizes, clustered dot and halftone screens, void-and-cluster, blue noise, IGN, R2, crosshatch, line screens and checks; palettes as named ink sets; a global "strength" knob; alpha handling. |
 | [Coolors](https://coolors.co/) and [Lospec Palette List](https://lospec.com/palette-list) (palette tools) | The Color Scheme Maker's shape: lockable swatches, harmony generation, palette naming, tone/hue sorting and a one-click save into the app's own palette store. Behaviour only; the generator, name rules and UI are original. |
+| [Lospec Palette List](https://lospec.com/palette-list) and its public palette JSON (`https://lospec.com/palette-list/<slug>.json`) | The Color Scheme Maker's Lospec import: a link or slug is resolved to Lospec's own JSON endpoint at request time, and only the published palette name and RGB list are read. No Lospec palette data is bundled. The importer, validation and safety meter are original. |
 | [DitherPunk.jl API](https://juliaimages.org/DitherPunk.jl/v3.1/api/) | The taxonomy used for the algorithm picker: ordered / error-diffusion / stochastic / palette families, and the naming of the published kernels. |
 | [ImageMagick ordered-dither threshold maps](https://usage.imagemagick.org/bugs/ordered-dither/) | The shape of the threshold-map catalogue (checks, line maps, clustered-dot maps of several sizes), which our generated `checks`, `line-*`, `clustered-dot-*` and `halftone-*` screens fill in. |
 
@@ -133,9 +134,10 @@ feature set navigable — not the paint.
 
 The press console itself — `index.html`, `style.css`, `app.js`, the sample
 table, the text mode, the preset recipes, the glitch stack's
-implementation, the tone-map system, the alpha pipeline, the tests and this
-file — is original work for this repository, written against the visual
-language in [`DESIGN.md`](../DESIGN.md). The tool rail's glyphs and the
+implementation, the tone-map system, the alpha pipeline, the plugin package
+format (tools, preset packs and palette packs), the palette-pack export and the
+Ink Extractor pipeline, the tests and this file — is original work for this
+repository, written against the visual language in [`DESIGN.md`](../DESIGN.md). The tool rail's glyphs and the
 paintings in `samples.js` are other people's work, and are credited below.
 
 ## The built-in samples
@@ -173,8 +175,9 @@ for *Open image…*, an image for the built-in sources, an eye for *Compare*, a
 shuffle for a fresh recipe, then webcam, video, record and preset marks. They are
 drawn at a 1.6 stroke because the rail renders them at 18 px, which keeps the
 1.2 px weight the rest of the chrome is drawn at, and they are inlined rather
-than fetched, so the rail needs no asset file. The app's only network use is the
-release check described in the user guides.
+than fetched, so the rail needs no asset file. Outside the release check
+described in the user guides, the only network use is the Lospec palette the
+user explicitly asks the Color Scheme Maker to import.
 
 Lucide is ISC-licensed. Its notice ships as
 [`desktop/LICENSE-LUCIDE.txt`](desktop/LICENSE-LUCIDE.txt) and is reproduced

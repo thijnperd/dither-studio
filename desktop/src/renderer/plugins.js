@@ -372,6 +372,7 @@
     if (global.DitherPaletteImport && global.DitherPaletteImport.isOpen && global.DitherPaletteImport.isOpen()) global.DitherPaletteImport.close();
     if (global.DitherInkExtractor && global.DitherInkExtractor.isOpen && global.DitherInkExtractor.isOpen()) global.DitherInkExtractor.close();
     if (global.DitherColorScheme && global.DitherColorScheme.isOpen && global.DitherColorScheme.isOpen()) global.DitherColorScheme.close();
+    if (global.DitherPaletteManager && global.DitherPaletteManager.isOpen && global.DitherPaletteManager.isOpen()) global.DitherPaletteManager.close();
     overlay.hidden = false;
     global.requestAnimationFrame(function () { overlay.classList.add('is-in'); });
     render();

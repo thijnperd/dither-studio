@@ -8,8 +8,9 @@ recording, or the recipe itself as JSON.
 
 Everything runs on your machine. The web demo is a static page: no server, no
 build step, no account. The desktop app reads and writes local files through the
-operating system's own dialogs. Its only network request is the update check
-(and the download you approve); the press itself never leaves the machine.
+operating system's own dialogs. Its network use is the update check (and the
+download you approve) plus the Lospec palette you explicitly import; the press
+itself never leaves the machine.
 
 **Try the web demo** — <https://thijnperd.github.io/dither-studio/>, nothing to install.
 **Download the desktop app** — [the latest release](https://github.com/thijnperd/dither-studio/releases/latest).
@@ -75,11 +76,15 @@ shelf and the download links, is
   size written on its row and the installed total below the list. A package
   switches on a capability or adds recipes; installed packages stay on the
   machine, and a declarative palette pack can also be installed from a file.
-  The Ink Extractor pulls a palette out of the open photo, Shape Press redraws
-  the proof as barcode, cross-stitch, halftone or bitmap sets, Color Scheme
-  Maker drafts lockable palettes from harmony rules (or a Lospec palette, the
-  open image, or pasted hex) and exports them as shareable packs, and preset
-  packs add whole recipes. No downloaded JavaScript is ever executed.
+  The bundled catalogue has seven packages — three tools and four preset
+  packs. The Ink Extractor pulls a palette out of the open photo, Shape Press
+  redraws the proof as barcode, cross-stitch, halftone or bitmap sets, Color
+  Scheme Maker drafts lockable palettes from harmony rules (or a Lospec palette,
+  the open image, or pasted hex) and exports them as shareable packs, and preset
+  packs add whole recipes. Saved schemes can be renamed, reopened in the maker
+  or deleted from *File ▸ Manage Color Schemes…*, and the Presets picker gives
+  each installed pack its own heading after the built-in recipes. No downloaded
+  JavaScript is ever executed.
 - **25 built-in recipes.** Whole setups — algorithm, palette, grading, effects
   and glow — applied in one pick, from Newsprint and Halftone Noir to VHS Decay,
   Sweetie Postcard, Tape Deck and the three structure-aware looks. The bundled

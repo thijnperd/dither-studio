@@ -1431,3 +1431,101 @@ body.dock-hidden .workarea {
 @media (prefers-reduced-motion: reduce) {
   .pimport, .pimport-card { transition: none; }
 }
+
+/* ========================= saved color schemes ========================= */
+
+.palette-manager-card { width: min(760px, 100%); }
+
+.palette-manager-list {
+  display: grid;
+  gap: 8px;
+}
+
+.palette-manager-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+}
+
+.palette-manager-swatches {
+  display: flex;
+  width: 88px;
+  height: 34px;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+}
+
+.palette-manager-swatch {
+  flex: 1 1 0;
+  min-width: 4px;
+  height: 100%;
+}
+
+.palette-manager-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.palette-manager-name {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: 600 var(--fs-label)/1.35 var(--font-ui);
+}
+
+.palette-manager-name:hover { border-color: var(--edge-soft); }
+.palette-manager-name:focus { border-color: var(--accent); background: var(--panel); outline: none; }
+
+.palette-manager-meta {
+  padding-left: 7px;
+  color: var(--muted);
+  font: var(--fs-small)/1.35 var(--font-ui);
+}
+
+.palette-manager-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.palette-manager-tools .btn {
+  padding: 4px 8px;
+  font-size: var(--fs-small);
+}
+
+.palette-manager-tools .btn:disabled {
+  opacity: 0.45;
+}
+
+.palette-manager-tools .btn.is-confirming {
+  border-color: color-mix(in srgb, #ff8080 55%, var(--edge));
+  color: #ff8080;
+}
+
+.palette-manager-empty {
+  margin: 0;
+  padding: 22px 14px;
+  border: 1px dashed var(--edge);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font: var(--fs-label)/1.5 var(--font-ui);
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .palette-manager-row { grid-template-columns: 1fr; gap: 8px; }
+  .palette-manager-swatches { width: 100%; height: 28px; }
+  .palette-manager-tools { justify-content: flex-start; }
+}

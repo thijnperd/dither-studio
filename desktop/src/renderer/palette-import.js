@@ -224,6 +224,9 @@
     if (window.DitherPalette && window.DitherPalette.isOpen && window.DitherPalette.isOpen()) {
       window.DitherPalette.close();
     }
+    if (window.DitherPaletteManager && window.DitherPaletteManager.isOpen && window.DitherPaletteManager.isOpen()) {
+      window.DitherPaletteManager.close();
+    }
     onImport = callback;
     nameTouched = false;
     nameField.value = '';

@@ -10,6 +10,21 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.5.1 — Schemes you can keep (2026-11-13)
+
+**A manager for saved color schemes, and recipe pickers grouped by origin.**
+
+- **Manage saved color schemes.** *File ▸ Manage Color Schemes…* lists every
+  palette saved from the Color Scheme Maker or imported from a file. Rename one
+  in place, reopen it in the maker (Save changes keeps the same palette, even
+  after a rename), or delete it with a second confirmation. Built-in and
+  plugin-owned palettes are not listed; deleting the selected scheme falls back
+  to black and white.
+- **Recipes grouped by origin.** The Presets picker now leads with **Built-in
+  recipes** and puts each installed preset pack under its own alphabetised
+  heading. Installing or removing a pack rebuilds the picker without duplicating
+  options.
+
 ## 0.5.0 — Schemes that travel (2026-11-13)
 
 **Lospec import, image-seeded schemes, a safety meter and shareable palette

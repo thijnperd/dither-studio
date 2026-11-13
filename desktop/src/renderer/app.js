@@ -1071,7 +1071,31 @@
 
   const GLITCHES_SORTED = D.GLITCHES.slice().sort(byName);
   const PALETTES_SORTED = D.PALETTES.slice().sort(byName);
-  const PRESETS_SORTED = PRESETS.slice().sort(byName);
+
+  // Recipes are grouped by where they came from, not just alphabetised: the
+  // built-ins lead, then each installed preset pack under its own name. The
+  // engine keeps one flat list, but the picker and its optgroups follow this.
+  const BUILTIN_PRESET_GROUP = 'Built-in recipes';
+  function presetGroup(preset) {
+    return preset.pluginName || BUILTIN_PRESET_GROUP;
+  }
+  function presetsByGroup(list) {
+    const names = [];
+    list.forEach(function (preset) {
+      const group = presetGroup(preset);
+      if (names.indexOf(group) < 0) names.push(group);
+    });
+    const ordered = names.filter(function (name) { return name === BUILTIN_PRESET_GROUP; })
+      .concat(names.filter(function (name) { return name !== BUILTIN_PRESET_GROUP; }).sort(function (a, b) {
+        return a.localeCompare(b, 'en', { sensitivity: 'base' });
+      }));
+    const out = [];
+    ordered.forEach(function (group) {
+      out.push.apply(out, list.filter(function (preset) { return presetGroup(preset) === group; }).sort(byName));
+    });
+    return out;
+  }
+  const PRESETS_SORTED = presetsByGroup(PRESETS);
 
   // Effects that belong to a plugin only appear once that plugin is installed.
   // The engine still knows how to draw them (an old preset can name one); the
@@ -1093,9 +1117,11 @@
   });
 
   function buildPresetSelect() {
+    el.preset.textContent = '';
     buildSelect(el.preset, PRESETS_SORTED, {
       placeholder: 'Choose a recipe…',
       label: function (preset) { return preset.name; },
+      group: presetGroup,
     });
   }
 
@@ -1142,7 +1168,7 @@
       if (!byId(PRESETS, preset.id)) PRESETS.push(preset);
     });
     PRESETS_SORTED.length = 0;
-    PRESETS.slice().sort(byName).forEach(function (preset) { PRESETS_SORTED.push(preset); });
+    presetsByGroup(PRESETS).forEach(function (preset) { PRESETS_SORTED.push(preset); });
     buildPresetSelect();
 
     // Pull a plugin effect out of the stack if its plugin has just gone. The
@@ -1374,17 +1400,61 @@
     return next.id;
   }
 
+  // Self-made palettes: Color Scheme Maker drafts and imported ink sets. Plugin
+  // palettes also live in D.PALETTES as custom entries, but their package owns
+  // them, so they must never appear in the manager below.
+  function savedPaletteEntries() {
+    return D.PALETTES.filter(function (palette) { return palette.custom && !palette.plugin; })
+      .slice().sort(byName)
+      .map(function (palette) {
+        return { id: palette.id, name: palette.name, colors: palette.colors };
+      });
+  }
+
+  function savedPaletteById(id) {
+    return D.PALETTES.find(function (palette) {
+      return palette.custom && !palette.plugin && palette.id === id;
+    });
+  }
+
+  function replacePaletteInView(entry) {
+    const at = PALETTES_SORTED.findIndex(function (palette) { return palette.id === entry.id; });
+    if (at >= 0) PALETTES_SORTED[at] = entry;
+    else PALETTES_SORTED.push(entry);
+    PALETTES_SORTED.sort(byName);
+  }
+
+  function refreshPaletteCatalogue(id) {
+    window.dispatchEvent(new CustomEvent('ds:catalogues', { detail: { kind: 'palettes', id: id } }));
+    if (window.DitherPalette && window.DitherPalette.refresh) window.DitherPalette.refresh();
+  }
+
   // One route for both the dialog and the debug hook. Re-importing a name
   // updates that custom palette in place, so trying a palette twice does not
-  // leave a trail of identical entries in the picker.
+  // leave a trail of identical entries in the picker. An edit passes its id so
+  // a rename in the dialog changes the same entry instead of making a new one.
   function importPalette(parsed) {
     if (!parsed || !Array.isArray(parsed.colors)) {
       return { ok: false, error: 'A palette needs 2–64 colours' };
     }
     const name = Core.cleanPaletteName(parsed.name, 'Imported palette');
-    const existing = D.PALETTES.find(function (palette) {
-      return palette.custom && palette.name.toLowerCase() === name.toLowerCase();
+    const existing = parsed.id
+      ? savedPaletteById(parsed.id)
+      : D.PALETTES.find(function (palette) {
+        return palette.custom && !palette.plugin && palette.name.toLowerCase() === name.toLowerCase();
+      });
+    if (parsed.id && !existing) {
+      return { ok: false, error: 'That saved palette no longer exists' };
+    }
+    const clash = D.PALETTES.find(function (palette) {
+      return palette.custom && !palette.plugin && palette !== existing &&
+        palette.name.toLowerCase() === name.toLowerCase();
     });
+    if (clash) {
+      const error = 'Another saved palette already uses that name';
+      el.statStatus.textContent = error;
+      return { ok: false, error: error };
+    }
     const id = existing ? existing.id : Core.paletteId(name, D.PALETTES.map(function (palette) { return palette.id; }));
     let entry;
     try {
@@ -1395,17 +1465,58 @@
       return { ok: false, error: error };
     }
 
-    const at = PALETTES_SORTED.findIndex(function (palette) { return palette.id === entry.id; });
-    if (at >= 0) PALETTES_SORTED[at] = entry;
-    else PALETTES_SORTED.push(entry);
-    PALETTES_SORTED.sort(byName);
+    replacePaletteInView(entry);
     saveCustomPalettes();
     rebuildPaletteSelect();
     setPalette(entry.id);
     el.statStatus.textContent = (existing ? 'Palette updated · ' : 'Palette imported · ') + entry.name;
-    window.dispatchEvent(new CustomEvent('ds:catalogues', { detail: { kind: 'palettes', id: entry.id } }));
-    if (window.DitherPalette && window.DitherPalette.refresh) window.DitherPalette.refresh();
+    refreshPaletteCatalogue(entry.id);
     return { ok: true, id: entry.id };
+  }
+
+  function renameSavedPalette(id, value) {
+    const entry = savedPaletteById(id);
+    if (!entry) return { ok: false, error: 'That saved palette no longer exists' };
+    const name = Core.cleanPaletteName(value, entry.name);
+    if (name === entry.name) return { ok: true, id: id, name: name };
+    const clash = D.PALETTES.find(function (palette) {
+      return palette.custom && !palette.plugin && palette.id !== id &&
+        palette.name.toLowerCase() === name.toLowerCase();
+    });
+    if (clash) return { ok: false, error: 'Another saved palette already uses that name' };
+
+    let updated;
+    try {
+      updated = D.registerPalette({ id: id, name: name, colors: entry.colors });
+    } catch (err) {
+      return { ok: false, error: err && err.message ? err.message : 'The palette could not be renamed' };
+    }
+    replacePaletteInView(updated);
+    saveCustomPalettes();
+    rebuildPaletteSelect();
+    if (state.settings.palette === id) {
+      el.statPalette.textContent = updated.name;
+      syncGroupNotes();
+    }
+    el.statStatus.textContent = 'Palette renamed · ' + updated.name;
+    refreshPaletteCatalogue(id);
+    return { ok: true, id: id, name: updated.name };
+  }
+
+  function deleteSavedPalette(id) {
+    const entry = savedPaletteById(id);
+    if (!entry) return { ok: false, error: 'That saved palette no longer exists' };
+    if (!D.unregisterPalette(id)) return { ok: false, error: 'That palette could not be deleted' };
+    const at = PALETTES_SORTED.findIndex(function (palette) { return palette.id === id; });
+    if (at >= 0) PALETTES_SORTED.splice(at, 1);
+    saveCustomPalettes();
+    const wasSelected = state.settings.palette === id;
+    rebuildPaletteSelect();
+    if (wasSelected) setPalette('bw');
+    else syncGroupNotes();
+    el.statStatus.textContent = 'Palette deleted · ' + entry.name;
+    refreshPaletteCatalogue(id);
+    return { ok: true, id: id, name: entry.name };
   }
 
   function paletteById(id) {
@@ -2564,9 +2675,10 @@
         return null;
       }
     },
-    customPalettes: function () {
-      return D.PALETTES.filter(function (palette) { return palette.custom; })
-        .map(function (palette) { return { id: palette.id, name: palette.name, colors: palette.colors }; });
+    customPalettes: savedPaletteEntries,
+    paletteManagerOpen: openPaletteManager,
+    paletteManagerState: function () {
+      return window.DitherPaletteManager ? window.DitherPaletteManager.state() : null;
     },
     // unique colours actually drawn on the canvas: verifies palette membership
     canvasColors: function () {
@@ -2709,7 +2821,7 @@
     });
   }
 
-  function openColorSchemeMaker() {
+  function openColorSchemeMaker(options) {
     const pkg = window.DitherPlugins && window.DitherPlugins.tool('color-scheme-maker');
     if (!pkg) {
       el.statStatus.textContent = 'Install Color Scheme Maker from File › Plugin Manager first';
@@ -2719,7 +2831,7 @@
       el.statStatus.textContent = 'The Color Scheme Maker dialog is not available';
       return false;
     }
-    return window.DitherColorScheme.open({
+    const settings = {
       count: pkg.data.defaultCount || 6,
       harmony: pkg.data.defaultHarmony || 'analogous',
       getCurrent: function () { return paletteById(state.settings.palette); },
@@ -2750,6 +2862,31 @@
         download(new Blob([text], { type: 'application/json' }), name);
         return { name: name, downloaded: true };
       },
+    };
+    if (options && options.editId) {
+      settings.editId = options.editId;
+      settings.name = options.name;
+      settings.colors = options.colors;
+    }
+    return window.DitherColorScheme.open(settings);
+  }
+
+  function openPaletteManager() {
+    if (!window.DitherPaletteManager) {
+      el.statStatus.textContent = 'The palette manager is not available';
+      return false;
+    }
+    return window.DitherPaletteManager.open({
+      list: savedPaletteEntries,
+      onRename: renameSavedPalette,
+      onDelete: deleteSavedPalette,
+      onEdit: function (id) {
+        const entry = savedPaletteById(id);
+        if (!entry) return { ok: false, error: 'That saved palette no longer exists' };
+        const opened = openColorSchemeMaker({ editId: entry.id, name: entry.name, colors: entry.colors });
+        if (!opened) return { ok: false, error: 'Install Color Scheme Maker from File › Plugin Manager first' };
+        return true;
+      },
     });
   }
 
@@ -2775,6 +2912,7 @@
     'file-plugin-manager': openPluginManager,
     'file-extract-palette': openInkExtractor,
     'file-color-scheme': openColorSchemeMaker,
+    'file-manage-palettes': openPaletteManager,
     'file-import-palette': function () {
       if (!window.DitherPaletteImport) {
         el.statStatus.textContent = 'The palette importer is not available';

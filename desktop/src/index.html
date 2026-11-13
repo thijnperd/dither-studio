@@ -543,6 +543,27 @@
     </section>
   </div>
 
+  <!-- the saved-scheme manager: only the palettes the user made or imported.
+       Rename and delete happen here; Edit reopens the maker with the same id. -->
+  <div class="pimport" id="palette-manager" hidden>
+    <section class="pimport-card palette-manager-card" role="dialog" aria-modal="true" aria-labelledby="palette-manager-title">
+      <header class="pimport-head">
+        <span class="pimport-kicker">Press · Color schemes</span>
+        <h2 class="pimport-title" id="palette-manager-title">Your color schemes</h2>
+        <p class="pimport-note">Saved from Color Scheme Maker or imported from a file. Rename one here, edit its inks in the maker, or delete it from this machine.</p>
+      </header>
+      <div class="pimport-body">
+        <div class="palette-manager-list" id="palette-manager-list"></div>
+        <p class="pimport-error" id="palette-manager-error" role="alert" hidden></p>
+      </div>
+      <footer class="pimport-foot">
+        <span class="pimport-hint" id="palette-manager-status" role="status" aria-live="polite"></span>
+        <span class="pimport-grow"></span>
+        <button class="btn" id="palette-manager-close" type="button">Close</button>
+      </footer>
+    </section>
+  </div>
+
   <!-- the plugin manager: a data-only catalogue pulled from the repository.
        Nothing in this window is executable; installing a package stores its
        JSON and lights up one of the app's own built-in capabilities. -->
@@ -800,6 +821,7 @@
   <script src="renderer/animation.js"></script>
   <script src="renderer/app.js"></script>
   <script src="renderer/palette-import.js"></script>
+  <script src="renderer/palette-manager.js"></script>
   <script src="renderer/ink-extractor.js"></script>
   <script src="renderer/color-scheme.js"></script>
   <script src="renderer/palette.js"></script>
