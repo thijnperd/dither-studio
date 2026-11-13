@@ -1,4 +1,4 @@
-/* tour.js - the Tutorial: ten lessons that point at the real controls.
+/* tour.js - the Tutorial: eleven lessons that point at the real controls.
  *
  * The shape is Photoshop's guided tutorials: a dimmed backdrop with a hole over
  * the exact control, a card that says what to do and why, and no fake UI. The
@@ -44,7 +44,7 @@
   // open, with the same guard: a disabled or unavailable storage is not worth
   // failing over. `seen` is the intro question: the tour has had its one free
   // appearance. `hidden` removes the Learn station entirely for someone who
-  // has learned it; Help > Show the Learn Panel brings it back.
+  // has learned it; Help > Learn Panel ticks it back.
   function blank() { return { done: {}, at: {}, seen: false, hidden: false }; }
 
   function loadProgress() {
@@ -87,6 +87,9 @@
     if (group) group.hidden = !!progress.hidden;
     const chip = document.querySelector('#jump .jump-chip[data-target="learn"]');
     if (chip) chip.hidden = !!progress.hidden;
+    // The Help menu item is a single Learn Panel toggle now, so its tick has
+    // to follow the station whether it was hidden here or from the menu.
+    window.dispatchEvent(new CustomEvent('ds:ui'));
   }
 
   function lessonById(id) {
@@ -164,7 +167,11 @@
       const mark = document.createElement('span');
       mark.className = 'tour-row-mark';
       mark.setAttribute('aria-hidden', 'true');
-      mark.textContent = done ? '✓' : '▢';
+      const markGlyph = document.createElement('span');
+      markGlyph.className = 'ui-glyph ui-glyph--sm';
+      markGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/' +
+        (done ? 'square-check' : 'square-uncheck') + '.svg")');
+      mark.appendChild(markGlyph);
 
       const text = document.createElement('span');
       text.className = 'tour-row-text';
@@ -438,7 +445,7 @@
     running.next = nextLesson ? nextLesson.id : null;
     card.classList.remove('is-done');
     card.classList.add('is-complete');
-    elCount.textContent = '✓ done';
+    elCount.textContent = 'Done';
     elTitle.textContent = nextLesson ? 'That is ' + lesson.title.toLowerCase() + '.' : 'That is every lesson.';
     elBody.textContent = nextLesson
       ? 'Next: ' + nextLesson.title + ' · ' + nextLesson.summary
@@ -623,4 +630,8 @@
       };
     },
   };
+  // applyHidden() ran before this surface existed, so the menu state could not
+  // read `hidden()` yet. Re-announce once it can: a persisted hidden station
+  // must not boot with its Help tick showing.
+  window.dispatchEvent(new CustomEvent('ds:ui'));
 }());

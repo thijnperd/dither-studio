@@ -69,7 +69,8 @@ shelf and the download links, is
   slot is dropped rather than queued.
 - **Animation for stills.** *Effects ▸ Animate the Still* opens a timeline over
   the proof: 1–12 seconds at 6–30 fps, tracks for eleven settings, four eases,
-  loop and scrub, and a WebM export of the take.
+  loop and scrub, and a WebM export of the take. The file carries its duration,
+  so players can seek it instead of reporting a broken recording.
 - **Plugins, as data.** File ▸ Plugin Manager installs declarative JSON packages
   from this repository's GitHub (with a bundled fallback when offline), grouped
   into **Functionality** and **Presets & color schemes** with each package's
@@ -100,9 +101,11 @@ shelf and the download links, is
   link that says what the app adds. On a phone or tablet it unlocks all 27
   recipes (the 25 built-ins plus the two Dreamy Cyberpunk recipes) and every
   palette, because the desktop app does not run there.
-- **Updates in the app.** *Help ▸ Check for Updates…* reads the public GitHub
-  release and installs the build for this machine when you agree; after an
-  update, *What's New* shows the matching changelog section once.
+- **Updates in the app.** *Help ▸ Check for Updates…* opens the About page with
+  the update row in view, reads the public GitHub release and installs the
+  build for this machine when you agree; after an update, *What's New* shows
+  the matching changelog section once. The same Help window holds the guide and
+  an editable keyboard page; `Ctrl+?` (`Cmd+?` on a Mac) opens the keys.
 
 ## Made with Dither Studio
 
@@ -245,9 +248,9 @@ wants *More info ▸ Run anyway*, and macOS Gatekeeper wants a right-click ▸
 presets, panel layout and tutorial progress in `%APPDATA%\Dither Studio` are
 kept. A fresh install is met by the **tour**: the Learn panel comes forward with
 the first lesson on screen, and **Skip**, **Exit** or `Escape` ends it for good —
-*Help ▸ Take the Tour* brings it back whenever you want it. **Hide** in the Learn
-panel, or *Help ▸ Hide the Tour Completely*, removes the station and its jump
-chip for good; *Help ▸ Show the Learn Panel* restores it.
+*Help ▸ Take the Tour* brings it back whenever you want it. **Hide Learn** in
+the panel, or unticking *Help ▸ Learn Panel*, removes the station and its jump
+chip for good; the same menu item ticks it back.
 
 **From this folder.** The launchers open the console in a Chromium app window
 with a profile of its own, under `%LOCALAPPDATA%\Dither Studio`,

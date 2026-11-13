@@ -293,6 +293,8 @@
   line-height: 1;
 }
 
+.btn-step .ui-glyph { display: block; margin: 0 auto; }
+
 .row-stepper {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 24px 24px;

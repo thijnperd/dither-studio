@@ -1,0 +1,689 @@
+/* feature-menu.css - the studio menu.
+ *
+ * A shelf over the press, not a second workspace. Four plates lead to the
+ * app's own surfaces. They share the house's single blue accent and the app's
+ * mono type; the label, the count and the imported mask icon distinguish them.
+ */
+
+.fm {
+  position: fixed;
+  inset: 0;
+  z-index: 84;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.fm-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 7, 10, 0.76);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  opacity: 0;
+  transition: opacity 140ms var(--ease-out);
+}
+
+.fm.is-in .fm-scrim { opacity: 1; }
+
+.fm-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(720px, 100%);
+  max-height: min(86vh, 800px);
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 140ms var(--ease-out), transform 140ms var(--ease-out);
+}
+
+.fm.is-in .fm-card { opacity: 1; transform: none; }
+
+/* The window is a panel, not a settings page: the brand block is gone, so the
+   search field is the first thing in the sidebar and the nav reads like the
+   dock's jump strip. */
+
+/* ------------------------------------------------------------------ head */
+
+.fm-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--edge-soft);
+}
+
+.fm-iconbtn {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  color: var(--muted);
+  box-shadow: var(--shadow-1);
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
+}
+
+.fm-iconbtn:hover { background: var(--hover); color: var(--text); }
+.fm-iconbtn:focus-visible { outline: none; box-shadow: var(--focus); }
+.fm-iconbtn svg { display: block; }
+
+.fm-headcopy { flex: 1 1 auto; min-width: 0; }
+
+.fm-title {
+  margin: 0;
+  color: var(--text);
+  font: 600 var(--fs-app)/1.2 var(--font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fm-body {
+  min-height: 0;
+  padding: 14px 16px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ------------------------------------------------------------- main shelf */
+
+.fm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fm-feature {
+  --fm-pigment: var(--accent);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 4px;
+  min-height: 148px;
+  padding: 13px 13px 11px;
+  overflow: hidden;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  color: var(--text);
+  text-align: left;
+  transition: background var(--fast), border-color var(--fast);
+}
+
+.fm-feature:hover {
+  border-color: color-mix(in srgb, var(--fm-pigment) 42%, var(--edge-soft));
+  background: var(--panel-2);
+}
+
+.fm-feature:focus-visible { outline: none; box-shadow: var(--focus); }
+
+/* One accent for every plate. The four pigments made the index read like a
+   different app; the instrument panel keeps a single blue and lets the label
+   and the count carry the distinction. */
+.fm-feature--plugins,
+.fm-feature--effects,
+.fm-feature--presets,
+.fm-feature--palettes { --fm-pigment: var(--accent); }
+
+.fm-feature-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fm-feature-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--fm-pigment) 30%, var(--edge-soft));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--fm-pigment) 10%, var(--raised));
+  color: var(--fm-pigment);
+}
+
+.fm-feature-arrow {
+  margin-top: 1px;
+  color: var(--muted);
+  transition: color var(--fast);
+}
+
+.fm-feature:hover .fm-feature-arrow { color: var(--fm-pigment); }
+
+.fm-feature-title {
+  margin-top: 9px;
+  color: var(--text);
+  font: 600 var(--fs-label)/1.25 var(--font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fm-feature-desc {
+  color: var(--muted);
+  font: var(--fs-small)/1.45 var(--font);
+}
+
+.fm-feature-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--edge-soft);
+  color: var(--muted);
+  font: var(--fs-small)/1 var(--font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fm-feature-open { color: color-mix(in srgb, var(--fm-pigment) 62%, var(--muted)); }
+
+/* ---------------------------------------------------------------- section */
+
+.fm-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 2px 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--edge-soft);
+}
+
+.fm-body > .fm-section-head:first-child { margin-top: 0; }
+
+.fm-section-label {
+  color: var(--text);
+  font: 600 var(--fs-small)/1 var(--font);
+  letter-spacing: 0.1em;
+}
+
+.fm-section-count {
+  color: var(--muted);
+  font: var(--fs-small)/1 var(--font);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- packages */
+
+.fm-package-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fm-package {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 70px;
+  padding: 9px 10px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  color: var(--text);
+  text-align: left;
+  transition: background var(--fast), border-color var(--fast);
+}
+
+.fm-package:hover {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--edge-soft));
+  background: var(--panel-2);
+}
+
+.fm-package:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.fm-package-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  color: color-mix(in srgb, var(--accent) 70%, var(--text));
+}
+
+.fm-package-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fm-package-copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font: 600 var(--fs-label)/1.3 var(--font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-package-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font: var(--fs-small)/1.35 var(--font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-package-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted) !important;
+  white-space: normal !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.fm-chevron {
+  color: var(--muted);
+  transition: color var(--fast);
+}
+
+.fm-package:hover .fm-chevron,
+.fm-recipe:hover .fm-chevron,
+.fm-palette-row:hover .fm-chevron,
+.fm-wide:hover .fm-chevron { color: var(--accent); }
+
+/* ---------------------------------------------------------------- effects */
+
+.fm-effect-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  padding: 10px 11px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+}
+
+.fm-summary-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--edge));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 9%, var(--raised));
+  color: var(--accent);
+}
+
+.fm-summary-copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fm-summary-copy strong { color: var(--text); font: 600 var(--fs-label)/1.3 var(--font); }
+.fm-summary-copy small { color: var(--muted); font: var(--fs-small)/1.35 var(--font); }
+
+.fm-text-action {
+  flex: 0 0 auto;
+  padding: 2px 0;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: var(--fs-small)/1.3 var(--font);
+}
+
+.fm-text-action:hover { border-bottom-color: var(--muted); color: var(--text); }
+.fm-text-action:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.fm-effects-list {
+  margin-top: 8px;
+  border-top: 1px solid var(--edge-soft);
+}
+
+.fm-effect-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--edge-soft);
+}
+
+.fm-effect-row:hover { background: color-mix(in srgb, var(--hover) 55%, transparent); }
+
+.fm-index {
+  color: var(--muted);
+  font: var(--fs-small)/1 var(--font);
+  font-variant-numeric: tabular-nums;
+}
+
+.fm-effect-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fm-effect-copy strong { color: var(--text); font: 600 var(--fs-label)/1.3 var(--font); }
+.fm-effect-copy small { color: var(--muted); font: var(--fs-small)/1.3 var(--font); }
+
+.fm-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 17px;
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: 99px;
+  background: var(--sunken);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  transition: background var(--fast), border-color var(--fast);
+}
+
+.fm-switch > span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 140ms var(--ease-out), background var(--fast);
+}
+
+.fm-switch.is-on {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--edge));
+  background: color-mix(in srgb, var(--accent) 25%, var(--sunken));
+}
+
+.fm-switch.is-on > span { background: var(--accent); transform: translateX(13px); }
+.fm-switch:hover { border-color: color-mix(in srgb, var(--accent) 65%, var(--edge)); }
+.fm-switch:focus-visible { outline: none; box-shadow: var(--focus); }
+
+/* ---------------------------------------------------------------- recipes */
+
+.fm-recipe {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 4px;
+  border: none;
+  border-bottom: 1px solid var(--edge-soft);
+  background: none;
+  color: var(--text);
+  text-align: left;
+  transition: background var(--fast);
+}
+
+.fm-recipe:hover,
+.fm-palette-row:hover { background: var(--hover); }
+
+.fm-recipe:focus-visible,
+.fm-palette-row:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.fm-recipe-swatches,
+.fm-palette-swatches {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+  background: var(--sunken);
+}
+
+.fm-recipe-swatches { width: 54px; height: 30px; }
+
+.fm-swatch {
+  flex: 1 1 0;
+  min-width: 3px;
+  height: 100%;
+}
+
+.fm-recipe-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fm-recipe-copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font: 600 var(--fs-label)/1.3 var(--font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-recipe-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font: var(--fs-small)/1.35 var(--font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------- inks */
+
+.fm-palette-list {
+  display: grid;
+  gap: 6px;
+}
+
+.fm-palette-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--edge-soft);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  color: var(--text);
+  text-align: left;
+  transition: background var(--fast), border-color var(--fast);
+}
+
+.fm-palette-row:hover { border-color: color-mix(in srgb, var(--accent) 38%, var(--edge-soft)); }
+.fm-palette-swatches { width: 76px; height: 32px; }
+
+.fm-palette-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fm-palette-copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font: 600 var(--fs-label)/1.3 var(--font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-palette-copy small { color: var(--muted); font: var(--fs-small)/1.35 var(--font); }
+
+/* ------------------------------------------------------- action and empty */
+
+.fm-wide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 12px;
+  padding: 0 12px;
+  border: 1px dashed var(--edge);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: var(--fs-label)/1.3 var(--font);
+  text-align: left;
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
+}
+
+.fm-wide:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--edge));
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  color: var(--text);
+}
+
+.fm-wide:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.fm-wide-copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fm-empty {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 26px 18px 22px;
+  border: 1px dashed var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--sunken);
+  text-align: center;
+}
+
+.fm-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 4px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  color: var(--muted);
+}
+
+.fm-empty strong { color: var(--text); font: 600 var(--fs-app)/1.25 var(--font); }
+.fm-empty p { max-width: 48ch; margin: 0; color: var(--muted); font: var(--fs-label)/1.48 var(--font); }
+
+.fm-empty-action {
+  margin-top: 7px;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--edge));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 13%, var(--raised));
+  color: color-mix(in srgb, var(--accent) 28%, #ffffff);
+  font: var(--fs-small)/1.2 var(--font);
+}
+
+.fm-empty-action:hover { background: color-mix(in srgb, var(--accent) 22%, var(--raised)); }
+.fm-empty-action:focus-visible { outline: none; box-shadow: var(--focus); }
+
+/* ----------------------------------------------------------------- footer */
+
+.fm-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 36px;
+  padding: 7px 16px;
+  border-top: 1px solid var(--edge-soft);
+  color: var(--muted);
+  font: var(--fs-small)/1.35 var(--font);
+}
+
+.fm-shortcut {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.fm-shortcut kbd { font-size: var(--fs-small); }
+
+/* ----------------------------------------------------------------- glyphs */
+
+/* External SVGs are masks, not images: the file supplies the silhouette and
+   CSS supplies the ink, so one icon works in every context and on every
+   pigment plate. */
+.fm-glyph {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  background: currentColor;
+  -webkit-mask: var(--fm-icon) center / contain no-repeat;
+  mask: var(--fm-icon) center / contain no-repeat;
+}
+
+.fm-glyph--feature { width: 26px; height: 26px; }
+.fm-glyph--package { width: 18px; height: 18px; }
+.fm-glyph--summary { width: 18px; height: 18px; }
+.fm-glyph--empty { width: 27px; height: 27px; }
+.fm-glyph--small { width: 16px; height: 16px; }
+
+/* The same mask trick carries the rail, the find fields and the footer's
+   GitHub mark. These are not menu-only icons, so they use their own property
+   and a neutral name. */
+.ui-glyph {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  background: currentColor;
+  -webkit-mask: var(--ui-icon) center / contain no-repeat;
+  mask: var(--ui-icon) center / contain no-repeat;
+}
+
+.ui-glyph--sm { width: 13px; height: 13px; }
+.ui-glyph--xs { width: 12px; height: 12px; }
+.ui-glyph--step { width: 13px; height: 13px; }
+.ui-glyph--github { width: 14px; height: 14px; }
+.ui-glyph--flip { transform: scaleX(-1); }
+.ui-glyph--up { transform: rotate(-90deg); }
+.ui-glyph--down { transform: rotate(90deg); }
+
+.tool .ui-glyph { display: block; }
+
+/* The find marks sit beside muted labels, not inside the text colour. */
+.cmdk-field .ui-glyph,
+.help-search .ui-glyph { color: var(--muted); }
+
+/* ------------------------------------------------------------------ narrow */
+
+@media (max-width: 700px) {
+  .fm { padding: 12px; align-items: end; }
+  .fm-card { max-height: 92vh; }
+  .fm-head { padding: 14px 14px 12px; }
+  .fm-body { padding: 12px 14px 14px; }
+  .fm-foot { padding: 8px 14px; }
+  .fm-grid { grid-template-columns: 1fr; gap: 8px; }
+  .fm-feature { min-height: 136px; }
+  .fm-package-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 460px) {
+  .fm-feature { min-height: 124px; }
+  .fm-feature-title { margin-top: 8px; }
+  .fm-package-summary { display: none; }
+  .fm-recipe { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .fm-recipe-swatches { width: 44px; height: 26px; }
+  .fm-palette-row { grid-template-columns: 60px minmax(0, 1fr) auto; }
+  .fm-palette-swatches { width: 60px; height: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fm-scrim, .fm-card, .fm-feature, .fm-feature-arrow, .fm-switch > span, .fm-chevron {
+    transition: none;
+  }
+}

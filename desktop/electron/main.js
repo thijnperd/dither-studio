@@ -395,6 +395,18 @@ ipcMain.handle('ds:open-guide', async function () {
   return result ? { error: result } : { ok: true, path: guide };
 });
 
+// The guide is a renderer page now. Read the copy that ships inside the app
+// (asar included) and let Help draw it, instead of handing a path to an editor
+// that may not exist on the machine.
+ipcMain.handle('ds:read-guide', function () {
+  try {
+    const file = path.join(APP_ROOT, 'GUIDE.md');
+    return { path: file, text: fsSync.readFileSync(file, 'utf8') };
+  } catch (err) {
+    return { error: String(err && err.message || err) };
+  }
+});
+
 ipcMain.on('ds:menu', function (_event, tree) { if (Array.isArray(tree)) installMenu(tree); });
 ipcMain.on('ds:state', function (_event, state) {
   menuState = state || {};

@@ -1,7 +1,7 @@
 {
   "name": "dither-studio-desktop",
   "productName": "Dither Studio",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Dither Studio as a desktop application: the offline dithering press in its own window, with native open/save, a tool rail, a panel dock and a guided tutorial.",
   "author": "Thijn Köhne",
   "private": true,
@@ -19,6 +19,8 @@
     "smoke:quick": "node tools/smoke.js quick",
     "smoke:plugins": "node tools/smoke.js plugins",
     "smoke:animation": "node tools/smoke.js animation",
+    "smoke:menu": "node tools/smoke.js menu",
+    "smoke:help": "node tools/smoke.js help",
     "smoke:all": "node tools/smoke.js all",
     "smoke:list": "node tools/smoke.js list",
     "pack": "electron-builder --win --dir",
@@ -47,6 +49,8 @@
       "package.json",
       "GUIDE.md",
       "LICENSE-LUCIDE.txt",
+      "LICENSE-TABLER.txt",
+      "LICENSE-WEBM-DURATION.txt",
       "!**/*.map"
     ],
     "extraResources": [

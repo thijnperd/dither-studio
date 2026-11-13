@@ -2155,6 +2155,17 @@
   ];
   const ANIMATION_PROPERTY_BY_ID = new Map(ANIMATION_PROPERTIES.map(function (p) { return [p.id, p]; }));
   const ANIMATION_EASE_IDS = ANIMATION_EASES.map(function (e) { return e.id; });
+  const SEEDED_KINDS = { noise: true, bluenoise: true, 'clustered-noise': true, structure: true };
+
+  // How a seed reaches this press: directly through the noise, through the
+  // screen's own shift on a fixed tiled screen, or not at all. The timeline
+  // uses this to be honest about a seed track on a diffusion kernel.
+  function algorithmSeedMode(id) {
+    const algo = ALGORITHMS.find(function (entry) { return entry.id === id; });
+    if (!algo || SEEDED_KINDS[algo.kind]) return 'seed';
+    if (algo.kind === 'ordered' || algo.kind === 'formula') return 'screen';
+    return 'none';
+  }
 
   function easeAnimation(t, ease) {
     if (ease === 'in') return t * t;
@@ -2195,6 +2206,7 @@
     const total = Math.max(1, Math.round(num(frameCount, 1)));
     const index = clampInt(Math.round(num(frameIndex, 0)), 0, total - 1);
     const t = total <= 1 ? 0 : index / (total - 1);
+    let seedDrift = 0;
     (tracks || []).forEach(function (track) {
       if (!track || !ANIMATION_PROPERTY_BY_ID.has(track.property)) return;
       const meta = ANIMATION_PROPERTY_BY_ID.get(track.property);
@@ -2205,8 +2217,21 @@
       const ease = ANIMATION_EASE_IDS.indexOf(track.ease) >= 0 ? track.ease : 'linear';
       const from = num(track.from, meta.from);
       const to = num(track.to, meta.to);
-      setAnimationValue(merged, track.property, from + (to - from) * easeAnimation(local, ease));
+      const value = from + (to - from) * easeAnimation(local, ease);
+      setAnimationValue(merged, track.property, value);
+      if (track.property === 'seed') seedDrift += Math.round(value);
     });
+    // A seed does nothing to an ordered or formula screen; those screens are
+    // fixed. Rather than leave a seed track dead, drift the screen itself by
+    // the same amount. It is the animation the user asked for, on the one
+    // control that screen actually reads. Other deterministic presses have no
+    // screen to move, and algorithmSeedMode() says so in the timeline.
+    if (seedDrift) {
+      const algo = ALGORITHMS.find(function (entry) { return entry.id === merged.algorithm; });
+      if (algo && (algo.kind === 'ordered' || algo.kind === 'formula')) {
+        merged.screenShift = clampInt((merged.screenShift | 0) + seedDrift, 0, 1000000);
+      }
+    }
     merged.frameIndex = index;
     return merged;
   }
@@ -2383,6 +2408,7 @@
     temporalSettings: temporalSettings,
     TEMPORAL_MODES: TEMPORAL_MODES,
     animationSettings: animationSettings,
+    algorithmSeedMode: algorithmSeedMode,
     ANIMATION_PROPERTIES: ANIMATION_PROPERTIES,
     ANIMATION_EASES: ANIMATION_EASES,
     process: process,

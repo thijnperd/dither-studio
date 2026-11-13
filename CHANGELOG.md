@@ -10,6 +10,42 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.6.0 — The studio menu and the guide (2026-11-13)
+
+**One menu for the studio's surfaces, and one Help window that holds the manual.**
+
+- **The Studio menu.** The rail's new first tool (also *View ▸ Studio Menu…*,
+  `Ctrl+Shift+M`) opens four shelves: Plugins, Effects, Presets and Color
+  Schemes. Each plate counts what is there before you open it. Effect switches
+  change the live stack, recipes and saved schemes apply in one pick, and
+  plugin rows start their tool instead of opening the manager: Ink Extractor
+  and Color Scheme Maker open their dialogs, Shape Press joins the effects
+  stack, and packs open the shelf they feed.
+- **The menu looks like the rest of the press.** Flat panels, the app's
+  monospace type and uppercase titles replace the gradient cards and the
+  web-style copy. Hover and selection no longer move or scale the plates.
+- **Help is the manual now.** *Help ▸ Dither Studio Guide* (F1) reads the
+  shipped guide inside the Help window, parsed into searchable sections, instead
+  of handing it to an external editor. The keyboard page is editable: press
+  **Change** and then the combination; `Ctrl+?` (`Cmd+?` on a Mac) opens it.
+  *Check for Updates* opens the About page with the check, progress and release
+  notes in view, and *Help ▸ Learn Panel* is a single tick that hides or shows
+  the Learn station.
+- **The supplied icon set reaches the whole window.** The rail, steppers,
+  effect controls, find fields and Help now use the Tabler-style masks that ship
+  in `src/assets/icons/`, with their license beside the app.
+- **The tour has eleven lessons.** A Studio menu lesson joins the first proof,
+  the press and the rest; animation is covered too. A seed track on a fixed
+  ordered or formula screen now drifts the screen itself, and a diffusion press
+  says the track has nothing to move instead of pretending.
+- **Animation exports are seekable.** WebM takes now carry their real duration,
+  so players can scrub and report the length rather than treating the file as
+  broken.
+- **Smaller repairs.** The dock's spyglass opens the command palette again; the
+  Studio menu footer no longer carries the "all changes stay on this machine"
+  line or its green dot; and the "studio index" name is gone from the tour and
+  the documentation.
+
 ## 0.5.1 — Schemes you can keep (2026-11-13)
 
 **A manager for saved color schemes, and recipe pickers grouped by origin.**

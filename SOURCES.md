@@ -82,6 +82,7 @@ pick a dense palette or the two-colour variant for a calmer screen.
 | [Dither Boy — Studio AAA](https://studioaaa.com/product/dither-boy/) (product page) | The last untouched item on the feature checklist this project measures itself against: video and animated output. |
 | The temporal-dithering literature for frame-rate-modulated displays (a pattern that is re-generated per frame so the eye averages it) | The three rules made explicit in `temporalSettings`: **freeze**, **shimmer** (a new seed per frame, so stochastic screens boil while tone holds) and **crawl** (the ordered screen slides a pixel per frame — the demoscene / Yliluoma-style walking screen). |
 | [MDN — `HTMLCanvasElement.captureStream()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream) and [`MediaRecorder`](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder) | WebM recording of the dithered canvas, with VP9 → VP8 → default codec fallback and a 60 s guard against runaway memory. |
+| [fix-webm-duration](https://github.com/yusitnikov/fix-webm-duration) (MIT) | `MediaRecorder` writes no Duration into the WebM Info section, so players cannot seek or report length. This vendored parser inserts (or repairs) the Duration element before the save dialog, for both video and timeline exports. Notice: [`desktop/LICENSE-WEBM-DURATION.txt`](desktop/LICENSE-WEBM-DURATION.txt). |
 | [MDN — `HTMLVideoElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement) and [`getUserMedia`](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) | The frame sources: a user-picked video file, the webcam, or the generated clip the browser checks drive (which needs no codec, so verification stays offline and deterministic). |
 
 ## Interface research (how the console is organised)
@@ -167,22 +168,31 @@ out of a local file, because drawing one into a canvas taints it and
 `getImageData` throws. [DEVELOPMENT.md](DEVELOPMENT.md) says how to replace
 one.
 
-## The desktop's tool rail
+## The desktop's icon set
 
-The eight buttons down the left edge of the desktop window are
-[Lucide](https://lucide.dev) icons, inlined in `desktop/src/index.html`: a folder
-for *Open image…*, an image for the built-in sources, an eye for *Compare*, a
-shuffle for a fresh recipe, then webcam, video, record and preset marks. They are
-drawn at a 1.6 stroke because the rail renders them at 18 px, which keeps the
-1.2 px weight the rest of the chrome is drawn at, and they are inlined rather
-than fetched, so the rail needs no asset file. Outside the release check
+The desktop's tool rail, studio menu, options-bar zoom buttons, stepper buttons,
+drawn menu checks, Help index, find fields, Help GitHub mark and plugin/package
+marks use the supplied 24×24 outline set in
+[`desktop/src/assets/icons/`](desktop/src/assets/icons) and
+[`desktop/src/assets/menu/`](desktop/src/assets/menu). The SVGs are applied as
+CSS masks, so the interface supplies each mark's ink and the assets carry no
+baked colour. The rail still renders at 18 px and the menu plates at 26 px; a
+2 px stroke in the 24 px viewBox keeps the same weight as the rest of the
+chrome. Keeping them as files rather than inlining them means a new package can
+ship its own mark without editing the window markup. Outside the release check
 described in the user guides, the only network use is the Lospec palette the
 user explicitly asks the Color Scheme Maker to import.
 
-Lucide is ISC-licensed. Its notice ships as
-[`desktop/LICENSE-LUCIDE.txt`](desktop/LICENSE-LUCIDE.txt) and is reproduced
-there verbatim — the file also carries the MIT notice for the icons Lucide
-derives from Feather, though none of these eight are on that list.
+The last pass added the supplied `arrow-left`, `arrows-horizontal`, `reload`,
+`square-check`, `square-uncheck`, `x` and `book` masks: back and close now use
+the same arrow and cross everywhere, the split grip uses the horizontal arrows,
+New seed uses reload, the tour's tick boxes use the square pair rather than a
+glyph, and the guide page uses the book.
+
+
+The set follows [Tabler Icons](https://tabler.io/icons), which is MIT-licensed.
+Its notice ships as [`desktop/LICENSE-TABLER.txt`](desktop/LICENSE-TABLER.txt)
+and is reproduced there verbatim.
 
 ## Keeping this current
 

@@ -753,19 +753,31 @@
       const up = document.createElement('button');
       up.className = 'icon-btn';
       up.type = 'button';
-      up.textContent = '▲';
+      const upGlyph = document.createElement('span');
+      upGlyph.className = 'ui-glyph ui-glyph--xs ui-glyph--up';
+      upGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/chevron-right.svg")');
+      upGlyph.setAttribute('aria-hidden', 'true');
+      up.appendChild(upGlyph);
       up.title = 'Move earlier in the stack';
       up.disabled = index === 0;
       const down = document.createElement('button');
       down.className = 'icon-btn';
       down.type = 'button';
-      down.textContent = '▼';
+      const downGlyph = document.createElement('span');
+      downGlyph.className = 'ui-glyph ui-glyph--xs ui-glyph--down';
+      downGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/chevron-right.svg")');
+      downGlyph.setAttribute('aria-hidden', 'true');
+      down.appendChild(downGlyph);
       down.title = 'Move later in the stack';
       down.disabled = index === active.length - 1;
       const remove = document.createElement('button');
       remove.className = 'icon-btn';
       remove.type = 'button';
-      remove.textContent = '✕';
+      const removeGlyph = document.createElement('span');
+      removeGlyph.className = 'ui-glyph ui-glyph--xs';
+      removeGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/x.svg")');
+      removeGlyph.setAttribute('aria-hidden', 'true');
+      remove.appendChild(removeGlyph);
       remove.title = 'Remove from the stack';
       remove.setAttribute('aria-label', 'Remove ' + meta.name);
 
@@ -1827,28 +1839,41 @@
 
   // ---- export ----
 
-  function download(blob, filename) {
-    // Desktop: the operating system asks where the file goes, and the path it
-    // returns is the receipt the title bar shows.
-    if (desktop) {
-      blob.arrayBuffer().then(function (data) {
-        return desktop.saveBlob({ name: filename, mime: blob.type || 'application/octet-stream', data: data });
-      }).then(function (out) {
-        if (!out) { el.statStatus.textContent = 'Save cancelled'; return; }
-        if (out.error) { el.statStatus.textContent = out.error; return; }
-        state.savedPath = out.path;
-        window.dispatchEvent(new CustomEvent('ds:saved', { detail: { path: out.path, name: out.name } }));
-      }).catch(function () { el.statStatus.textContent = 'That file could not be saved'; });
+  function download(blob, filename, durationMs) {
+    function save(value) {
+      // Desktop: the operating system asks where the file goes, and the path it
+      // returns is the receipt the title bar shows.
+      if (desktop) {
+        value.arrayBuffer().then(function (data) {
+          return desktop.saveBlob({ name: filename, mime: value.type || 'application/octet-stream', data: data });
+        }).then(function (out) {
+          if (!out) { el.statStatus.textContent = 'Save cancelled'; return; }
+          if (out.error) { el.statStatus.textContent = out.error; return; }
+          state.savedPath = out.path;
+          window.dispatchEvent(new CustomEvent('ds:saved', { detail: { path: out.path, name: out.name } }));
+        }).catch(function () { el.statStatus.textContent = 'That file could not be saved'; });
+        return;
+      }
+      const url = URL.createObjectURL(value);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    }
+
+    // MediaRecorder writes WebM without a Duration, which leaves players with
+    // a bar that cannot seek and a file that reports no length. Patch the
+    // container before it reaches the save dialog. A failed patch saves the
+    // original, so the recording is never lost.
+    if (durationMs && /\.webm$/i.test(filename) && typeof window.ysFixWebmDuration === 'function') {
+      window.ysFixWebmDuration(blob, Math.max(1, Math.round(durationMs)), { logger: false })
+        .then(save, function () { save(blob); });
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    save(blob);
   }
 
   function exportName(extension) {
@@ -2529,7 +2554,7 @@
           el.videoRecord.disabled = false;
           el.videoRecord.textContent = '● Record WebM';
           if (out && out.blob && out.blob.size) {
-            download(out.blob, 'dither-video.webm');
+            download(out.blob, 'dither-video.webm', out.seconds * 1000);
             videoStatus('Saved dither-video.webm · ' + out.seconds + ' s · ' +
               Math.round(out.blob.size / 1024) + ' KB');
           } else {
@@ -2583,6 +2608,10 @@
     exportTxt: exportTXT,
     // --- plugins, animation and the plugin tools --------------------------
     pluginsOpen: openPluginManager,
+    featureMenuOpen: openFeatureMenu,
+    featureMenuClose: closeFeatureMenu,
+    featureMenuState: function () { return window.DitherFeatureMenu ? window.DitherFeatureMenu.state() : null; },
+    featureMenuRefresh: function () { return window.DitherFeatureMenu ? window.DitherFeatureMenu.refresh() : false; },
     pluginsInstall: function (id) { return window.DitherPlugins ? window.DitherPlugins.install(id) : null; },
     pluginsRemove: function (id) { return window.DitherPlugins ? window.DitherPlugins.remove(id) : false; },
     pluginsInstalled: function () { return window.DitherPlugins ? window.DitherPlugins.installed() : []; },
@@ -2794,7 +2823,121 @@
     render(true);
   }
 
+  // The studio menu is a view, not a second settings store: it asks the app
+  // for a fresh snapshot each time it paints, and its actions are the same
+  // functions the menu bar and the panels already use.
+  function featureMenuSnapshot() {
+    const installed = window.DitherPlugins ? window.DitherPlugins.installed().slice() : [];
+    installed.sort(function (a, b) {
+      const aTool = a.kind === 'tool' ? 0 : 1;
+      const bTool = b.kind === 'tool' ? 0 : 1;
+      if (aTool !== bTool) return aTool - bTool;
+      return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
+    });
+    const effects = activeEffects().map(function (id) {
+      const meta = effectMeta(id);
+      const mode = glitches.mode[id];
+      const modeMeta = (meta.modes || []).find(function (entry) { return entry.id === mode; });
+      return {
+        id: id,
+        name: meta.name,
+        amount: glitches.amount[id],
+        mode: modeMeta ? modeMeta.name : '',
+      };
+    });
+    const presets = PRESETS_SORTED.map(function (preset) {
+      const settings = preset.settings || {};
+      const palette = paletteById(settings.palette);
+      return {
+        id: preset.id,
+        name: preset.name,
+        group: presetGroup(preset),
+        subtitle: algorithmById(settings.algorithm).name + ' · ' + palette.name,
+        colors: palette.colors,
+      };
+    });
+    const saved = savedPaletteEntries();
+    return {
+      stats: {
+        plugins: installed.length,
+        effects: effects.length,
+        presets: presets.length,
+        savedPalettes: saved.length,
+      },
+      plugins: installed.map(function (pkg) {
+        return {
+          id: pkg.id,
+          name: pkg.name,
+          kind: pkg.kind,
+          version: pkg.version,
+          summary: pkg.summary,
+        };
+      }),
+      effects: effects,
+      presets: presets,
+      palettes: saved,
+    };
+  }
+
+  function openFeatureMenu() {
+    if (!window.DitherFeatureMenu) {
+      el.statStatus.textContent = 'The studio menu is not available';
+      return false;
+    }
+    if (window.DitherFeatureMenu.isOpen()) {
+      window.DitherFeatureMenu.close();
+      return true;
+    }
+    return window.DitherFeatureMenu.open({
+      data: featureMenuSnapshot,
+      openPlugin: openPlugin,
+      openPluginManager: openPluginManager,
+      openPaletteManager: openPaletteManager,
+      openPanel: function (id) { runCommand('window-panel-open', id); },
+      toggleEffect: function (id) { removeEffect(id); },
+      clearEffects: clearStack,
+      applyPreset: applyPreset,
+      selectPalette: setPalette,
+    });
+  }
+
+  function closeFeatureMenu() {
+    if (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen()) {
+      window.DitherFeatureMenu.close();
+    }
+  }
+
+  // A shelf row is a verb, not a shortcut to the manager. Tool packages open
+  // their own dialog; Shape Press joins the stack and shows the effects panel;
+  // packs open the shelf they feed. Only an unknown package falls back to the
+  // manager, where its install details live.
+  function openPlugin(id) {
+    const pkg = window.DitherPlugins && window.DitherPlugins.installed().find(function (entry) {
+      return entry.id === id;
+    });
+    if (!pkg) return openPluginManager();
+    if (id === 'ink-extractor') return openInkExtractor();
+    if (id === 'color-scheme-maker') return openColorSchemeMaker();
+    if (id === 'shape-press') {
+      closeFeatureMenu();
+      if (!glitches.on.shapepress) addEffect('shapepress');
+      runCommand('window-panel-open', 'effects');
+      return true;
+    }
+    if (pkg.kind === 'preset-pack') {
+      closeFeatureMenu();
+      runCommand('window-panel-open', 'preset');
+      return true;
+    }
+    if (pkg.kind === 'palette-pack') {
+      closeFeatureMenu();
+      return openPaletteManager();
+    }
+    return openPluginManager();
+  }
+
   function openPluginManager() {
+    closeFeatureMenu();
     if (!window.DitherPlugins) {
       el.statStatus.textContent = 'The plugin manager is not available';
       return false;
@@ -2803,6 +2946,7 @@
   }
 
   function openInkExtractor() {
+    closeFeatureMenu();
     const pkg = window.DitherPlugins && window.DitherPlugins.tool('ink-extractor');
     if (!pkg) {
       el.statStatus.textContent = 'Install Ink Extractor from File › Plugin Manager first';
@@ -2822,6 +2966,7 @@
   }
 
   function openColorSchemeMaker(options) {
+    closeFeatureMenu();
     const pkg = window.DitherPlugins && window.DitherPlugins.tool('color-scheme-maker');
     if (!pkg) {
       el.statStatus.textContent = 'Install Color Scheme Maker from File › Plugin Manager first';
@@ -2872,6 +3017,7 @@
   }
 
   function openPaletteManager() {
+    closeFeatureMenu();
     if (!window.DitherPaletteManager) {
       el.statStatus.textContent = 'The palette manager is not available';
       return false;
@@ -2914,6 +3060,7 @@
     'file-color-scheme': openColorSchemeMaker,
     'file-manage-palettes': openPaletteManager,
     'file-import-palette': function () {
+      closeFeatureMenu();
       if (!window.DitherPaletteImport) {
         el.statStatus.textContent = 'The palette importer is not available';
         return;
@@ -2949,6 +3096,7 @@
     'press-preset': function (arg) { applyPreset(arg); },
     'effects-add': function (arg) { addEffect(arg); },
     'effects-clear': clearStack,
+    'view-feature-menu': openFeatureMenu,
     'view-zoom-in': function () { zoomStep(1); },
     'view-zoom-out': function () { zoomStep(-1); },
     'view-zoom-fit': function () { state.zoom = null; applyZoom(); },
@@ -3006,6 +3154,7 @@
       serpentine: !!state.settings.serpentine,
       compare: !!state.compareOn,
       split: !!state.splitOn,
+      learnVisible: !(window.DitherTour && window.DitherTour.hidden && window.DitherTour.hidden()),
       canUndo: history.past.length > 1,
       canRedo: history.future.length > 0,
       effects: activeEffects(),

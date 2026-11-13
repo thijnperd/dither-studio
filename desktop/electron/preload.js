@@ -62,7 +62,9 @@ const api = {
 
   /* ---- dialogs owned by the main process ---- */
   openGuide: function () { return ipcRenderer.invoke('ds:open-guide'); },
+  readGuide: function () { return ipcRenderer.invoke('ds:read-guide'); },
   checkUpdates: function () { return ipcRenderer.invoke('ds:updates-check'); },
+  updateStatus: function () { return ipcRenderer.invoke('ds:updates-status'); },
   installUpdate: function () { return ipcRenderer.invoke('ds:updates-install'); },
   // Declarative plugin packages: the catalogue, then one package by catalogue id.
   // Main owns the URL; the renderer never sees a fetch it can point elsewhere.

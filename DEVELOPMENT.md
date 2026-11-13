@@ -92,13 +92,16 @@ builds.
 | [`electron/update-script.js`](desktop/electron/update-script.js) | the Windows helper: a PowerShell script that waits for the app to close, installs silently, relaunches and cleans up |
 | [`electron/splash.html`](desktop/electron/splash.html) | the startup animation: **this is the file to replace** (see below) |
 | [`electron/Splash/`](desktop/electron/Splash/) | the source PNGs the animation was built from (Adam, Adam dithered, God). The document inlines its own copies, so `build.files` keeps this folder out of the package |
-| [`src/index.html`](desktop/src/index.html) | the window's markup: caption, menus, options, the rail (its Lucide icons inlined), document tabs, dock, status |
-| [`LICENSE-LUCIDE.txt`](desktop/LICENSE-LUCIDE.txt) | the ISC notice for the rail's Lucide icons; `build.files` ships it beside the app |
+| [`src/index.html`](desktop/src/index.html) | the window's markup: caption, menus, options, the rail (its glyphs masked from `src/assets/`), document tabs, dock, status |
+| [`LICENSE-TABLER.txt`](desktop/LICENSE-TABLER.txt) | the MIT notice for the supplied Tabler-style icon set that the rail, studio menu, Help index and find fields draw from; `build.files` ships it beside the app |
+| [`LICENSE-LUCIDE.txt`](desktop/LICENSE-LUCIDE.txt) | the ISC notice for the two remaining inline Lucide paths, the studio menu's back and close marks; `build.files` ships it beside the app |
+| [`LICENSE-WEBM-DURATION.txt`](desktop/LICENSE-WEBM-DURATION.txt) | the MIT notice for the vendored WebM duration patcher; `build.files` ships it beside the app |
 | [`src/menu-spec.js`](desktop/src/menu-spec.js) | the one menu definition, shared by the native menu and the drawn one |
 | [`src/tour-spec.js`](desktop/src/tour-spec.js) | the tutorial's lessons, as data: a target selector, a body, an optional panel, an optional command and a `when` predicate per step |
 | [`src/renderer/core.js`](desktop/src/renderer/core.js) | the desktop core: the colour pair, the catalogue lookups, the settings paths, the one dropdown builder |
 | [`src/renderer/dither.js`](desktop/src/renderer/dither.js) | the engine — DOM-free, byte-identical to the web builds |
 | [`src/renderer/video.js`](desktop/src/renderer/video.js) | the video source, clock and recorder |
+| [`src/renderer/webm-duration.js`](desktop/src/renderer/webm-duration.js) | the vendored `fix-webm-duration` parser that writes the Duration element `MediaRecorder` leaves out |
 | [`src/renderer/samples.js`](desktop/src/renderer/samples.js) | the built-in source table — generated from the launcher build, like the engine |
 | [`src/renderer/app.js`](desktop/src/renderer/app.js) | the desktop shell: rendering, controls, the native routes, and the command surface the menus drive |
 | [`src/renderer/plugins.js`](desktop/src/renderer/plugins.js) | the plugin manager: package validation and storage, file install, the Functionality / Presets & color schemes sections, and disk sizes |
@@ -114,7 +117,7 @@ builds.
 | [`tools/update.test.js`](desktop/tools/update.test.js) | the updater's own suite: semver ordering, platform asset choice, changelog extraction and the Windows helper |
 | [`tools/smoke.js`](desktop/tools/smoke.js) | the smoke runner: picks a suite and starts the app with it |
 | [`tools/smoke-in-page.js`](desktop/tools/smoke-in-page.js) | the page half of the full smoke run |
-| [`tools/smoke-quick.js`](desktop/tools/smoke-quick.js), [`tools/smoke-plugins.js`](desktop/tools/smoke-plugins.js), [`tools/smoke-animation.js`](desktop/tools/smoke-animation.js) | the focused suites behind `npm run smoke`, `smoke:plugins` and `smoke:animation` |
+| [`tools/smoke-quick.js`](desktop/tools/smoke-quick.js), [`tools/smoke-plugins.js`](desktop/tools/smoke-plugins.js), [`tools/smoke-animation.js`](desktop/tools/smoke-animation.js), [`tools/smoke-menu.js`](desktop/tools/smoke-menu.js), [`tools/smoke-help.js`](desktop/tools/smoke-help.js) | the focused suites behind `npm run smoke`, `smoke:plugins`, `smoke:animation`, `smoke:menu` and `smoke:help` |
 
 The desktop shell is its own code. It used to be the web shell with ten patches
 applied, which meant every helper existed twice, so the desktop now has a core of
@@ -153,8 +156,8 @@ so the tour never opens by itself again; after that *Help ▸ Take the Tour* or 
 Learn panel starts it whenever it is wanted, and either brings the station back
 if it has folded away.
 
-Ten short lessons, one per station, from the first proof to the last export.
-Each lesson is five or six steps, and each step dims the window, opens the panel
+Eleven short lessons, one per surface, from the first proof and the Studio menu
+to the last export. Each lesson is a handful of steps, and each step dims the window, opens the panel
 it is about, and settles a ring around the one control it means. If that control
 is far down the rail, the rail is scrolled to it first, the way a guide turns the
 page for you.
@@ -166,10 +169,9 @@ changes, and a step that cannot be checked simply says what to do. **Show me**
 performs that one step for a stuck learner, **Back** and **Next** move, and
 `Escape` leaves. Progress is kept per lesson and per step, so a lesson resumes
 where it was left; **Reset** clears the ticks and puts the intro back on offer.
-**Hide** beside Reset, or *Help ▸ Hide the Tour Completely*, stores a `hidden`
+**Hide Learn** beside Reset, or unticking *Help ▸ Learn Panel*, stores a `hidden`
 flag with the progress, removes the Learn station and its jump chip, and stops
-the intro; *Help ▸ Show the Learn Panel* brings the station back without
-erasing what was learned. Finishing the last lesson folds the Learn station away
+the intro; the same menu item ticks it back without erasing what was learned. Finishing the last lesson folds the Learn station away
 and closes the verdict card on its own a moment later, so a finished tutorial
 stops taking up the dock.
 
@@ -418,16 +420,18 @@ fails the run and names itself.
 
 ```bash
 cd desktop
-npm test                                       # core, tour and updater: 54 checks, no window
+npm test                                       # core, tour and updater: 67 checks, no window
 npm run smoke                                  # quick boot, chrome and a live proof
 npm run smoke:plugins                          # plugin store, Shape Press, presets, palette packs, Ink Extractor, Color Scheme Maker
-npm run smoke:animation                        # animation timeline and still restore
+npm run smoke:animation                        # timeline, seed drift, WebM duration and still restore
+npm run smoke:menu                             # studio menu routes, counts and icons
+npm run smoke:help                             # shortcut editor, guide page, update row and Learn toggle
 npm run smoke:all                              # the full in-page set; exit 0/1
 ```
 
 `npm test` runs the three Node suites. `tools/core.test.js` covers the colour
 round trip, the catalogue lookups the steppers and the menus share, the settings
-paths, the station notes and the dropdown builder (21 checks); `tools/tour.test.js`
+paths, the station notes and the dropdown builder (44 checks); `tools/tour.test.js`
 covers the tutorial's lesson data (18 checks), and it reads `app.js` itself for
 the command names and panel ids, so a lesson cannot outlive the verb it drives;
 `tools/update.test.js` covers version ordering, platform asset choice, changelog
@@ -441,8 +445,11 @@ verdict is part of the run's, not a footnote beside it. `tools/smoke-quick.js`
 checks the boot surface and one live render; `tools/smoke-plugins.js` installs
 from the bundled package path and checks the Shape Press gate, a preset pack,
 the Ink Extractor, the manager's sections and disk sizes, and a generated Color
-Scheme Maker palette; `tools/smoke-animation.js` scrubs the timeline and restores
-the still. The focused suites set `DITHER_NO_SPLASH=1`, so they take seconds.
+Scheme Maker palette; `tools/smoke-animation.js` scrubs the timeline, checks a
+seed track on a fixed screen, records a real WebM and reads its patched
+duration, then restores the still; `tools/smoke-help.js` edits and resets a
+shortcut, reads the guide through IPC, checks the update row and the single
+Learn toggle. The focused suites set `DITHER_NO_SPLASH=1`, so they take seconds.
 `npm run smoke:all` runs `tools/smoke-in-page.js`, the complete set, and is what
 CI and a release use.
 

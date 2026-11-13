@@ -3,6 +3,7 @@
  *     node tools/smoke.js quick      # boot, chrome and a live proof (default)
  *     node tools/smoke.js plugins    # manager, sizes, Shape Press, presets, both dialogs
  *     node tools/smoke.js animation  # timeline, playhead and transport
+ *     node tools/smoke.js menu       # the studio menu and its four routes
  *     node tools/smoke.js all        # every in-page check; slower, for CI/release
  *     node tools/smoke.js list       # what is available
  *
@@ -26,6 +27,14 @@ const SUITES = {
   animation: {
     script: 'smoke-animation.js',
     blurb: 'animation timeline, playhead and still restore',
+  },
+  menu: {
+    script: 'smoke-menu.js',
+    blurb: 'studio menu routes, counts, actions and icons',
+  },
+  help: {
+    script: 'smoke-help.js',
+    blurb: 'Help shortcuts editor, guide page, update row and Learn toggle',
   },
   all: {
     script: 'smoke-in-page.js',

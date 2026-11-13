@@ -50,6 +50,7 @@
       chunks: [],
       stream: null,
       timer: 0,
+      recordedAt: 0,
       restoreLoop: true,
     };
 
@@ -140,7 +141,11 @@
         const remove = document.createElement('button');
         remove.className = 'icon-btn';
         remove.type = 'button';
-        remove.textContent = '✕';
+        const removeGlyph = document.createElement('span');
+        removeGlyph.className = 'ui-glyph ui-glyph--xs';
+        removeGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/x.svg")');
+        removeGlyph.setAttribute('aria-hidden', 'true');
+        remove.appendChild(removeGlyph);
         remove.title = 'Remove this track';
         remove.setAttribute('aria-label', 'Remove ' + meta.name);
         remove.addEventListener('click', function () { removeTrack(index); });
@@ -170,6 +175,18 @@
         fields.appendChild(ease);
         row.appendChild(head);
         row.appendChild(fields);
+        if (meta.id === 'seed' && typeof D.algorithmSeedMode === 'function') {
+          const base = opts.getBaseSettings ? opts.getBaseSettings() : D.DEFAULTS;
+          const mode = D.algorithmSeedMode(base.algorithm);
+          if (mode !== 'seed') {
+            const hint = document.createElement('p');
+            hint.className = 'anim-track-note';
+            hint.textContent = mode === 'screen'
+              ? 'This fixed screen drifts itself for the seed track.'
+              : 'This press has no screen to drift; animate Brightness or Pixel size instead.';
+            row.appendChild(hint);
+          }
+        }
         el.tracks.appendChild(row);
       });
     }
@@ -337,14 +354,17 @@
       state.recorder.onstop = function () {
         const blob = new Blob(state.chunks, { type: mime.split(';')[0] });
         state.chunks = [];
+        const durationMs = state.recordedAt ? performance.now() - state.recordedAt : state.duration * 1000;
         if (blob.size && typeof opts.download === 'function') {
-          opts.download(blob, 'dither-animation.webm');
-          note('Exported dither-animation.webm · ' + Math.round(blob.size / 1024) + ' KB');
+          opts.download(blob, 'dither-animation.webm', durationMs);
+          note('Exported dither-animation.webm · ' + Math.round(durationMs / 100) / 10 + ' s · ' +
+            Math.round(blob.size / 1024) + ' KB');
         } else {
           note('The recording came out empty');
         }
       };
       state.recording = true;
+      state.recordedAt = performance.now();
       el.exportBtn.disabled = true;
       el.exportBtn.textContent = 'Recording…';
       el.recorder = state.recorder;

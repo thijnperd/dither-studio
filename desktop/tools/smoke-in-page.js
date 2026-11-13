@@ -41,7 +41,7 @@
   check('the caption bar has its three window buttons', document.querySelectorAll('.titlebar .wbtn').length === 3);
   check('the menu bar has eight menus', document.querySelectorAll('.menubar .menu').length === 8,
     document.querySelectorAll('.menubar .menu').length);
-  check('the tool rail has its eight tools', document.querySelectorAll('.toolrail .tool').length === 8,
+  check('the tool rail has its nine tools', document.querySelectorAll('.toolrail .tool').length === 9,
     document.querySelectorAll('.toolrail .tool').length);
   check('the dock holds all eleven panels', document.querySelectorAll('#rail .group').length === 11,
     document.querySelectorAll('#rail .group').length);
@@ -667,12 +667,14 @@
   check('the Help menu opens the one Help window',
     shortcutsRouted === true && !!help && help.isOpen() && document.getElementById('help').hidden === false);
   check('the Help sidebar carries every page',
-    document.querySelectorAll('#help-nav .help-navitem').length === 3,
+    document.querySelectorAll('#help-nav .help-navitem').length === 4 &&
+      Array.prototype.some.call(document.querySelectorAll('#help-nav .help-navitem'),
+        function (button) { return button.getAttribute('data-page') === 'guide'; }),
     document.querySelectorAll('#help-nav .help-navitem').length);
   const helpGithub = document.getElementById('help-github');
   check('the Help footer carries the author’s GitHub profile',
     !!helpGithub && helpGithub.getAttribute('href') === 'https://github.com/thijnperd' &&
-      !!helpGithub.querySelector('svg path') && helpGithub.getBoundingClientRect().width > 20,
+      !!helpGithub.querySelector('.ui-glyph') && helpGithub.getBoundingClientRect().width > 20,
     helpGithub ? helpGithub.getAttribute('href') : null);
   check('Help opens on the keyboard reference',
     document.getElementById('help-title').textContent === 'Keyboard shortcuts',
@@ -843,6 +845,12 @@
       findBtn.getBoundingClientRect().right <= window.innerWidth + 1 &&
       findBtn.getBoundingClientRect().left >= dockBox.left - 1,
     strip && findBtn ? strip.scrollWidth + 'px in ' + strip.clientWidth + 'px' : null);
+  findBtn.click();
+  await wait(120);
+  check('the dock find button opens the command palette',
+    !!window.DitherPalette && window.DitherPalette.isOpen());
+  if (window.DitherPalette) window.DitherPalette.close();
+
   await wait(240);
   check('choosing one loads exactly that painting',
     DS.state().name === window.DitherSamples[0].name, DS.state().name);

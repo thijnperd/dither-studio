@@ -37,8 +37,12 @@
   let activePage = 'shortcuts';
   let query = '';
   let releasePromise = null;
+  let guidePromise = null;
+  let captureCommand = null;
 
   const release = { state: 'idle', version: '', notes: '', error: '' };
+  const guide = { state: 'idle', text: '', error: '' };
+  const update = { state: 'idle', info: null, error: '', progress: 0 };
 
   // ---- the pages ---------------------------------------------------------
 
@@ -57,11 +61,36 @@
     return { title: titleText, keys: keys, note: note };
   }
 
+  // The reference rows and the editor share the same command names. A row
+  // without an entry here is documentation for a fixed key (the bare keys,
+  // the arrow steps), not something the editor can capture.
+  const SHORTCUT_COMMANDS = {
+    'Open an image': 'file-open',
+    'Open a clip': 'file-open-clip',
+    'Built-in source': 'file-demo',
+    'Save the proof as PNG': 'file-save-png',
+    'Copy the proof to the clipboard': 'file-copy-png',
+    'Quit Dither Studio': 'file-quit',
+    'Find anything': 'view-palette',
+    'Zoom in': 'view-zoom-in',
+    'Zoom out': 'view-zoom-out',
+    'Fit the proof in the window': 'view-zoom-fit',
+    'Open the guide': 'help-guide',
+    'Reload the window': 'view-reload',
+    'Toggle developer tools': 'view-devtools',
+    'Toggle full screen': 'view-fullscreen',
+    'Undo the last recipe change': 'edit-undo',
+    'Redo the last recipe change': 'edit-redo',
+    'Roll a fresh recipe': 'edit-random',
+    'New seed': 'edit-reseed',
+    'Character mode': 'image-textmode',
+  };
+
   const SHORTCUTS = {
     id: 'shortcuts',
     group: 'Reference',
     name: 'Keyboard shortcuts',
-    glyph: '⌘',
+    icon: 'shortcuts',
     kicker: 'Reference · Keys',
     sub: 'Every command the window answers to, without leaving the proof.',
     lead: '',
@@ -84,7 +113,7 @@
           shortcut('Zoom in', ['Ctrl', '='], 'The bare + key also zooms in when no field has focus.'),
           shortcut('Zoom out', ['Ctrl', '−'], 'The bare − key also zooms out when no field has focus.'),
           shortcut('Fit the proof in the window', ['Ctrl', '0'], 'The bare 0 key does the same.'),
-          shortcut('Open the guide', ['F1'], 'Open GUIDE.md in your editor.'),
+          shortcut('Open the guide', ['F1'], 'Read the full manual inside this Help window.'),
           shortcut('Reload the window', ['F5'], 'Reload the press without changing its saved presets.'),
           shortcut('Toggle developer tools', ['Ctrl', 'Shift', 'I'], 'Only needed when working on the app itself.'),
           shortcut('Toggle full screen', ['F11'], 'Fill the display with the press.'),
@@ -136,6 +165,44 @@
     return parts.join(' · ');
   }
 
+  function updateNote() {
+    if (update.state === 'checking') return 'Checking GitHub for a newer release…';
+    if (update.state === 'error') return 'The check failed: ' + (update.error || 'GitHub could not be reached.');
+    if (update.state === 'installing') {
+      const pct = Math.round(Math.max(0, Math.min(1, update.progress || 0)) * 100);
+      return 'Downloading the update · ' + pct + '%';
+    }
+    if (update.info && update.info.status === 'available') {
+      return 'Version ' + update.info.latest + ' is available. You have ' + update.info.current + '.';
+    }
+    if (update.info && update.info.status === 'current') {
+      return 'Dither Studio ' + update.info.current + ' is the latest version.';
+    }
+    return 'Check GitHub for a newer release. The app stays offline until you ask.';
+  }
+
+  function updateRows() {
+    const rows = [{ title: 'Release status', note: updateNote(), search: 'update version release github' }];
+    const actions = [];
+    if (update.state === 'available' || (update.info && update.info.status === 'available')) {
+      actions.push({ label: 'Install and restart', command: 'help-update-install' });
+    }
+    if (update.state !== 'checking' && update.state !== 'installing') {
+      actions.push({ label: update.state === 'idle' ? 'Check for updates' : 'Check again', command: 'help-update-check' });
+    }
+    rows[0].actions = actions;
+    if (update.info && update.info.status === 'available' && update.info.notes) {
+      rows.push({
+        title: 'What is in ' + update.info.latest,
+        note: update.info.notes.length > 1200 ? update.info.notes.slice(0, 1199) + '…' : update.info.notes,
+        prose: true,
+        plain: true,
+        search: 'release notes ' + update.info.latest,
+      });
+    }
+    return rows;
+  }
+
   function aboutPage() {
     const versions = desktop && desktop.versions ? desktop.versions : {};
     const versionValue = release.state === 'ready' && release.version ? release.version : '…';
@@ -147,11 +214,15 @@
       id: 'about',
       group: 'This build',
       name: 'About Dither Studio',
-      glyph: 'i',
+      icon: 'info_or_about',
       kicker: 'About this build',
       sub: 'An offline dithering press, its shared engine, and where to read more.',
       lead: '',
       sections: [
+        // Updates is first because Help ▸ Check for Updates opens this page at
+        // the top: the check, its progress and its result must be in view
+        // without hunting through the credits below.
+        { title: 'Updates', rows: updateRows() },
         {
           title: 'The press',
           rows: [
@@ -184,8 +255,8 @@
           rows: [
             {
               title: 'The guide',
-              note: 'The full manual, kept beside the app and opened in your editor.',
-              action: { label: 'Open guide', command: 'help-guide' },
+              note: 'The full manual, read inside Help and kept with the app.',
+              action: { label: 'Read the guide', command: 'help-guide' },
               search: 'guide manual markdown f1',
             },
             {
@@ -274,7 +345,7 @@
       id: 'whats-new',
       group: 'This build',
       name: 'What’s new',
-      glyph: '✦',
+      icon: 'whatsnew',
       kicker: 'Release notes',
       sub: 'The notes for the build on this computer, read from the changelog it ships with.',
       lead: lead,
@@ -282,8 +353,130 @@
     };
   }
 
+  // The guide is Markdown on disk, but it should not open an editor on a
+  // machine that has none. Parse the blocks the manual actually uses -
+  // headings, paragraphs, bullets, tables and fences - into the same rows as
+  // every other Help page, so it searches and scrolls with the rest.
+  function cleanInline(text) {
+    return String(text || '')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/`([^`]+)`/g, '$1')
+      .trim();
+  }
+
+  function guideBlocks(text) {
+    const lines = String(text || '').replace(/\r/g, '').split('\n');
+    const sections = [{ title: 'The guide', rows: [] }];
+    let current = sections[0];
+    let lead = '';
+    let paragraph = [];
+    let code = null;
+
+    function flushParagraph() {
+      if (!paragraph.length) return;
+      const value = cleanInline(paragraph.join(' '));
+      paragraph = [];
+      if (!value) return;
+      current.rows.push({ title: value, prose: true, plain: true, search: value });
+    }
+
+    function flushCode() {
+      if (!code) return;
+      const value = code.join('\n').replace(/^\n+|\n+$/g, '');
+      code = null;
+      if (value) current.rows.push({ title: value, prose: true, plain: true, code: true, search: value });
+    }
+
+    lines.forEach(function (line) {
+      if (code !== null) {
+        if (/^```/.test(line)) flushCode();
+        else code.push(line);
+        return;
+      }
+      if (/^```/.test(line)) {
+        flushParagraph();
+        code = [];
+        return;
+      }
+      if (/^#\s+/.test(line)) {
+        flushParagraph();
+        if (!lead) lead = cleanInline(line.replace(/^#\s+/, ''));
+        return;
+      }
+      if (/^##\s+/.test(line)) {
+        flushParagraph();
+        current = { title: cleanInline(line.replace(/^##\s+/, '')), rows: [] };
+        sections.push(current);
+        return;
+      }
+      if (/^###\s+/.test(line)) {
+        flushParagraph();
+        const value = cleanInline(line.replace(/^###\s+/, ''));
+        current.rows.push({ title: value, prose: true, plain: true, search: value });
+        return;
+      }
+      if (!line.trim()) { flushParagraph(); return; }
+      if (/^[-*]\s+/.test(line)) {
+        flushParagraph();
+        const value = cleanInline(line.replace(/^[-*]\s+/, ''));
+        current.rows.push({ title: value, prose: true, plain: true, search: value });
+        return;
+      }
+      if (/^\|/.test(line)) {
+        flushParagraph();
+        const cells = line.split('|').slice(1, -1).map(function (cell) { return cleanInline(cell); });
+        if (!cells.length || cells.every(function (cell) { return /^:?-{2,}:?$/.test(cell) || !cell; })) return;
+        const value = cells.filter(Boolean).join('  ·  ');
+        current.rows.push({ title: value, prose: true, plain: true, search: value });
+        return;
+      }
+      paragraph.push(line.trim());
+    });
+    flushCode();
+    flushParagraph();
+    return { lead: lead, sections: sections };
+  }
+
+  function guidePage() {
+    const page = {
+      id: 'guide',
+      group: 'Reference',
+      name: 'The guide',
+      icon: 'book',
+      kicker: 'Reference · Manual',
+      sub: 'The full guide to the press, kept in the app so it can be read offline.',
+      lead: '',
+      sections: [],
+    };
+    if (guide.state === 'ready') {
+      const parsed = guideBlocks(guide.text);
+      page.lead = parsed.lead;
+      page.sections = parsed.sections.filter(function (section) { return section.rows.length; });
+      if (!page.sections.length) {
+        page.sections = [{
+          title: 'The guide',
+          rows: [{ title: 'The guide has no readable sections.', prose: true, plain: true, search: 'guide empty' }],
+        }];
+      }
+    } else if (guide.state === 'error') {
+      page.lead = 'The guide could not be read from this build.';
+      page.sections = [{
+        title: 'The guide',
+        rows: [{ title: 'The manual is missing.', note: guide.error || 'The file could not be opened.', prose: true, plain: true, search: 'guide missing error' }],
+      }];
+    } else {
+      page.lead = 'Reading the guide that ships with this build…';
+      page.sections = [{
+        title: 'The guide',
+        rows: [{ title: 'The manual is on its way.', note: 'It is read from GUIDE.md beside the app.', prose: true, plain: true, search: 'guide loading' }],
+      }];
+    }
+    return page;
+  }
+
   function allPages() {
-    return [SHORTCUTS, whatsNewPage(), aboutPage()];
+    return [SHORTCUTS, guidePage(), whatsNewPage(), aboutPage()];
   }
 
   function pageById(id) {
@@ -360,27 +553,131 @@
     if (shell && typeof shell.run === 'function') shell.run(action.command, action.arg);
   }
 
+  function actionButton(action) {
+    const button = node('button', 'btn help-action', action.label || 'Open');
+    button.type = 'button';
+    if (action.disabled) button.disabled = true;
+    button.addEventListener('click', function () {
+      if (typeof action.run === 'function') action.run();
+      else runAction(action);
+    });
+    return button;
+  }
+
   function appendSection(section, rows) {
     const block = node('section', 'help-section');
     block.appendChild(node('h2', '', section.title));
     (rows || section.rows).forEach(function (row) {
-      const line = node('div', 'help-row' + (row.prose ? ' help-row-prose' : '') + (row.plain ? ' is-plain' : ''));
+      const line = node('div', 'help-row' + (row.prose ? ' help-row-prose' : '') +
+        (row.plain ? ' is-plain' : '') + (row.code ? ' help-row-code' : ''));
       const text = node('div', 'help-row-text');
       text.appendChild(node('div', 'help-row-title', row.title));
       if (row.note) text.appendChild(node('div', 'help-row-note', row.note));
       line.appendChild(text);
 
-      if (row.keys) line.appendChild(keycaps(row.keys));
+      const command = row.command || SHORTCUT_COMMANDS[row.title];
+      const liveKeys = command && window.DitherShortcuts ? window.DitherShortcuts.keysFor(command) : null;
+      if (row.keys || (liveKeys && liveKeys.length)) line.appendChild(keycaps(liveKeys && liveKeys.length ? liveKeys : row.keys));
       else if (row.value) line.appendChild(node('span', 'help-value', row.value));
-      else if (row.action) {
-        const button = node('button', 'btn help-action', row.action.label || 'Open');
-        button.type = 'button';
-        button.addEventListener('click', function () { runAction(row.action); });
-        line.appendChild(button);
+      else if (row.action) line.appendChild(actionButton(row.action));
+      if (row.actions && row.actions.length) {
+        const group = node('span', 'help-actions');
+        row.actions.forEach(function (action) { group.appendChild(actionButton(action)); });
+        line.appendChild(group);
       }
       block.appendChild(line);
     });
     body.appendChild(block);
+  }
+
+  // ---- editing the keys ---------------------------------------------------
+
+  function beginCapture(command) {
+    captureCommand = command;
+    renderAll({ keepScroll: true });
+    status.textContent = 'Press the new keys. Escape cancels.';
+  }
+
+  function accelFromEvent(event) {
+    const key = event.key || '';
+    let normalized = '';
+    if (/^[a-z]$/i.test(key)) normalized = key.toUpperCase();
+    else if (/^\d$/.test(key)) normalized = key;
+    else if (key === '?' || key === '/') normalized = '/';
+    else if (key === '=' || key === '+') normalized = '=';
+    else if (key === '-') normalized = '-';
+    else if (key === ' ' || key === 'Spacebar') normalized = 'Space';
+    else if (key === 'ArrowUp') normalized = 'Up';
+    else if (key === 'ArrowDown') normalized = 'Down';
+    else if (key === 'ArrowLeft') normalized = 'Left';
+    else if (key === 'ArrowRight') normalized = 'Right';
+    else if (/^F\d{1,2}$/.test(key)) normalized = key.toUpperCase();
+    else return '';
+    if (!event.ctrlKey && !event.metaKey && !/^F\d/.test(normalized)) return '';
+    const parts = [];
+    if (event.ctrlKey || event.metaKey) parts.push('CmdOrCtrl');
+    if (event.altKey) parts.push('Alt');
+    if (event.shiftKey) parts.push('Shift');
+    parts.push(normalized);
+    return parts.join('+');
+  }
+
+  function shortcutEditor() {
+    const api = window.DitherShortcuts;
+    if (!api) return null;
+    const rows = api.list().map(function (item) {
+      const actions = [{
+        label: captureCommand === item.command ? 'Press keys…' : 'Change',
+        run: function () { beginCapture(item.command); },
+      }];
+      if (item.changed) {
+        actions.push({
+          label: 'Reset',
+          run: function () {
+            api.reset(item.command);
+            captureCommand = null;
+            renderAll({ keepScroll: true });
+            status.textContent = item.label + ' is back on its default key.';
+          },
+        });
+      }
+      return {
+        title: item.label,
+        note: captureCommand === item.command ? 'Listening for the new combination…'
+          : item.changed ? 'Custom key' : 'Default key',
+        keys: api.keysFor(item.command),
+        command: item.command,
+        actions: actions,
+      };
+    });
+    if (!rows.length) return null;
+    rows.push({
+      title: 'Every shortcut',
+      note: 'Put every key back on the combination this build shipped with.',
+      actions: [{
+        label: 'Reset all',
+        run: function () {
+          api.resetAll();
+          captureCommand = null;
+          renderAll({ keepScroll: true });
+          status.textContent = 'Every shortcut is back on its default key.';
+        },
+      }],
+    });
+    return { title: 'Change the keys', rows: rows };
+  }
+
+  function navGlyph(page) {
+    const box = node('span', 'help-nav-glyph');
+    if (page.icon) {
+      const mark = node('span', 'ui-glyph ui-glyph--sm');
+      mark.style.setProperty('--ui-icon', 'url("../assets/icons/' + page.icon + '.svg")');
+      mark.setAttribute('aria-hidden', 'true');
+      box.appendChild(mark);
+    } else {
+      box.textContent = page.glyph || '';
+    }
+    return box;
   }
 
   function renderNav(pageCounts, searching) {
@@ -397,7 +694,7 @@
       if (!searching && page.id === activePage) button.setAttribute('aria-current', 'page');
       button.setAttribute('data-page', page.id);
 
-      button.appendChild(node('span', 'help-nav-glyph', page.glyph));
+      button.appendChild(navGlyph(page));
       button.appendChild(node('span', 'help-nav-name', page.name));
       if (searching) button.appendChild(node('span', 'help-nav-count', String(pageCounts[page.id] || 0)));
       button.addEventListener('click', function () { go(page.id); });
@@ -407,13 +704,17 @@
 
   function renderPage(page) {
     if (page.lead) body.appendChild(node('p', 'help-lead', page.lead));
+    if (page.id === 'shortcuts') {
+      const editor = shortcutEditor();
+      if (editor) appendSection(editor);
+    }
     page.sections.forEach(function (section) { appendSection(section); });
   }
 
   function renderResults(found) {
     found.forEach(function (group) {
       const head = node('div', 'help-hit-page');
-      head.appendChild(node('span', 'help-nav-glyph', group.page.glyph));
+      head.appendChild(navGlyph(group.page));
       head.appendChild(node('span', '', group.page.name));
       body.appendChild(head);
       group.sections.forEach(function (section) {
@@ -500,6 +801,41 @@
   }
 
   function keydown(event) {
+    if (captureCommand) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        captureCommand = null;
+        renderAll({ keepScroll: true });
+        status.textContent = 'The old shortcut was kept.';
+        return;
+      }
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        const command = captureCommand;
+        captureCommand = null;
+        if (window.DitherShortcuts) window.DitherShortcuts.reset(command);
+        renderAll({ keepScroll: true });
+        status.textContent = 'Shortcut reset to its default.';
+        return;
+      }
+      if (event.key === 'Tab' || event.key === 'Shift' || event.key === 'Control' ||
+          event.key === 'Alt' || event.key === 'Meta') return;
+      const accel = accelFromEvent(event);
+      if (!accel) {
+        status.textContent = 'Use Ctrl or Cmd plus a key, or a function key.';
+        return;
+      }
+      const command = captureCommand;
+      const result = window.DitherShortcuts ? window.DitherShortcuts.set(command, accel) : { ok: false, error: 'Shortcuts are not available here.' };
+      if (!result.ok) {
+        status.textContent = result.error;
+        return;
+      }
+      captureCommand = null;
+      renderAll({ keepScroll: true });
+      status.textContent = 'Shortcut updated. The menu bar carries the new key.';
+      return;
+    }
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
@@ -548,6 +884,16 @@
       if (event.target === overlay) close();
     });
     overlay.addEventListener('keydown', keydown);
+    window.addEventListener('ds:shortcuts', function () {
+      if (overlay && !overlay.hidden) renderAll({ keepScroll: true });
+    });
+    if (desktop && typeof desktop.onUpdateProgress === 'function') {
+      desktop.onUpdateProgress(function (fraction) {
+        update.progress = Number(fraction) || 0;
+        if (update.state !== 'installing') update.state = 'installing';
+        if (overlay && !overlay.hidden && activePage === 'about') renderAll({ keepScroll: true });
+      });
+    }
     return true;
   }
 
@@ -578,6 +924,56 @@
     return releasePromise;
   }
 
+  function ensureGuide() {
+    if (guidePromise) return guidePromise;
+    if (!desktop || typeof desktop.readGuide !== 'function') {
+      guide.state = 'error';
+      guide.error = 'The guide is only available in the desktop app.';
+      return null;
+    }
+    guide.state = 'loading';
+    guidePromise = desktop.readGuide().then(function (out) {
+      if (out && out.text) {
+        guide.state = 'ready';
+        guide.text = out.text;
+      } else {
+        guide.state = 'error';
+        guide.error = out && out.error ? out.error : 'The guide file was empty.';
+      }
+    }).catch(function (err) {
+      guide.state = 'error';
+      guide.error = String(err && err.message || err);
+    }).then(function () {
+      if (overlay && !overlay.hidden && (query || activePage === 'guide')) {
+        renderAll({ keepScroll: true });
+      }
+    });
+    return guidePromise;
+  }
+
+  function checkUpdates() {
+    if (!desktop || typeof desktop.updateStatus !== 'function') {
+      update.state = 'error';
+      update.error = 'Updates are only available in the desktop app.';
+      return null;
+    }
+    update.state = 'checking';
+    update.error = '';
+    update.progress = 0;
+    if (overlay && !overlay.hidden && activePage === 'about') renderAll({ keepScroll: true });
+    return desktop.updateStatus().then(function (info) {
+      update.info = info || null;
+      update.state = info && info.status === 'available' ? 'available' : 'current';
+      if (overlay && !overlay.hidden && activePage === 'about') renderAll({ keepScroll: true });
+      return info;
+    }).catch(function (err) {
+      update.state = 'error';
+      update.error = String(err && err.message || err);
+      if (overlay && !overlay.hidden && activePage === 'about') renderAll({ keepScroll: true });
+      return { status: 'error', error: update.error };
+    });
+  }
+
   function open(pageId) {
     if (!overlay && !build()) return false;
     if (window.DitherPalette && window.DitherPalette.isOpen && window.DitherPalette.isOpen()) {
@@ -585,6 +981,9 @@
     }
     if (window.DitherPaletteImport && window.DitherPaletteImport.isOpen && window.DitherPaletteImport.isOpen()) {
       window.DitherPaletteImport.close();
+    }
+    if (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen && window.DitherFeatureMenu.isOpen()) {
+      window.DitherFeatureMenu.close();
     }
     if (pageId && allPages().some(function (page) { return page.id === pageId; })) {
       activePage = pageId;
@@ -599,6 +998,7 @@
       clearButton.hidden = true;
       overlay.hidden = false;
       ensureRelease();
+      ensureGuide();
       renderAll();
       window.requestAnimationFrame(function () { overlay.classList.add('is-in'); });
       field.focus();
@@ -628,5 +1028,6 @@
     open: open,
     close: close,
     isOpen: isOpen,
+    checkUpdates: checkUpdates,
   };
 }());

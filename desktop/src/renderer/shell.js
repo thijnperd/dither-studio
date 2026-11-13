@@ -58,7 +58,7 @@
     if (node.submenu) return { label: node.label, submenu: node.submenu.map(expand) };
     return {
       label: node.label, command: node.command, arg: node.arg,
-      accel: node.accel, radio: node.radio, check: node.check,
+      accel: node.accel, accelDisplay: node.accelDisplay, radio: node.radio, check: node.check,
     };
   }
 
@@ -71,7 +71,167 @@
   // The catalogue is normally fixed, but an imported palette joins the Press
   // menu at runtime. Rebuilding the one tree keeps the drawn bar and the native
   // menu in step without teaching either one about imports.
-  let TREE = buildTree();
+  // ---- editable shortcuts ----
+
+  // The menu is still the one definition; this layer only swaps an accelerator
+  // for a command the user changed. Defaults are kept beside it so Reset and
+  // the Help editor always know what "the key it shipped with" means.
+  const SHORTCUT_STORE = 'dither-studio.shortcuts';
+  const SHORTCUT_EDITABLE = [
+    'file-open', 'file-open-clip', 'file-demo', 'file-save-png', 'file-copy-png', 'file-quit',
+    'edit-undo', 'edit-redo', 'edit-random', 'edit-reseed',
+    'image-textmode',
+    'view-palette', 'view-feature-menu', 'view-zoom-in', 'view-zoom-out', 'view-zoom-fit',
+    'view-reload', 'view-devtools', 'view-fullscreen',
+    'help-guide', 'help-shortcuts',
+  ];
+
+  const SHORTCUT_DEFAULTS = {};
+  (function collectDefaults(items) {
+    items.forEach(function (node) {
+      if (node.submenu) return collectDefaults(node.submenu);
+      if (node.command && node.accel) SHORTCUT_DEFAULTS[node.command] = node.accel;
+    });
+  }(buildTree().reduce(function (all, menu) { return all.concat(menu.items); }, [])));
+
+  function readShortcutOverrides() {
+    const out = {};
+    try {
+      const raw = window.localStorage.getItem(SHORTCUT_STORE);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && typeof parsed === 'object') {
+        Object.keys(parsed).forEach(function (command) {
+          if (SHORTCUT_EDITABLE.indexOf(command) >= 0 && typeof parsed[command] === 'string' && parsed[command].trim()) {
+            out[command] = parsed[command].trim();
+          }
+        });
+      }
+    } catch (err) { /* a first run, private mode, or a broken entry: use defaults */ }
+    return out;
+  }
+
+  let shortcutOverrides = readShortcutOverrides();
+
+  function applyShortcutOverrides(items) {
+    items.forEach(function (node) {
+      if (node.submenu) { applyShortcutOverrides(node.submenu); return; }
+      if (node.command && shortcutOverrides[node.command]) {
+        node.accel = shortcutOverrides[node.command];
+        node.accelDisplay = '';
+      }
+    });
+  }
+
+  function makeTree() {
+    const tree = buildTree();
+    tree.forEach(function (menu) { applyShortcutOverrides(menu.items); });
+    return tree;
+  }
+
+  let TREE = makeTree();
+
+  function shortcutEntries() {
+    const out = [];
+    TREE.forEach(function (menu) {
+      (function walk(items) {
+        items.forEach(function (node) {
+          if (node.submenu) { walk(node.submenu); return; }
+          if (!node.command || !node.accel || SHORTCUT_EDITABLE.indexOf(node.command) < 0) return;
+          out.push({
+            command: node.command,
+            label: node.label,
+            accel: node.accel,
+            defaultAccel: SHORTCUT_DEFAULTS[node.command] || node.accel,
+            changed: !!shortcutOverrides[node.command],
+          });
+        });
+      }(menu.items));
+    });
+    return out;
+  }
+
+  function shortcutConflict(command, accel) {
+    const signature = accelSignature(accel);
+    let conflict = null;
+    TREE.forEach(function (menu) {
+      (function walk(items) {
+        items.forEach(function (node) {
+          if (conflict) return;
+          if (node.submenu) { walk(node.submenu); return; }
+          if (node.command && node.command !== command && node.accel &&
+              accelSignature(node.accel) === signature) conflict = node.label;
+        });
+      }(menu.items));
+    });
+    return conflict;
+  }
+
+  function saveShortcutOverrides() {
+    try { window.localStorage.setItem(SHORTCUT_STORE, JSON.stringify(shortcutOverrides)); }
+    catch (err) { /* the current session still uses them */ }
+  }
+
+  function rebuildShortcutMenus() {
+    TREE = makeTree();
+    rebuildAccelerators();
+    lastPushed = '';
+    pushToMain(true);
+    window.dispatchEvent(new Event('ds:shortcuts'));
+  }
+
+  function setShortcut(command, accel) {
+    const value = String(accel || '').trim();
+    if (!SHORTCUT_DEFAULTS[command]) return { ok: false, error: 'That command has no shortcut to change.' };
+    if (!value) return { ok: false, error: 'Press a key combination first.' };
+    if (!/(CmdOrCtrl|Ctrl|Cmd)/i.test(value) && !/^F\d{1,2}$/i.test(value)) {
+      return { ok: false, error: 'Include Ctrl or Cmd in the shortcut.' };
+    }
+    const conflict = shortcutConflict(command, value);
+    if (conflict) return { ok: false, error: 'That key already runs ' + conflict + '.' };
+    if (accelSignature(value) === accelSignature(SHORTCUT_DEFAULTS[command])) delete shortcutOverrides[command];
+    else shortcutOverrides[command] = value;
+    saveShortcutOverrides();
+    rebuildShortcutMenus();
+    return { ok: true };
+  }
+
+  function resetShortcut(command) {
+    if (!shortcutOverrides[command]) return { ok: true };
+    delete shortcutOverrides[command];
+    saveShortcutOverrides();
+    rebuildShortcutMenus();
+    return { ok: true };
+  }
+
+  function resetAllShortcuts() {
+    shortcutOverrides = {};
+    saveShortcutOverrides();
+    rebuildShortcutMenus();
+    return { ok: true };
+  }
+
+  function keysFor(command) {
+    const entry = shortcutEntries().find(function (item) { return item.command === command; });
+    const accel = entry ? entry.accel : SHORTCUT_DEFAULTS[command];
+    if (!accel) return [];
+    return String(accel).split('+').map(function (part) {
+      if (part === 'CmdOrCtrl' || part === 'Cmd' || part === 'Command') return 'Ctrl';
+      if (part === 'Ctrl') return 'Ctrl';
+      return part;
+    });
+  }
+
+  window.DitherShortcuts = {
+    list: shortcutEntries,
+    set: setShortcut,
+    reset: resetShortcut,
+    resetAll: resetAllShortcuts,
+    keysFor: keysFor,
+    accelFor: function (command) {
+      const entry = shortcutEntries().find(function (item) { return item.command === command; });
+      return entry ? entry.accel : (SHORTCUT_DEFAULTS[command] || '');
+    },
+  };
 
   function menuById(id) {
     for (let i = 0; i < TREE.length; i++) if (TREE[i].id === id) return TREE[i];
@@ -89,6 +249,7 @@
       preset: s.preset, quality: s.quality, alphaMode: s.alphaMode,
       textRamp: s.textRamp, serpentine: s.serpentine, textMode: s.textMode,
       compare: s.compare, split: s.split, dock: !document.body.classList.contains('dock-hidden'),
+      learnVisible: !(window.DitherTour && window.DitherTour.hidden && window.DitherTour.hidden()),
     };
     s.openGroups.forEach(function (id) { map['panel:' + id] = true; });
     return map;
@@ -201,8 +362,12 @@
 
       if (node.submenu) {
         const arrow = document.createElement('span');
-        arrow.className = 'menu-accel';
-        arrow.textContent = '▶';
+        arrow.className = 'menu-accel menu-arrow';
+        const arrowGlyph = document.createElement('span');
+        arrowGlyph.className = 'ui-glyph ui-glyph--xs';
+        arrowGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/chevron-right.svg")');
+        arrowGlyph.setAttribute('aria-hidden', 'true');
+        arrow.appendChild(arrowGlyph);
         item.appendChild(arrow);
         item.setAttribute('aria-haspopup', 'true');
         const level = box.__level || 0;
@@ -215,7 +380,7 @@
         if (node.accel) {
           const keys = document.createElement('span');
           keys.className = 'menu-accel';
-          keys.textContent = accelText(node.accel);
+          keys.textContent = accelText(node.accelDisplay || node.accel);
           item.appendChild(keys);
         }
         item.addEventListener('mouseenter', function () { closeSubMenusFrom(box.__level || 0); });
@@ -351,18 +516,27 @@
     if (event.ctrlKey || event.metaKey) parts.push('ctrl');
     if (event.altKey) parts.push('alt');
     if (event.shiftKey) parts.push('shift');
-    parts.push(String(event.key || '').toLowerCase());
+    // Ctrl/Cmd+? is the Help shortcut. `?` is Shift+/ on the layouts this app
+    // ships for, so give both spellings the same signature.
+    const key = String(event.key || '').toLowerCase();
+    parts.push(key === '?' ? '/' : key);
     return signature(parts);
   }
 
-  const ACCELERATORS = {};
+  let ACCELERATORS = {};
 
-  (function collect(items) {
-    items.forEach(function (item) {
-      if (item.submenu) { collect(item.submenu); return; }
-      if (item.accel) ACCELERATORS[accelSignature(item.accel)] = { name: item.command, arg: item.arg };
-    });
-  }(TREE.map(function (menu) { return menu.items; }).reduce(function (all, items) { return all.concat(items); }, [])));
+  function rebuildAccelerators() {
+    ACCELERATORS = {};
+    (function collect(items) {
+      items.forEach(function (item) {
+        if (item.submenu) { collect(item.submenu); return; }
+        if (item.accel) ACCELERATORS[accelSignature(item.accel)] = { name: item.command, arg: item.arg };
+      });
+    }(TREE.map(function (menu) { return menu.items; }).reduce(function (all, items) { return all.concat(items); }, [])));
+    if (window.__shell) window.__shell.accelerators = Object.keys(ACCELERATORS);
+  }
+
+  rebuildAccelerators();
 
   // What the window actually received, so the smoke run can tell "the key never
   // arrived" apart from "the key arrived and matched nothing".
@@ -381,8 +555,12 @@
       // exception: it closes Help (palette.open does that) and opens Find.
       const modal = (window.DitherHelp && window.DitherHelp.isOpen()) ||
         (window.DitherPalette && window.DitherPalette.isOpen()) ||
-        (window.DitherPaletteImport && window.DitherPaletteImport.isOpen());
-      if (modal && hit.name !== 'view-palette') return;
+        (window.DitherPaletteImport && window.DitherPaletteImport.isOpen()) ||
+        (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen());
+      // Find and the studio menu are the two global surfaces: both can be
+      // reached while another modal is up, and the menu can be toggled shut
+      // with the same key that opened it.
+      if (modal && hit.name !== 'view-palette' && hit.name !== 'view-feature-menu') return;
       event.preventDefault();
       event.stopPropagation();
       acceleratorFires += 1;
@@ -408,13 +586,10 @@
     // The palette is the renderer's own module, like the tour: looked up when
     // the key is pressed, so the order the two files load never matters.
     'view-palette': function () {
+      if (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen()) window.DitherFeatureMenu.close();
       if (window.DitherPalette) window.DitherPalette.toggle();
     },
-    'help-guide': function () {
-      desktop.openGuide().then(function (out) {
-        note(out && out.error ? out.error : 'The guide opened in your editor');
-      });
-    },
+    'help-guide': function () { openHelp('guide'); },
     // The tutorial is the renderer's own tour.js, which loads after this file
     // and hangs itself off the window: the lookup happens when the menu item is
     // clicked, so the order of the two files never matters.
@@ -431,7 +606,26 @@
       const tour = window.DitherTour;
       if (tour) tour.show();
     },
-    'help-update': function () { desktop.checkUpdates(); },
+    'help-tour-toggle': function () {
+      const tour = window.DitherTour;
+      if (!tour) return;
+      if (tour.hidden()) tour.show(); else tour.hide();
+      refresh();
+    },
+    'help-update': function () {
+      openHelp('about');
+      window.setTimeout(function () {
+        if (window.DitherHelp && window.DitherHelp.checkUpdates) window.DitherHelp.checkUpdates();
+      }, 60);
+    },
+    'help-update-check': function () {
+      if (window.DitherHelp && window.DitherHelp.checkUpdates) window.DitherHelp.checkUpdates();
+    },
+    'help-update-install': function () {
+      desktop.installUpdate().then(function (out) {
+        if (out && out.error) note(out.error);
+      });
+    },
     'help-whats-new': function () { openHelp('whats-new'); },
     'help-shortcuts': function () { openHelp('shortcuts'); },
     'help-about': function () { openHelp('about'); },
@@ -533,6 +727,7 @@
   // ---- the tool rail ----
 
   const TOOLS = {
+    menu: function () { run('view-feature-menu'); },
     open: function () { run('file-open'); },
     // The rail's picture button is a way *into* the picker, not a second way to
     // shuffle it: the Source station holds the dropdown and the thumbnails.

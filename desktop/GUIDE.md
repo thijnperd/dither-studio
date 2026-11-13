@@ -39,7 +39,9 @@ code-signed. *More info* → *Run anyway*.
 The app checks the public GitHub release feed quietly on launch. If a newer
 release has a build for this machine, it offers the notes and a download; a
 failed check never interrupts a press that is working offline. You can ask at
-any time with *Help ▸ Check for Updates…*.
+any time with *Help ▸ Check for Updates…*; it opens the About page with the
+update row already in view, and the check reports there instead of in a system
+dialog.
 
 On Windows the downloaded setup runs after the app closes, installs silently and
 starts the new version. On macOS the downloaded zip replaces the app after it
@@ -162,9 +164,12 @@ full screen.
 Panel. Collapsing the panels you are not using is the fastest way to give the
 proof more room; *View ▸ Panels on the Right* hides the dock entirely.
 
-**Help** — the tour (take it, hide it completely, or show the Learn panel), the
-repository guide, Check for Updates, the engine's sources document, the project
-page, and one Help window holding the keyboard list, What's New and About.
+**Help** — the tour, one **Learn Panel** tick that hides or shows the station,
+the guide (read inside the Help window), Keyboard Shortcuts, Check for Updates,
+the engine's sources document, the project page, and one Help window holding
+the keyboard list, What's New and About. The shortcut page is editable: press
+**Change** on a row and then the combination you want. `Ctrl+?` (`Cmd+?` on a
+Mac) opens that page from anywhere.
 
 ## 5. The tutorial
 
@@ -179,10 +184,11 @@ station that starts open — and press **Take the Tour**, or use *Help ▸ Take 
 Tour* from the menu bar. Both bring the station back if it has folded itself
 away.
 
-Ten lessons, one per station, in the order the work happens: the first proof, the
-press itself, the grade, ink and paper, the effects stack, text mode, the three
-structure-aware looks, motion, recipes and exports, and finding your way around
-the window. Each lesson is five or six steps, and each step has one job.
+Eleven lessons, one per surface, in the order the work happens: the first proof,
+the Studio menu, the press itself, the grade, ink and paper, the effects stack,
+text mode, the three structure-aware looks, motion, recipes and exports, and
+finding your way around the window. Each lesson is a handful of steps, and each
+step has one job.
 
 A step dims the window, opens the panel it is about and draws a ring around the
 one control it means — scrolling the rail to it if it is further down than the
@@ -202,10 +208,10 @@ Finish the last lesson and the tutorial takes itself out of the way: the Learn
 station folds and the verdict card closes on its own a moment later. *Help ▸
 Take the Tour* opens the station again with every tick still in place.
 
-If you have learned it and want the station gone, press **Hide** beside *Reset*,
-or use *Help ▸ Hide the Tour Completely*. That removes the Learn station and its
-jump chip and stops the intro; the setting survives a restart. *Help ▸ Show the
-Learn Panel* is the way back.
+If you have learned it and want the station gone, press **Hide Learn** beside
+*Reset*, or untick *Help ▸ Learn Panel*. That removes the Learn station and its
+jump chip and stops the intro; the setting survives a restart. The same menu
+item ticks it back.
 
 Two notes. The tour describes the *desktop* panels; the web console has the same
 controls in its own layout, and its [GUIDE.md](../GUIDE.md) is the tour for that
@@ -330,6 +336,10 @@ Strength, Seed drift, Screen shift, Threshold, Pixel size, brightness, contrast,
 saturation, hue, glow radius and glow intensity. Each track has a from/to value,
 a slice of the timeline and one of four eases (linear, in, out, in-out); scrub
 the playhead or press Play with the loop on, and export the take as a WebM.
+On a fixed ordered or formula screen the seed track drifts the screen itself;
+a diffusion press has no screen to drift, and the track says so rather than
+pretending to move. The exported WebM carries its duration, so players can seek
+and report its length instead of treating it as a broken file.
 Closing the timeline returns the still at the frame you stopped on. The
 timeline is separate from clip playback: the normal video transport still owns
 a clip while it plays.

@@ -178,7 +178,14 @@
 
 .menu-item.is-on { color: var(--accent); }
 
-.menu-item.is-on::before { content: "✓"; font-size: 11px; }
+.menu-item.is-on::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+  -webkit-mask: url("../assets/icons/checkmark.svg") center / contain no-repeat;
+  mask: url("../assets/icons/checkmark.svg") center / contain no-repeat;
+}
 
 .menu-item[disabled] {
   color: var(--muted);
@@ -240,6 +247,8 @@
   padding: 0;
   font-size: 14px;
 }
+
+.obtn-icon .ui-glyph { display: block; margin: 0 auto; }
 
 /* The update note is the only thing in the bar allowed to give way, so the
    Export button at the far end is never clipped in a narrow window. */
@@ -515,19 +524,26 @@
 }
 
 .split-grip::after {
-  content: "↔";
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
-  display: grid;
   width: 22px;
   height: 22px;
-  place-items: center;
   border-radius: 50%;
   background: var(--accent);
-  color: var(--sunken);
-  font: 600 12px/1 var(--font);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, -50%);
+}
+
+.split-grip-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 13px;
+  height: 13px;
+  color: var(--sunken);
   transform: translate(-50%, -50%);
 }
 
@@ -668,6 +684,12 @@
   min-width: 0;
   height: 23px;
   font: var(--fs-small)/1 var(--font);
+}
+
+.anim-track-note {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font: var(--fs-small)/1.45 var(--font-ui);
 }
 
 .anim-track-fields select {
@@ -1082,7 +1104,16 @@
 
 /* A step the app can see has been done says so by itself: a tick on the title,
    in the one accent, and nothing else moves. */
-.tour-card.is-done .tour-title::after { content: ' ✓'; color: var(--accent); }
+.tour-card.is-done .tour-title::after {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 5px;
+  background: var(--accent);
+  -webkit-mask: url("../assets/icons/checkmark.svg") center / contain no-repeat;
+  mask: url("../assets/icons/checkmark.svg") center / contain no-repeat;
+}
 .tour-card.is-complete { border-color: color-mix(in srgb, var(--accent) 45%, var(--edge)); }
 
 /* The one way out of a tour the learner did not ask for: quiet, in the meta row

@@ -342,6 +342,9 @@
     if (window.DitherPaletteImport && window.DitherPaletteImport.isOpen && window.DitherPaletteImport.isOpen()) {
       window.DitherPaletteImport.close();
     }
+    if (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen && window.DitherFeatureMenu.isOpen()) {
+      window.DitherFeatureMenu.close();
+    }
     overlay.hidden = false;
     restoreFocus = document.activeElement;
     field.value = '';
@@ -363,6 +366,11 @@
   function isOpen() { return !!overlay && !overlay.hidden; }
 
   function toggle() { if (isOpen()) close(); else open(); }
+
+  // Bind at load, not on first open: the dock's find button gets its click
+  // listener in build(), so waiting for an open leaves the button unable to
+  // cause the first one.
+  build();
 
   // An imported palette changes the catalogue under a palette that was already
   // built. Clearing the index makes the next open include it; the event is the

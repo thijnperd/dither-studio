@@ -361,6 +361,9 @@ function rememberLaunch() {
 
 function wire() {
   ipcMain.handle('ds:updates-check', checkAndPrompt);
+  // The Help window draws its own update page; this route only reports, never
+  // opens a native message box.
+  ipcMain.handle('ds:updates-status', function () { return check(); });
   ipcMain.handle('ds:updates-install', async function () {
     if (!found) return { status: 'current', current: app.getVersion() };
     return install({ status: 'available', latest: found.version, asset: found.asset, kind: found.kind });

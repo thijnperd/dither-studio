@@ -87,6 +87,35 @@
 
       /* ---------------------------------------------------------------- */
       {
+        id: 'studio-menu',
+        title: 'Studio menu',
+        summary: 'One shelf for plugins, effects, recipes and saved inks.',
+        theme: 'Get started',
+        minutes: 2,
+        steps: [
+          {
+            title: 'One door to four shelves',
+            body: 'The Studio menu gathers the four surfaces you will keep coming back to: Plugins, Effects, Presets and Color Schemes. Open it from the gear at the top of the rail, View ▸ Studio Menu…, or Ctrl+Shift+M. Each plate reports what is on the shelf before you open it.',
+            why: 'The menu is a way in, not a second workspace: every choice lands on the panel that already owns it.',
+            target: '.tool[data-tool="menu"]',
+          },
+          {
+            title: 'Effects in pipeline order',
+            body: 'The Effects plate lists the stack in the order it runs, with a switch per effect and one action that clears the whole stack. The order is the point: grain before scanlines does not print the same proof as scanlines before grain.',
+            target: '#g-effects',
+            open: 'effects',
+          },
+          {
+            title: 'Recipes and saved inks',
+            body: 'Presets are grouped by the hand that packed them, and Color Schemes holds the inks you saved or imported. Both shelves apply in one pick and then close, leaving the press on the new recipe.',
+            target: '#g-preset',
+            open: 'preset',
+          },
+        ],
+      },
+
+      /* ---------------------------------------------------------------- */
+      {
         id: 'the-press',
         title: 'The press',
         summary: 'Every control in the Press panel, and what it does to the pattern.',
@@ -339,7 +368,7 @@
           },
           {
             title: 'Or take the whole look',
-            body: 'The Presets panel holds twenty-one recipes. Matrix Rain, Ice Dot Field and Riso Duotone set the screen, the ink, the pixel size and the grade in one move, a starting point you then push around.',
+            body: 'The Presets panel holds twenty-five recipes. Matrix Rain, Ice Dot Field and Riso Duotone set the screen, the ink, the pixel size and the grade in one move, a starting point you then push around.',
             target: '#preset',
             show: [['window-panel-open', 'preset'], ['press-preset', 'matrixrain']],
             when: function (s) { return s.preset === 'matrixrain'; },
@@ -382,6 +411,13 @@
             body: 'Record WebM, the button in the tool rail or the one this panel adds, captures the playback to a file. It stops itself at sixty seconds so a forgotten recording cannot fill a disk.',
             target: '.tool[data-tool=\"record\"]',
           },
+          {
+            title: 'Animate the still',
+            body: 'Animate the still turns the same press into a timeline: add a track for strength, threshold, pixel size, grade, glow or seed, set where it starts and ends, and play it. On a fixed ordered screen a seed track drifts the screen itself; on a diffusion press the track says so and points at brightness or pixel size instead. Export WebM writes the duration into the file, so the recording seeks and reports its length.',
+            target: '#animation-start',
+            show: [['motion-start']],
+            when: function (s) { return !!(s.animation && s.animation.active); },
+          },
         ],
       },
 
@@ -395,7 +431,7 @@
         steps: [
           {
             title: 'A recipe is the whole press',
-            body: 'A recipe holds the algorithm, the ink, the pixel size, the seed, the grade, the effects stack and the glow. Twenty-one are in the box, and the one you are on is always shown here.',
+            body: 'A recipe holds the algorithm, the ink, the pixel size, the seed, the grade, the effects stack and the glow. Twenty-five are in the box, and the one you are on is always shown here.',
             target: '#g-preset',
             open: 'preset',
           },
@@ -468,7 +504,7 @@
           },
           {
             title: 'Two more doors',
-            body: 'Help ▸ Keyboard shortcuts lists every key in one dialog, and F1 opens the guide that ships beside the app. This tutorial can be started again from Help ▸ Take the Tour, or from the Learn panel above the rail.',
+            body: 'Help ▸ Keyboard Shortcuts, or Ctrl+?, lists every key and lets you change it: press Change, then the combination you want. F1 opens the guide inside Help. This tutorial can be started again from Help ▸ Take the Tour, or from the Learn panel above the rail.',
             target: '.menu[data-menu="help"]',
           },
         ],

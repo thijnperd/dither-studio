@@ -120,6 +120,7 @@
         id: 'view', label: 'View',
         items: [
           { label: 'Find Anything…', command: 'view-palette', accel: 'CmdOrCtrl+K' },
+          { label: 'Studio Menu…', command: 'view-feature-menu', accel: 'CmdOrCtrl+Shift+M' },
           { type: 'sep' },
           { label: 'Zoom In', command: 'view-zoom-in', accel: 'CmdOrCtrl+=' },
           { label: 'Zoom Out', command: 'view-zoom-out', accel: 'CmdOrCtrl+-' },
@@ -155,10 +156,9 @@
         id: 'help', label: 'Help',
         items: [
           { label: 'Take the Tour', command: 'help-tour' },
-          { label: 'Hide the Tour Completely', command: 'help-tour-hide' },
-          { label: 'Show the Learn Panel', command: 'help-tour-show' },
+          { label: 'Learn Panel', command: 'help-tour-toggle', check: 'learnVisible' },
           { label: 'Dither Studio Guide', command: 'help-guide', accel: 'F1' },
-          { label: 'Keyboard Shortcuts', command: 'help-shortcuts' },
+          { label: 'Keyboard Shortcuts', command: 'help-shortcuts', accel: 'CmdOrCtrl+Shift+/', accelDisplay: 'CmdOrCtrl+?' },
           { type: 'sep' },
           { label: 'Check for Updates…', command: 'help-update' },
           { label: 'What’s New…', command: 'help-whats-new' },

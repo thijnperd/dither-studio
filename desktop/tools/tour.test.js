@@ -116,6 +116,7 @@ function candidates() {
   list.push(withState({ status: 'Exported proof.png' }));
   list.push(withState({ quality: 'full' }));
   list.push(withState({ compare: true }));
+  list.push(withState({ animation: { active: true } }));
   return list;
 }
 
