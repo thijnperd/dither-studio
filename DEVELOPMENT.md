@@ -14,7 +14,7 @@ performance budget, and every check that ships with the app.
 | Path | What it is |
 |---|---|
 | [`launcher/`](launcher/) | the **launcher** build, self-contained: the page (`index.html`, `style.css`, `app.js`, `video.js`, `samples.js`), the engine master (`dither.js`) and its tests (`test.js`), the three launchers, `manifest.webmanifest` and `icons/` |
-| [`launcher/dither.js`](launcher/dither.js) | the engine: screens and masks, 46 algorithms, palettes, mixing plans, adjustments, tone maps, alpha, effects, glow, video temporal rules, `process()`. DOM-free, shared by all three builds |
+| [`launcher/dither.js`](launcher/dither.js) | the engine: screens and masks, 47 algorithms (including `none` passthrough), palettes, mixing plans, adjustments, tone maps, alpha, 25 effects, glow, video temporal rules, `process()`. DOM-free, shared by all three builds |
 | [`launcher/samples.js`](launcher/samples.js) | the built-in sources the Source panel steps through: three public-domain paintings inlined as data URIs, so no build has to fetch anything and a console opened from `file://` still gets real pixels. Shared by all three builds |
 | [`launcher/test.js`](launcher/test.js) | the engine's Node tests |
 | [`launcher/Dither Studio.cmd`](launcher/Dither%20Studio.cmd), [`launcher/Dither Studio.command`](launcher/Dither%20Studio.command), [`launcher/dither-studio.sh`](launcher/dither-studio.sh) | the app-mode launchers (Windows / macOS / Linux) |

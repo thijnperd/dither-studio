@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "paper-distress",
+  "name": "Paper Distress",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "paper-distress",
+  "summary": "Procedural xerox toner dust, roller streaks, aged parchment fibers and zine wear, inspired by Studio AAA's Printer Trash workflow.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/dither-boy-spotlight-dread-jpg/",
+  "data": {
+    "modes": ["photocopy", "parchment", "halftone-tear"]
+  }
+}

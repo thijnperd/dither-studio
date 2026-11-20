@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "id": "inspired-paradise",
+  "name": "Paradise Palettes (Inspired)",
+  "version": "1.0.0",
+  "kind": "palette-pack",
+  "summary": "Five original Miami sunset, beach neon and coastal noir ink sets inspired by Studio AAA's Paradise Palettes for Dither Boy 6.",
+  "author": "Dither Studio · inspired by Studio AAA",
+  "homepage": "https://studioaaa.com/paradise-palettes-for-dither-boy/",
+  "data": {
+    "palettes": [
+      {
+        "id": "miami-sunset",
+        "name": "Paradise · Miami Sunset",
+        "colors": ["#12091e", "#3d1649", "#8c2464", "#e0486c", "#ff8d5c", "#ffd67a", "#fff4d6"]
+      },
+      {
+        "id": "vice-palms",
+        "name": "Paradise · Vice Palms",
+        "colors": ["#0b1324", "#18334e", "#1d7a8a", "#42d4c2", "#ff5ca8", "#ff9cd3", "#f6f8ff"]
+      },
+      {
+        "id": "ocean-drive",
+        "name": "Paradise · Ocean Drive",
+        "colors": ["#0d1b2a", "#1b4965", "#3fa7d6", "#7be0ad", "#f7e3af", "#ff9b71"]
+      },
+      {
+        "id": "neon-flamingo",
+        "name": "Paradise · Neon Flamingo",
+        "colors": ["#140a1a", "#4a154b", "#b82973", "#ff5c93", "#ff9eb5", "#ffe6eb"]
+      },
+      {
+        "id": "noir-marina",
+        "name": "Paradise · Noir Marina",
+        "colors": ["#080d14", "#17273b", "#2e4e6e", "#5c809e", "#c9a66b", "#f2e5c6"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "modulation-lines",
+  "name": "Modulation Lines",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "modulation-lines",
+  "summary": "Oscilloscope and FM signal scanlines driven by pixel luminance, inspired by Studio AAA's Dither Boy Modulation Lines.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/modulation-lines-demo/",
+  "data": {
+    "modes": ["waves", "vertical", "contour", "orb"]
+  }
+}

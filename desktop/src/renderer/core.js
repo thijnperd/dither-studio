@@ -561,7 +561,8 @@
   const PLUGIN_KINDS = ['tool', 'preset-pack', 'palette-pack'];
   const PLUGIN_CAPABILITIES = [
     'ink-extractor', 'shape-press', 'color-scheme-maker',
-    'crepuscular-rays', 'epsilon-glow', 'riso-misprint', 'phosphor-mask', 'guilloche-plate',
+    'crepuscular-rays', 'epsilon-glow', 'modulation-lines', 'neo-glow', 'paper-distress',
+    'riso-misprint', 'phosphor-mask', 'guilloche-plate',
   ];
   const EXTRACT_LABELS = { cins: 'CINS', median: 'Median cut', octree: 'Octree', polarity: 'Polarity' };
 

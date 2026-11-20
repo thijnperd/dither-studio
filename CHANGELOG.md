@@ -10,6 +10,20 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 1.0.0 — Layers, object detection, no-dither passthrough & Studio AAA inspired collection (2026-11-20)
+
+**The 1.0.0 public release: per-object multi-algorithm Layers & Object Detection, a No dither original-image passthrough, three new effect plugins, five inspired palette packs, and three new artist-inspired preset packs.**
+
+- **Layers & Object Detection mode.** A new **Layers** station (`Ctrl+L`, plus a stack button in the tool rail) brings offline object segmentation and per-object compositing into the workbench. Click **Detect objects** to segment foreground subjects automatically, use **Pick object** (click on the proof; `Shift` adds, `Alt` subtracts) for smart colour-region selection, or refine masks with **Paint mask** and **Erase mask**. Every layer owns its own independent algorithm, palette, tone, detail, effects stack, glow, opacity, feathering and mask inversion — so you can dither only a single subject over an untouched original background or combine completely different algorithms across separate objects. Exports (`Export PNG` / `Copy PNG`) always composite cleanly without the interactive mask overlay.
+- **New algorithm: No dither (original image).** Added `none` to the core engine (47 algorithms total) so continuous source images can pass straight through the pipeline without quantization while keeping tone grading, pixel chunking, effects, glow and Layers compositing live.
+- **Three new effect plugins (25 effects total).**
+  - **Modulation Lines** (`modulation-lines`) — brightness-driven CRT oscilloscope & Rutt-Etra scanline deflection in `Waves`, `Vertical`, `Contour` and `Orb` modes.
+  - **Neo Glow** (`neo-glow`) — high-contrast luminous ASCII, Matrix, Cyber and Medieval glyph overlays with phosphor bloom.
+  - **Paper Distress** (`paper-distress`) — organic printer-trash & photocopy degradation in `Photocopy`, `Parchment` and `Halftone tear` modes.
+- **Five Studio AAA–inspired palette packs (25 new palettes).** Bundled as declarative `palette-pack` plugins in the Plugin Manager, each clearly marked as inspired by Studio AAA's free Dither Boy downloads: **Inspired: Paradise Palettes**, **Inspired: Spooky Halloween**, **Inspired: Moody Matrix**, **Inspired: Autumn Palettes**, and **Inspired: Medieval Palettes** (5 curated palettes per pack).
+- **Three new artist-inspired preset packs (24 bundled packages total).** Added **Inspired: Retro Noctua**, **Inspired: Dread.jpg Punk**, and **Inspired: Allan Parker Marathon** alongside the existing five packs, plus seventeen official Tabler outline icons across the Layers tools, new plugins and packs.
+- **Adaptive Crepuscular Rays (v1.2.0).** Upgraded Crepuscular Rays with highlight-aware adaptive thresholding and full-reach volumetric marches so shafts stay crisp and dramatic across both sparse dark-ground silhouettes and bright full-frame artwork.
+
 ## 0.7.1 — Rebuilt Crepuscular Rays, Epsilon Glow & plugin upgrades (2026-11-20)
 
 **Volumetric outward light shafts, Dither Boy–inspired Epsilon Glow, canvas origin picking, and sharper effect plugins.**

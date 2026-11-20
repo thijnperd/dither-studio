@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "id": "inspired-halloween",
+  "name": "Spooky Halloween Palettes (Inspired)",
+  "version": "1.0.0",
+  "kind": "palette-pack",
+  "summary": "Five original pumpkin-glow, crypt and blood-moon ink sets inspired by Studio AAA's Spooky Halloween Palettes.",
+  "author": "Dither Studio · inspired by Studio AAA",
+  "homepage": "https://studioaaa.com/spooky-halloween-palettes-for-dither-boy/",
+  "data": {
+    "palettes": [
+      {
+        "id": "jack-lantern",
+        "name": "Halloween · Jack-o'-Lantern",
+        "colors": ["#0c070d", "#2c1124", "#6e2219", "#c74d14", "#ff8c1a", "#ffd466"]
+      },
+      {
+        "id": "haunted-crypt",
+        "name": "Halloween · Haunted Crypt",
+        "colors": ["#080b0e", "#1b242c", "#3a4c54", "#6f8a88", "#a8c7b8", "#e3f2e8"]
+      },
+      {
+        "id": "witch-brew",
+        "name": "Halloween · Witch's Brew",
+        "colors": ["#0d0718", "#2d144a", "#5d267a", "#328a46", "#88e03c", "#e8ff9c"]
+      },
+      {
+        "id": "blood-moon",
+        "name": "Halloween · Blood Moon",
+        "colors": ["#0b0508", "#300a14", "#701122", "#b81f32", "#e85d56", "#f5d3c8"]
+      },
+      {
+        "id": "phantom-mist",
+        "name": "Halloween · Phantom Mist",
+        "colors": ["#0a0a14", "#21203d", "#454175", "#7a78b8", "#b9bce6", "#f0f2ff"]
+      }
+    ]
+  }
+}

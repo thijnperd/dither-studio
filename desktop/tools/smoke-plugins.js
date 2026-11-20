@@ -20,7 +20,7 @@
     optionNames('effect-add').indexOf('Crepuscular rays') < 0);
 
   const catalogue = plugins ? await plugins.refresh(true, true) : null;
-  check('the bundled catalogue is readable', !!catalogue && catalogue.plugins.length >= 13,
+  check('the bundled catalogue is readable', !!catalogue && catalogue.plugins.length >= 24,
     catalogue ? catalogue.plugins.length : 0);
 
   const ink = plugins ? await plugins.install('ink-extractor', true) : null;
@@ -83,6 +83,9 @@
     ['riso-misprint', 'riso', 'Riso Misprint', 'Riso misprint'],
     ['phosphor-mask', 'phosphor', 'Phosphor Mask', 'Phosphor mask'],
     ['guilloche-plate', 'guilloche', 'Guilloche Plate', 'Guilloche plate'],
+    ['modulation-lines', 'modulation', 'Modulation Lines', 'Modulation lines'],
+    ['neo-glow', 'neoglow', 'Neo Glow', 'Neo glow'],
+    ['paper-distress', 'paperdistress', 'Paper Distress', 'Paper distress'],
   ];
   for (let i = 0; i < extraEffects.length; i++) {
     const entry = extraEffects[i];
@@ -281,13 +284,20 @@
 
   window.DS.command('file-plugin-manager');
   await wait(250);
+  const paradisePack = plugins ? await plugins.install('inspired-paradise', true) : null;
+  check('the Inspired Paradise palette pack installs', !!paradisePack && paradisePack.kind === 'palette-pack');
+  const paradisePalettes = window.DS.catalogues.PALETTES.filter(function (p) { return p.plugin === 'inspired-paradise'; });
+  check('Inspired Paradise registers its five palettes', paradisePalettes.length === 5, paradisePalettes.length);
+  const retroPack = plugins ? await plugins.install('retro-noctua', true) : null;
+  check('the Retro Noctua inspired preset pack installs', !!retroPack && retroPack.kind === 'preset-pack');
+
   const managerRows = document.querySelectorAll('#plugin-list .plugin-row');
   const sections = document.querySelectorAll('#plugin-list .plugin-section');
   const sectionNames = Array.prototype.map.call(sections, function (node) {
     return node.querySelector('.plugin-section-title').textContent;
   });
   check('the Plugin Manager lists the catalogue',
-    plugins.isOpen() && managerRows.length >= 13, managerRows.length);
+    plugins.isOpen() && managerRows.length >= 24, managerRows.length);
   check('the manager is split into functionality and presets',
     sectionNames.join('|') === 'Functionality|Presets & color schemes', sectionNames.join('|'));
   check('every plugin row states a package size',

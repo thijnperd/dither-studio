@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "id": "retro-noctua",
+  "name": "Retro Noctua Dark Fantasy (Inspired)",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Three original dark-fantasy dialogue and medieval knight recipes inspired by Retro Noctua's Dither Boy spotlight.",
+  "author": "Dither Studio · inspired by Retro Noctua",
+  "homepage": "https://studioaaa.com/retro-noctuas-viral-dithering-art/",
+  "data": {
+    "presets": [
+      {
+        "id": "noctua-bonfire-dialogue",
+        "name": "Noctua · Bonfire Dialogue",
+        "settings": {
+          "algorithm": "atkinson",
+          "palette": "amber",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.24, "gamma": 0.94, "sharpen": 0.35 },
+          "glitches": [
+            { "id": "vignette", "amount": 42 },
+            { "id": "grain", "amount": 16, "mode": "mono" }
+          ],
+          "glow": { "radius": 2, "intensity": 34 }
+        }
+      },
+      {
+        "id": "noctua-ashen-knight",
+        "name": "Noctua · Ashen Knight",
+        "settings": {
+          "algorithm": "bayer8",
+          "palette": "gray-4",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.22, "gamma": 0.92 },
+          "toneMap": "selenium",
+          "glitches": [
+            { "id": "paperdistress", "amount": 32, "mode": "parchment" },
+            { "id": "vignette", "amount": 38 }
+          ]
+        }
+      },
+      {
+        "id": "noctua-eclipse-scripture",
+        "name": "Noctua · Eclipse Scripture",
+        "settings": {
+          "algorithm": "sierra",
+          "palette": "bw",
+          "pixelSize": 1,
+          "adjustments": { "contrast": 1.28, "gamma": 0.95 },
+          "glitches": [
+            { "id": "neoglow", "amount": 58, "mode": "medieval" },
+            { "id": "vignette", "amount": 35 }
+          ]
+        }
+      }
+    ]
+  }
+}

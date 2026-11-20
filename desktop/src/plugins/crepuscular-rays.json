@@ -2,10 +2,10 @@
   "schema": 1,
   "id": "crepuscular-rays",
   "name": "Crepuscular Rays",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "kind": "tool",
   "capability": "crepuscular-rays",
-  "summary": "Volumetric radial light shafts from bright pixels and thin dither lines, with Euphoria, Prismatic, Source light and Solar modes plus a placeable origin.",
+  "summary": "Adaptive volumetric radial light shafts from bright pixels and thin dither lines, with Euphoria, Prismatic, Source light and Solar modes plus canvas origin picking.",
   "author": "Dither Studio",
   "homepage": "https://developer.nvidia.com/gpugems/gpugems3/part-ii-light-and-shadows/chapter-13-volumetric-light-scattering-post-process",
   "data": {

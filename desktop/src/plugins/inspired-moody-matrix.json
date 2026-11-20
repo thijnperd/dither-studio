@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "id": "inspired-moody-matrix",
+  "name": "Moody Matrix Palettes (Inspired)",
+  "version": "1.0.0",
+  "kind": "palette-pack",
+  "summary": "Five original dark, inky ordered-dither palettes tuned for Bayer and Void-and-Cluster screens, inspired by Studio AAA's Moody Matrix Palettes.",
+  "author": "Dither Studio · inspired by Studio AAA",
+  "homepage": "https://studioaaa.com/moody-matrix-palettes/",
+  "data": {
+    "palettes": [
+      {
+        "id": "ink-well",
+        "name": "Moody Matrix · Ink Well",
+        "colors": ["#06070a", "#121622", "#242c42", "#435173", "#7989ad", "#c5d0e6"]
+      },
+      {
+        "id": "deep-abyss",
+        "name": "Moody Matrix · Deep Abyss",
+        "colors": ["#040b0e", "#0c2029", "#173c4a", "#2b6373", "#5695a3", "#b4dce0"]
+      },
+      {
+        "id": "smoky-jade",
+        "name": "Moody Matrix · Smoky Jade",
+        "colors": ["#070d0b", "#14241e", "#264236", "#426b58", "#74a188", "#c2decb"]
+      },
+      {
+        "id": "storm-cobalt",
+        "name": "Moody Matrix · Storm Cobalt",
+        "colors": ["#070a14", "#141d38", "#253766", "#425d9e", "#7692cf", "#cddbf5"]
+      },
+      {
+        "id": "obsidian-plum",
+        "name": "Moody Matrix · Obsidian Plum",
+        "colors": ["#0a060e", "#1e1229", "#3c234f", "#683e80", "#a172b5", "#e2c8eb"]
+      }
+    ]
+  }
+}

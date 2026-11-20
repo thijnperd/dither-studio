@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "id": "dread-punk",
+  "name": "Dread.jpg Punk Print (Inspired)",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Three original high-contrast Sierra and distressed xerox print recipes inspired by Dread.jpg's Dither Boy spotlight.",
+  "author": "Dither Studio · inspired by Dread.jpg",
+  "homepage": "https://studioaaa.com/dither-boy-spotlight-dread-jpg/",
+  "data": {
+    "presets": [
+      {
+        "id": "dread-sierra-zine",
+        "name": "Dread · Sierra Zine",
+        "settings": {
+          "algorithm": "sierra",
+          "palette": "bw",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.38, "sharpen": 0.45 },
+          "glitches": [
+            { "id": "paperdistress", "amount": 64, "mode": "photocopy" },
+            { "id": "grain", "amount": 18, "mode": "mono" }
+          ]
+        }
+      },
+      {
+        "id": "dread-toner-collage",
+        "name": "Dread · Toner Collage",
+        "settings": {
+          "algorithm": "sierra-two-row",
+          "palette": "bw",
+          "pixelSize": 2,
+          "toneMap": "oxide",
+          "adjustments": { "contrast": 1.32, "gamma": 1.05 },
+          "glitches": [
+            { "id": "paperdistress", "amount": 72, "mode": "halftone-tear" },
+            { "id": "riso", "amount": 42, "mode": "crimson" }
+          ]
+        }
+      },
+      {
+        "id": "dread-xerox-riot",
+        "name": "Dread · Xerox Riot",
+        "settings": {
+          "algorithm": "threshold",
+          "palette": "bw",
+          "pixelSize": 1,
+          "threshold": 118,
+          "adjustments": { "contrast": 1.45, "sharpen": 0.6 },
+          "glitches": [
+            { "id": "paperdistress", "amount": 80, "mode": "photocopy" },
+            { "id": "tracking", "amount": 26 }
+          ]
+        }
+      }
+    ]
+  }
+}

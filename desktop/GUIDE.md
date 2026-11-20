@@ -107,20 +107,21 @@ web page:
 - **Options bar** — how you are *looking*: zoom controls and the zoom readout,
   the update mode (Full / Live / Still), Compare, Split, Random, Copy PNG, the
   export scale and Export PNG.
-- **Tool rail** — the verbs worth a button: open, the built-in sources, compare
-  (hold to see the source), random, webcam, clip, record, presets. Hover or tab
-  to an icon and a tooltip names it; a tool that is engaged lights up in the
-  accent colour.
+- **Tool rail** — the verbs worth a button: Studio menu, open, the built-in
+  sources, Layers & Object Detection (`Ctrl+L`), compare (hold to see the
+  source), random, webcam, clip, record, presets. Hover or tab to an icon and a
+  tooltip names it; a tool that is engaged lights up in the accent colour.
 - **Document tabs** — the proof's name, its pixel size and the zoom it is at.
 - **The well** — the proof on a checkerboard. Drag to pan once it is bigger than
   the well; `+` / `−` / `0` zoom.
-- **Dock** — eleven panel tabs over one scrolling column of collapsible panels.
-  The strip is a single row that scrolls sideways and keeps the panel you are in
-  visible; station headers stay pinned at the top of the column while you scroll
-  it. Click a tab to jump to its panel, or press `Ctrl+K` and type what you want.
-  Every slider draws the part it has travelled in the accent colour.
+- **Dock** — twelve panel tabs (including **Layers** for per-object dithering)
+  over one scrolling column of collapsible panels. The strip is a single row
+  that scrolls sideways and keeps the panel you are in visible; station headers
+  stay pinned at the top of the column while you scroll it. Click a tab to jump
+  to its panel, or press `Ctrl+K` and type what you want. Every slider draws the
+  part it has travelled in the accent colour.
 - **Find anything** — `Ctrl+K`, or the magnifier at the right of the panel tabs,
-  opens one field over the whole app: the stations, all 46 algorithms, the
+  opens one field over the whole app: the stations, all 47 algorithms, the
   palettes, tone maps, effects, recipes and the common verbs. ↑ ↓ move, Enter
   runs, Escape closes. It is the fastest way to an algorithm whose name you only
   half remember.
@@ -145,13 +146,14 @@ image; a new source starts a fresh timeline. A slider drag is one undo step.
 
 **Image** — the pixel stage: the tone map (the whole list), transparency mode
 (flatten onto paper / dither the matte / keep as PNG alpha), print with
-characters, the character ramp, and shortcuts to the Tone and Detail panels.
+characters, the character ramp, and shortcuts to the Layers (`Ctrl+L`), Tone
+and Detail panels.
 
-**Press** — the heart of it: the full algorithm menu (all 46, each with its
-`name` as written in the app), the full palette menu, previous/next for both
-(`Ctrl+↑↓`, `Ctrl+←→`), Serpentine Sweep, and the 25 built-in recipe presets
-(plus any installed preset packs). The item you are on is ticked, so the menu
-doubles as a readout of the current press.
+**Press** — the heart of it: the full algorithm menu (all 47, including No
+dither passthrough, each with its `name` as written in the app), the full
+palette menu, previous/next for both (`Ctrl+↑↓`, `Ctrl+←→`), Serpentine Sweep,
+and the 25 built-in recipe presets (plus any installed preset packs). The item
+you are on is ticked, so the menu doubles as a readout of the current press.
 
 **Effects** — add any effect from the stack catalogue; the stack is ordered and
 reorderable in the Effects panel, and Clear the Stack empties it.

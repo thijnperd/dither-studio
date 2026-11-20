@@ -56,7 +56,7 @@
           },
           {
             title: 'Choose a press',
-            body: 'This picker holds all forty-six algorithms, in families: ordered screens, stochastic noise, the three structure-aware screens, Yliluoma colour mixing and fourteen error-diffusion kernels. Press it and pick another, or step through the list with the arrows beside it.',
+            body: 'This picker holds all forty-seven algorithms, in families: no-dither passthrough, ordered screens, stochastic noise, the three structure-aware screens, Yliluoma colour mixing and fourteen error-diffusion kernels. Press it and pick another, or step through the list with the arrows beside it.',
             why: 'The press decides the pattern; the ink decides the colour. Those are two separate decisions here.',
             target: '#algorithm',
             open: 'press',
@@ -131,7 +131,7 @@
           {
             title: 'Step through the catalogue',
             body: 'The arrows beside a picker walk that catalogue one entry at a time. Ctrl+↑ and Ctrl+↓ do the algorithm, Ctrl+← and Ctrl+→ the palette, from anywhere in the window. There are also Previous/Next entries in the Press menu.',
-            why: 'Comparing two screens by stepping between them beats scrolling a list of forty-six.',
+            why: 'Comparing two screens by stepping between them beats scrolling a list of forty-seven.',
             target: '#algorithm-next',
           },
           {
@@ -259,7 +259,7 @@
       {
         id: 'stack-effects',
         title: 'Stack effects',
-        summary: 'Twenty-two effects that run after the dither, plus the glow over them.',
+        summary: 'Twenty-five effects that run after the dither, plus the glow over them.',
         theme: 'Effects',
         minutes: 3,
         steps: [
@@ -471,13 +471,13 @@
         steps: [
           {
             title: 'The whole catalogue is in the menus',
-            body: 'File, Edit, Image, Press, Effects, View, Window and Help hold all forty-six algorithms, thirty palettes, twenty-two effects, thirteen tone maps and twenty-five built-in recipes, with the accelerators beside them.',
+            body: 'File, Edit, Image, Press, Effects, View, Window and Help hold all forty-seven algorithms, thirty palettes, twenty-five effects, thirteen tone maps and twenty-five built-in recipes, with the accelerators beside them.',
             why: 'The menus are expanded from the same tables the panels are built from, so a new algorithm can never be missing from one of them.',
             target: '#menubar',
           },
           {
             title: 'The dock',
-            body: 'Ten stations, each one collapsible: click a tab here to jump to one, or a panel header to fold it away. Window ▸ Open every panel brings them all back, and View ▸ Panels on the right hides the dock entirely for a clean proof.',
+            body: 'Twelve stations, including Layers for per-object dithering: click a tab here to jump to one, or a panel header to fold it away. Window ▸ Open every panel brings them all back, and View ▸ Panels on the right hides the dock entirely for a clean proof.',
             target: '#jump',
           },
           {

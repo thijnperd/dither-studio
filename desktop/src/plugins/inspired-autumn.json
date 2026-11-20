@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "id": "inspired-autumn",
+  "name": "Autumn Palettes (Inspired)",
+  "version": "1.0.0",
+  "kind": "palette-pack",
+  "summary": "Five original maple-rust, ochre and woodland moss ink sets inspired by Studio AAA's Autumn Palettes.",
+  "author": "Dither Studio · inspired by Studio AAA",
+  "homepage": "https://studioaaa.com/autumn-palettes-download/",
+  "data": {
+    "palettes": [
+      {
+        "id": "maple-ember",
+        "name": "Autumn · Maple Ember",
+        "colors": ["#140a07", "#3d1810", "#7a2c17", "#bf4c1d", "#e8842e", "#f7cc77"]
+      },
+      {
+        "id": "harvest-ochre",
+        "name": "Autumn · Harvest Ochre",
+        "colors": ["#17110a", "#3e2c17", "#735327", "#b0823a", "#deb462", "#f7e6b7"]
+      },
+      {
+        "id": "woodland-moss",
+        "name": "Autumn · Woodland Moss",
+        "colors": ["#0d120b", "#22301d", "#415932", "#748a46", "#b8a256", "#e8deb3"]
+      },
+      {
+        "id": "cider-dusk",
+        "name": "Autumn · Cider Dusk",
+        "colors": ["#170c12", "#421e28", "#7d3538", "#bd5c42", "#e89861", "#f7d9b5"]
+      },
+      {
+        "id": "frost-pine",
+        "name": "Autumn · Frost Pine",
+        "colors": ["#0c1214", "#1e3033", "#385452", "#697d70", "#a89f85", "#e6dfd1"]
+      }
+    ]
+  }
+}

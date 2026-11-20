@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "id": "allan-marathon",
+  "name": "Marathon Graphic Press (Inspired)",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Three bold sci-fi poster and signal-line recipes inspired by Allan Parker's Marathon artwork with Dither Boy.",
+  "author": "Dither Studio · inspired by Allan Parker",
+  "homepage": "https://studioaaa.com/dither-boy-in-marathon-by-allan-parker/",
+  "data": {
+    "presets": [
+      {
+        "id": "marathon-signal-poster",
+        "name": "Marathon · Signal Poster",
+        "settings": {
+          "algorithm": "bayer4",
+          "palette": "cyberpunk-acid",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.28, "saturation": 1.3, "sharpen": 0.3 },
+          "glitches": [
+            { "id": "modulation", "amount": 64, "mode": "waves" },
+            { "id": "aberration", "amount": 18 }
+          ]
+        }
+      },
+      {
+        "id": "marathon-hazard-print",
+        "name": "Marathon · Hazard Print",
+        "settings": {
+          "algorithm": "halftone-8",
+          "palette": "sweetie-16",
+          "pixelSize": 2,
+          "adjustments": { "contrast": 1.3, "saturation": 1.25 },
+          "glitches": [
+            { "id": "modulation", "amount": 52, "mode": "contour" },
+            { "id": "scanlines", "amount": 22 }
+          ]
+        }
+      },
+      {
+        "id": "marathon-orbital-grid",
+        "name": "Marathon · Orbital Grid",
+        "settings": {
+          "algorithm": "void-and-cluster",
+          "palette": "cyberpunk-holo",
+          "pixelSize": 1,
+          "adjustments": { "contrast": 1.22, "saturation": 1.18 },
+          "glitches": [
+            { "id": "modulation", "amount": 58, "mode": "orb" },
+            { "id": "epsilonglow", "amount": 44, "mode": "neon" }
+          ]
+        }
+      }
+    ]
+  }
+}

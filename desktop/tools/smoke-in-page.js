@@ -41,11 +41,11 @@
   check('the caption bar has its three window buttons', document.querySelectorAll('.titlebar .wbtn').length === 3);
   check('the menu bar has eight menus', document.querySelectorAll('.menubar .menu').length === 8,
     document.querySelectorAll('.menubar .menu').length);
-  check('the tool rail has its nine tools', document.querySelectorAll('.toolrail .tool').length === 9,
+  check('the tool rail has its ten tools', document.querySelectorAll('.toolrail .tool').length === 10,
     document.querySelectorAll('.toolrail .tool').length);
-  check('the dock holds all eleven panels', document.querySelectorAll('#rail .group').length === 11,
+  check('the dock holds all twelve panels', document.querySelectorAll('#rail .group').length === 12,
     document.querySelectorAll('#rail .group').length);
-  check('and a tab for each of them', document.querySelectorAll('#jump .jump-chip').length === 11,
+  check('and a tab for each of them', document.querySelectorAll('#jump .jump-chip').length === 12,
     document.querySelectorAll('#jump .jump-chip').length);
   check('the document tab names the open proof',
     document.getElementById('doc-name').textContent === DS.state().name,
@@ -426,7 +426,7 @@
 
   DS.command('window-panels-open');
   await wait(60);
-  check('opening every panel opens every panel', window.DS.state().openGroups.length === 11,
+  check('opening every panel opens every panel', window.DS.state().openGroups.length === 12,
     window.DS.state().openGroups.length);
   DS.command('effects-clear');
   await wait(60);
@@ -829,7 +829,7 @@
   await wait(300);
   const managerRows = document.querySelectorAll('#plugin-list .plugin-row');
   check('the Plugin Manager lists the catalogue',
-    window.DitherPlugins.isOpen() && managerRows.length >= 11,
+    window.DitherPlugins.isOpen() && managerRows.length >= 24,
     managerRows.length);
   check('the Plugin Manager is split into two sections',
     document.querySelectorAll('#plugin-list .plugin-section').length === 2,
@@ -839,6 +839,39 @@
       return Number(row.dataset.bytes) > 0;
     }));
   window.DitherPlugins.close();
+
+  /* ---- no-dither passthrough & layers object detection ------------ */
+
+  DS.command('press-algorithm', 'none');
+  await wait(120);
+  check('the no-dither algorithm runs as original image passthrough',
+    DS.state().algorithm === 'none' && window.__dither.stats().colors > 32,
+    window.__dither.stats().colors + ' colors');
+  DS.command('press-algorithm', 'floyd-steinberg');
+  await wait(100);
+
+  DS.command('window-panel-open', 'layers');
+  await wait(100);
+  const detectedObjects = window.__dither.detectObjects();
+  await wait(160);
+  const ls = window.__dither.layersState();
+  check('Detect objects enables Layers mode and finds objects in the painting',
+    ls.enabled === true && detectedObjects.length >= 1 && ls.count >= 2,
+    detectedObjects.length + ' objects, ' + ls.count + ' layers');
+  const hashObj1 = window.__dither.canvasHash();
+  DS.command('press-algorithm', 'bayer8');
+  DS.command('press-palette', 'gameboy');
+  await wait(160);
+  const hashObj2 = window.__dither.canvasHash();
+  check('editing an object layer updates only that object with its own algorithm and palette',
+    hashObj1 !== hashObj2 && window.__dither.layersState().items[0].algorithm === 'none',
+    window.__dither.layersState().items.map(function (l) { return l.name + ':' + l.algorithm; }).join(' | '));
+  window.__dither.clearObjectLayers();
+  window.__dither.enableLayers(false);
+  DS.command('press-algorithm', 'floyd-steinberg');
+  await wait(100);
+  check('turning Layers mode off returns cleanly to single-layer press',
+    window.__dither.layersState().enabled === false && DS.state().algorithm === 'floyd-steinberg');
 
   /* ---- the animation timeline ------------------------------------- */
 

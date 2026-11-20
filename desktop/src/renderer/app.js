@@ -22,6 +22,7 @@
   'use strict';
 
   const D = window.DitherLib;
+  const Layers = window.DitherLayers || null;
   const MAX_SOURCE = 1600;
   const PREVIEW_SCALE = 0.5;
   const ZOOM_STEPS = [1, 2, 3, 4, 6, 8];
@@ -118,10 +119,23 @@
     quality: $('quality'), qualityNote: $('quality-note'),
     transport: $('transport'), videoReadout: $('video-readout'),
     noteLearn: $('note-learn'),
-    noteSource: $('note-source'), notePress: $('note-press'), noteTone: $('note-tone'),
+    noteSource: $('note-source'), noteLayers: $('note-layers'), notePress: $('note-press'), noteTone: $('note-tone'),
     noteInk: $('note-ink'), noteDetail: $('note-detail'), noteEffects: $('note-effects'),
     noteGlow: $('note-glow'), noteMotion: $('note-motion'), noteType: $('note-type'),
     notePreset: $('note-preset'),
+    layersEnabled: $('layers-enabled'), layersShowMask: $('layers-show-mask'),
+    layersDetect: $('layers-detect'), layersPick: $('layers-pick'),
+    layersBrush: $('layers-brush'), layersErase: $('layers-erase'),
+    layersTolerance: $('layers-tolerance'), layersToleranceValue: $('layers-tolerance-value'),
+    layersFeather: $('layers-feather'), layersFeatherValue: $('layers-feather-value'),
+    layersBrushSize: $('layers-brush-size'), layersBrushSizeValue: $('layers-brush-size-value'),
+    layersContiguous: $('layers-contiguous'),
+    layersList: $('layers-list'), layersActiveBox: $('layers-active-box'),
+    layersOpacity: $('layers-opacity'), layersOpacityValue: $('layers-opacity-value'),
+    layersInvert: $('layers-invert'),
+    layersAdd: $('layers-add'), layersClear: $('layers-clear'),
+    pressLayerBanner: $('press-layer-banner'), pressLayerName: $('press-layer-name'),
+    pressLayerJump: $('press-layer-jump'),
   };
 
   const ctx = el.canvas.getContext('2d', { willReadFrequently: true });
@@ -135,6 +149,7 @@
     // explains itself once you know what the station is for.
     { id: 'learn', name: 'Learn' },
     { id: 'source', name: 'Source' },
+    { id: 'layers', name: 'Layers' },
     { id: 'press', name: 'Press' },
     { id: 'tone', name: 'Tone' },
     { id: 'ink', name: 'Ink' },
@@ -150,6 +165,7 @@
 
   const state = {
     source: null,       // { data, width, height } at working resolution
+    sourceSeq: 0,       // incremented whenever a new source image loads
     original: null,     // ImageData of the working source, for compare
     preview: null,      // half-resolution { data, width, height }
     name: 'untitled',
@@ -163,6 +179,25 @@
     splitOn: false,     // source on the left of a draggable divider, proof on the right
     splitAt: 0.5,
     pickingOrigin: null, // effect id when placing an origin point on the proof
+  };
+
+  // Multi-layer & object detection state. Each layer owns a full merged
+  // settings object (algorithm, palette, tone, detail, effects, glow) so the
+  // existing stations edit whichever layer is active, and each object layer
+  // composites over the base layer through its own soft mask.
+  const layerState = {
+    enabled: false,
+    showMask: true,
+    tool: null,           // null | 'pick' | 'brush' | 'erase'
+    tolerance: 34,
+    feather: 2,
+    brushSize: 28,
+    contiguous: true,
+    activeId: 'base',
+    nextId: 1,
+    items: [],
+    cache: new Map(),     // layer.id -> { key, res }
+    maskCache: new Map(), // layer.id -> { key, mask }
   };
 
   // A bounded snapshot history for the recipe itself. Loading a new source
@@ -420,6 +455,7 @@
       glow: glowActive,
       motion: motionActive,
       type: typeActive,
+      layers: !!layerState.enabled,
     };
     Object.keys(flags).forEach(function (id) {
       const group = groupEl(id);
@@ -450,7 +486,7 @@
     el.tonePaper.value = rgbToHex(s.tonePaper);
     el.inkCustom.hidden = s.toneMap !== 'custom';
     el.alphaMode.value = s.alphaMode;
-    el.thresholdRow.hidden = s.palette !== 'bw';
+    el.thresholdRow.hidden = s.palette !== 'bw' || s.algorithm === 'none';
     showAlphaBehind(s.alphaMode);
     syncTextUI();
     syncScreenRows();
@@ -600,7 +636,7 @@
   let currentStationId = GROUPS.length ? GROUPS[0].id : null;
 
   const STATION_NOTES = {
-    learn: el.noteLearn, source: el.noteSource, press: el.notePress, tone: el.noteTone, ink: el.noteInk,
+    learn: el.noteLearn, source: el.noteSource, layers: el.noteLayers, press: el.notePress, tone: el.noteTone, ink: el.noteInk,
     detail: el.noteDetail, effects: el.noteEffects, glow: el.noteGlow,
     motion: el.noteMotion, type: el.noteType, preset: el.notePreset,
   };
@@ -661,6 +697,7 @@
     const palette = paletteById(s.palette);
     const effects = activeEffects();
     setNote(el.noteSource, state.name || 'nothing loaded');
+    setNote(el.noteLayers, layersSummary());
     setNote(el.notePress, algo.name + ' · ' + shortPalette(palette));
     setNote(el.noteTone, toneSummary());
     setNote(el.noteInk, inkSummary());
@@ -1415,6 +1452,598 @@
     });
   }
 
+  // ---- layers & object detection ----
+
+  const LAYER_RECIPES = [
+    { algorithm: 'floyd-steinberg', palette: 'bw', pixelSize: 2 },
+    { algorithm: 'bayer8', palette: 'c64', pixelSize: 2 },
+    { algorithm: 'atkinson', palette: 'gameboy', pixelSize: 2 },
+    { algorithm: 'smooth-diffusion', palette: 'bw', pixelSize: 1, screen: { smooth: 6, flow: 90, streak: 15 } },
+    { algorithm: 'halftone-16', palette: 'gruvbox', pixelSize: 2 },
+  ];
+
+  function cloneSettings(settings) {
+    return D.mergeSettings(JSON.parse(JSON.stringify(settings || D.DEFAULTS)));
+  }
+
+  function ensureLayersInit() {
+    if (!layerState.items.length) {
+      layerState.items.push({
+        id: 'base',
+        name: 'Background',
+        isBase: true,
+        visible: true,
+        opacity: 1,
+        inverted: false,
+        mask: null,
+        maskW: 0,
+        maskH: 0,
+        maskVer: 0,
+        settings: cloneSettings(state.settings),
+      });
+      layerState.activeId = 'base';
+    }
+  }
+
+  function activeLayer() {
+    ensureLayersInit();
+    return byId(layerState.items, layerState.activeId) || layerState.items[0];
+  }
+
+  function saveActiveLayerSettings() {
+    if (!layerState.items.length) return;
+    const active = activeLayer();
+    const copy = cloneSettings(state.settings);
+    copy.glitches = deriveGlitches();
+    active.settings = copy;
+  }
+
+  function layersSummary() {
+    if (!layerState.enabled) return 'off';
+    const active = activeLayer();
+    return active.name + ' · ' + layerState.items.length + 'L';
+  }
+
+  function syncLayerBanner() {
+    if (!el.pressLayerBanner) return;
+    el.pressLayerBanner.hidden = !layerState.enabled;
+    if (layerState.enabled && el.pressLayerName) {
+      el.pressLayerName.textContent = activeLayer().name;
+    }
+  }
+
+  function setLayerTool(tool) {
+    const next = (tool === 'pick' || tool === 'brush' || tool === 'erase')
+      ? (layerState.tool === tool ? null : tool)
+      : null;
+    layerState.tool = next;
+    if (next && state.pickingOrigin) setPickingOrigin(null);
+    if (next && !layerState.enabled) enableLayers(true, true);
+    if (el.layersPick) el.layersPick.setAttribute('aria-pressed', next === 'pick' ? 'true' : 'false');
+    if (el.layersBrush) el.layersBrush.setAttribute('aria-pressed', next === 'brush' ? 'true' : 'false');
+    if (el.layersErase) el.layersErase.setAttribute('aria-pressed', next === 'erase' ? 'true' : 'false');
+    if (el.wrap) {
+      el.wrap.classList.toggle('is-layer-pick', next === 'pick');
+      el.wrap.classList.toggle('is-layer-brush', next === 'brush' || next === 'erase');
+    }
+    if (next === 'pick') {
+      el.statStatus.textContent = 'Click an object on the proof to select it (Shift adds, Alt subtracts, Esc done)';
+    } else if (next === 'brush') {
+      el.statStatus.textContent = 'Drag on the proof to paint the object mask (Esc done)';
+    } else if (next === 'erase') {
+      el.statStatus.textContent = 'Drag on the proof to erase from the object mask (Esc done)';
+    }
+  }
+
+  function syncLayerActiveBox() {
+    if (!el.layersActiveBox) return;
+    const active = activeLayer();
+    const show = layerState.enabled && !active.isBase;
+    el.layersActiveBox.hidden = !show;
+    if (show) {
+      const pct = Math.round((active.opacity === undefined ? 1 : active.opacity) * 100);
+      if (el.layersOpacity) el.layersOpacity.value = String(pct);
+      if (el.layersOpacityValue) el.layersOpacityValue.textContent = String(pct);
+      if (el.layersInvert) el.layersInvert.checked = !!active.inverted;
+    }
+  }
+
+  function makeLayerThumb(layer) {
+    const c = document.createElement('canvas');
+    c.className = 'layer-thumb';
+    c.width = 28;
+    c.height = 28;
+    const tctx = c.getContext('2d');
+    tctx.fillStyle = '#0e1118';
+    tctx.fillRect(0, 0, 28, 28);
+    if (layer.isBase) {
+      tctx.fillStyle = '#33415c';
+      tctx.fillRect(3, 3, 22, 22);
+      return c;
+    }
+    if (!layer.mask || !layer.maskW || !layer.maskH) return c;
+    const img = tctx.createImageData(28, 28);
+    const d = img.data;
+    for (let y = 0; y < 28; y++) {
+      const sy = Math.min(layer.maskH - 1, Math.floor((y / 28) * layer.maskH));
+      for (let x = 0; x < 28; x++) {
+        const sx = Math.min(layer.maskW - 1, Math.floor((x / 28) * layer.maskW));
+        const raw = layer.mask[sy * layer.maskW + sx];
+        const v = layer.inverted ? 255 - raw : raw;
+        const idx = (y * 28 + x) * 4;
+        if (v > 32) {
+          d[idx] = 88;
+          d[idx + 1] = 166;
+          d[idx + 2] = 255;
+          d[idx + 3] = Math.max(96, v);
+        } else {
+          d[idx] = 14;
+          d[idx + 1] = 17;
+          d[idx + 2] = 24;
+          d[idx + 3] = 255;
+        }
+      }
+    }
+    tctx.putImageData(img, 0, 0);
+    return c;
+  }
+
+  function renderLayerList() {
+    if (!el.layersList) return;
+    ensureLayersInit();
+    el.layersList.textContent = '';
+    // Display top-most object first, Background last (compositor stack order).
+    const display = layerState.items.slice().reverse();
+    display.forEach(function (layer) {
+      const idx = layerState.items.indexOf(layer);
+      const isActive = layer.id === layerState.activeId;
+      const row = document.createElement('div');
+      row.className = 'layer-row' + (isActive ? ' is-active' : '') + (!layer.visible ? ' is-hidden' : '');
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      row.dataset.layerId = layer.id;
+
+      const vis = document.createElement('button');
+      vis.type = 'button';
+      vis.className = 'icon-btn';
+      vis.title = layer.visible ? 'Hide layer' : 'Show layer';
+      vis.setAttribute('aria-label', (layer.visible ? 'Hide ' : 'Show ') + layer.name);
+      const visGlyph = document.createElement('span');
+      visGlyph.className = 'ui-glyph ui-glyph--xs';
+      visGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/' + (layer.visible ? 'eye.svg' : 'eye-off.svg') + '")');
+      visGlyph.setAttribute('aria-hidden', 'true');
+      vis.appendChild(visGlyph);
+      vis.addEventListener('click', function (e) {
+        e.stopPropagation();
+        layer.visible = !layer.visible;
+        renderLayerList();
+        render(true);
+      });
+
+      const thumb = makeLayerThumb(layer);
+
+      const meta = document.createElement('div');
+      meta.className = 'layer-meta';
+      const name = document.createElement('div');
+      name.className = 'layer-name';
+      name.textContent = layer.name;
+      const sub = document.createElement('div');
+      sub.className = 'layer-sub';
+      const algo = algorithmById(layer.settings.algorithm);
+      const pal = paletteById(layer.settings.palette);
+      sub.textContent = algo.id === 'none' ? 'Original image' : (algo.name + ' · ' + shortPalette(pal));
+      meta.appendChild(name);
+      meta.appendChild(sub);
+
+      const actions = document.createElement('div');
+      actions.className = 'layer-actions';
+      if (!layer.isBase) {
+        const up = document.createElement('button');
+        up.type = 'button';
+        up.className = 'icon-btn';
+        up.title = 'Move layer up';
+        up.setAttribute('aria-label', 'Move ' + layer.name + ' up');
+        up.disabled = idx >= layerState.items.length - 1;
+        const upG = document.createElement('span');
+        upG.className = 'ui-glyph ui-glyph--xs ui-glyph--up';
+        upG.style.setProperty('--ui-icon', 'url("../assets/icons/chevron-right.svg")');
+        upG.setAttribute('aria-hidden', 'true');
+        up.appendChild(upG);
+        up.addEventListener('click', function (e) {
+          e.stopPropagation();
+          moveLayer(idx, 1);
+        });
+
+        const down = document.createElement('button');
+        down.type = 'button';
+        down.className = 'icon-btn';
+        down.title = 'Move layer down';
+        down.setAttribute('aria-label', 'Move ' + layer.name + ' down');
+        down.disabled = idx <= 1;
+        const downG = document.createElement('span');
+        downG.className = 'ui-glyph ui-glyph--xs ui-glyph--down';
+        downG.style.setProperty('--ui-icon', 'url("../assets/icons/chevron-right.svg")');
+        downG.setAttribute('aria-hidden', 'true');
+        down.appendChild(downG);
+        down.addEventListener('click', function (e) {
+          e.stopPropagation();
+          moveLayer(idx, -1);
+        });
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'icon-btn';
+        del.title = 'Remove layer';
+        del.setAttribute('aria-label', 'Remove ' + layer.name);
+        const delG = document.createElement('span');
+        delG.className = 'ui-glyph ui-glyph--xs';
+        delG.style.setProperty('--ui-icon', 'url("../assets/icons/x.svg")');
+        delG.setAttribute('aria-hidden', 'true');
+        del.appendChild(delG);
+        del.addEventListener('click', function (e) {
+          e.stopPropagation();
+          removeLayer(layer.id);
+        });
+
+        actions.appendChild(up);
+        actions.appendChild(down);
+        actions.appendChild(del);
+      }
+
+      row.appendChild(vis);
+      row.appendChild(thumb);
+      row.appendChild(meta);
+      row.appendChild(actions);
+
+      row.addEventListener('click', function () {
+        selectLayer(layer.id);
+      });
+      el.layersList.appendChild(row);
+    });
+    syncLayerActiveBox();
+    syncLayerBanner();
+  }
+
+  function selectLayer(id, opts) {
+    const skipRender = typeof opts === 'boolean' ? opts : !!(opts && opts.skipRender);
+    const skipSave = !!(opts && opts.skipSave);
+    ensureLayersInit();
+    if (!skipSave) saveActiveLayerSettings();
+    const target = byId(layerState.items, id) || layerState.items[0];
+    layerState.activeId = target.id;
+    state.settings = cloneSettings(target.settings);
+    readGlitchState(state.settings.glitches);
+    syncUI();
+    renderLayerList();
+    if (!skipRender) render(true);
+    el.statStatus.textContent = 'Editing ' + target.name;
+    window.dispatchEvent(new CustomEvent('ds:ui'));
+    return target.id;
+  }
+
+  function enableLayers(on, quiet) {
+    ensureLayersInit();
+    const next = !!on;
+    if (next === layerState.enabled) return layerState.enabled;
+    saveActiveLayerSettings();
+    layerState.enabled = next;
+    if (el.layersEnabled) el.layersEnabled.checked = next;
+    if (!next) {
+      setLayerTool(null);
+    }
+    renderLayerList();
+    syncGroupNotes();
+    if (!quiet) render(true);
+    window.dispatchEvent(new CustomEvent('ds:ui'));
+    return layerState.enabled;
+  }
+
+  function createObjectLayer(opts) {
+    ensureLayersInit();
+    const w = state.source ? state.source.width : 1;
+    const h = state.source ? state.source.height : 1;
+    const n = layerState.nextId++;
+    const recipeIndex = (layerState.items.length - 1) % LAYER_RECIPES.length;
+    const settings = opts && opts.settings
+      ? cloneSettings(opts.settings)
+      : cloneSettings(LAYER_RECIPES[recipeIndex]);
+    const item = {
+      id: 'obj-' + n,
+      name: (opts && opts.name) || ('Object ' + n),
+      isBase: false,
+      visible: true,
+      opacity: 1,
+      inverted: false,
+      mask: (opts && opts.mask) || new Uint8Array(w * h),
+      maskW: w,
+      maskH: h,
+      maskVer: 1,
+      settings: settings,
+    };
+    layerState.items.push(item);
+    return item;
+  }
+
+  function addEmptyObjectLayer() {
+    ensureLayersInit();
+    const wasOff = !layerState.enabled;
+    const currentRecipe = cloneSettings(state.settings);
+    currentRecipe.glitches = deriveGlitches();
+    if (wasOff) {
+      layerState.items[0].settings = cloneSettings({ algorithm: 'none', pixelSize: 1 });
+      layerState.enabled = true;
+      if (el.layersEnabled) el.layersEnabled.checked = true;
+    }
+    const objRecipe = (wasOff && currentRecipe.algorithm !== 'none') ? currentRecipe : null;
+    const created = createObjectLayer({ settings: objRecipe });
+    selectLayer(created.id, { skipSave: wasOff });
+    if (!layerState.tool) setLayerTool('pick');
+    return created.id;
+  }
+
+  function removeLayer(id) {
+    const idx = layerState.items.findIndex(function (item) { return item.id === id; });
+    if (idx <= 0) return false;
+    layerState.items.splice(idx, 1);
+    layerState.cache.delete(id);
+    layerState.maskCache.delete(id);
+    const fallback = layerState.items[Math.min(idx, layerState.items.length - 1)] || layerState.items[0];
+    selectLayer(fallback.id);
+    return true;
+  }
+
+  function moveLayer(idx, delta) {
+    const target = idx + delta;
+    if (idx <= 0 || target <= 0 || target >= layerState.items.length) return false;
+    const copy = layerState.items.slice();
+    const moved = copy.splice(idx, 1)[0];
+    copy.splice(target, 0, moved);
+    layerState.items = copy;
+    renderLayerList();
+    render(true);
+    return true;
+  }
+
+  function clearObjectLayers(quiet) {
+    ensureLayersInit();
+    const base = layerState.items[0];
+    layerState.items = [base];
+    layerState.cache.clear();
+    layerState.maskCache.clear();
+    layerState.nextId = 1;
+    layerState.activeId = 'base';
+    if (!quiet) {
+      state.settings = cloneSettings(base.settings);
+      readGlitchState(state.settings.glitches);
+      syncUI();
+      renderLayerList();
+      render(true);
+      el.statStatus.textContent = 'Object layers cleared';
+    } else {
+      renderLayerList();
+    }
+  }
+
+  function detectObjectLayers() {
+    if (!Layers || !state.source) return [];
+    ensureLayersInit();
+    const wasOff = !layerState.enabled;
+    const currentRecipe = cloneSettings(state.settings);
+    currentRecipe.glitches = deriveGlitches();
+    const detected = Layers.detectObjects(state.source, {
+      maxObjects: 5,
+      feather: 0,
+    });
+
+    const base = layerState.items[0];
+    if (wasOff) {
+      base.settings = cloneSettings({ algorithm: 'none', pixelSize: 1 });
+    } else {
+      saveActiveLayerSettings();
+    }
+    layerState.items = [base];
+    layerState.cache.clear();
+    layerState.maskCache.clear();
+    layerState.nextId = 1;
+    layerState.enabled = true;
+    if (el.layersEnabled) el.layersEnabled.checked = true;
+
+    detected.forEach(function (obj, index) {
+      const recipe = index === 0 && currentRecipe.algorithm !== 'none'
+        ? currentRecipe
+        : LAYER_RECIPES[index % LAYER_RECIPES.length];
+      createObjectLayer({
+        name: obj.name || ('Object ' + (index + 1)),
+        mask: obj.mask,
+        settings: recipe,
+      });
+    });
+
+    if (layerState.items.length > 1) {
+      selectLayer(layerState.items[1].id, { skipSave: true });
+      el.statStatus.textContent = 'Detected ' + detected.length + (detected.length === 1 ? ' object' : ' objects') + ' · editing ' + layerState.items[1].name;
+    } else {
+      selectLayer('base', { skipSave: true });
+      el.statStatus.textContent = 'No distinct objects found — use Pick object or Paint mask';
+    }
+    return detected.map(function (o, i) {
+      return { id: layerState.items[i + 1] ? layerState.items[i + 1].id : null, name: o.name, coverage: o.coverage, bbox: o.bbox };
+    });
+  }
+
+  function prepareLayerMask(layer, w, h) {
+    if (layer.isBase || !layer.mask) return null;
+    const feather = layerState.feather | 0;
+    const key = layer.maskVer + ':' + w + 'x' + h + ':f' + feather;
+    const hit = layerState.maskCache.get(layer.id);
+    if (hit && hit.key === key) return hit.mask;
+    let m = layer.mask;
+    if (layer.maskW !== w || layer.maskH !== h) {
+      const scaled = new Uint8Array(w * h);
+      const sxRatio = layer.maskW / w;
+      const syRatio = layer.maskH / h;
+      for (let y = 0; y < h; y++) {
+        const sy = Math.min(layer.maskH - 1, Math.floor(y * syRatio));
+        const rowOff = y * w;
+        const srcOff = sy * layer.maskW;
+        for (let x = 0; x < w; x++) {
+          const sx = Math.min(layer.maskW - 1, Math.floor(x * sxRatio));
+          scaled[rowOff + x] = m[srcOff + sx];
+        }
+      }
+      m = scaled;
+    }
+    if (feather > 0 && Layers) {
+      const scaledFeather = layer.maskW !== w ? Math.max(1, Math.round(feather * (w / Math.max(1, layer.maskW)))) : feather;
+      m = Layers.featherMask(m, w, h, scaledFeather);
+    }
+    layerState.maskCache.set(layer.id, { key: key, mask: m });
+    return m;
+  }
+
+  function renderComposite(source, full) {
+    const t0 = performance.now();
+    saveActiveLayerSettings();
+    const w = source.width;
+    const h = source.height;
+    const prefix = (full ? 'F' : 'P') + ':' + state.sourceSeq + ':';
+    const overlays = [];
+    let baseData = null;
+    let maxColors = 0;
+
+    for (let i = 0; i < layerState.items.length; i++) {
+      const layer = layerState.items[i];
+      if (!layer.visible) {
+        if (layer.isBase) baseData = new Uint8ClampedArray(w * h * 4);
+        continue;
+      }
+      const key = prefix + JSON.stringify(layer.settings);
+      let cached = layerState.cache.get(layer.id);
+      if (!cached || cached.key !== key) {
+        const out = D.process(source, layer.settings);
+        cached = { key: key, res: out };
+        layerState.cache.set(layer.id, cached);
+      }
+      if (cached.res.colors > maxColors) maxColors = cached.res.colors;
+      if (layer.isBase) {
+        baseData = cached.res.data;
+      } else {
+        overlays.push({
+          data: cached.res.data,
+          mask: prepareLayerMask(layer, w, h),
+          maskW: w,
+          maskH: h,
+          opacity: Math.round((layer.opacity === undefined ? 1 : layer.opacity) * 100),
+          invert: !!layer.inverted,
+        });
+      }
+    }
+
+    if (!baseData) baseData = new Uint8ClampedArray(w * h * 4);
+    const comp = Layers ? Layers.compositeLayers(baseData, w, h, overlays) : baseData;
+    const ms = performance.now() - t0;
+    return {
+      data: comp,
+      width: w,
+      height: h,
+      colors: maxColors || 0,
+      ms: ms,
+    };
+  }
+
+  function canvasNormFromEvent(clientX, clientY) {
+    const rect = el.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height || !state.source) return null;
+    const xNorm = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const yNorm = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    return { xNorm: xNorm, yNorm: yNorm };
+  }
+
+  function ensureEditableObjectLayer() {
+    ensureLayersInit();
+    let active = activeLayer();
+    if (!active.isBase) return active;
+    const firstObject = layerState.items.length === 1;
+    const currentRecipe = cloneSettings(state.settings);
+    currentRecipe.glitches = deriveGlitches();
+    if (firstObject) {
+      layerState.items[0].settings = cloneSettings({ algorithm: 'none', pixelSize: 1 });
+    }
+    const objRecipe = (firstObject && currentRecipe.algorithm !== 'none') ? currentRecipe : null;
+    const created = createObjectLayer({ settings: objRecipe });
+    selectLayer(created.id, { skipRender: true, skipSave: firstObject });
+    return created;
+  }
+
+  function applyCanvasPick(clientX, clientY, mode) {
+    if (!Layers || !state.source) return;
+    const pt = canvasNormFromEvent(clientX, clientY);
+    if (!pt) return;
+    if (!layerState.enabled) enableLayers(true, true);
+    const target = ensureEditableObjectLayer();
+    const sel = Layers.magicSelect(state.source, pt.xNorm, pt.yNorm, {
+      tolerance: layerState.tolerance,
+      feather: 0,
+      contiguous: layerState.contiguous,
+    });
+    target.mask = Layers.combineMasks(target.mask, sel.mask, mode || 'replace');
+    target.maskW = state.source.width;
+    target.maskH = state.source.height;
+    target.maskVer = (target.maskVer || 0) + 1;
+    renderLayerList();
+    render(true);
+    el.statStatus.textContent = target.name + ' · selected ' + sel.coverage + '% of frame';
+  }
+
+  function applyCanvasBrush(clientX, clientY, value) {
+    if (!Layers || !state.source) return;
+    const pt = canvasNormFromEvent(clientX, clientY);
+    if (!pt) return;
+    if (!layerState.enabled) enableLayers(true, true);
+    const target = ensureEditableObjectLayer();
+    if (!target.mask || target.maskW !== state.source.width || target.maskH !== state.source.height) {
+      target.mask = new Uint8Array(state.source.width * state.source.height);
+      target.maskW = state.source.width;
+      target.maskH = state.source.height;
+    }
+    Layers.paintMask(
+      target.mask,
+      target.maskW,
+      target.maskH,
+      pt.xNorm,
+      pt.yNorm,
+      Math.max(2, Math.round(layerState.brushSize / 2)),
+      value
+    );
+    target.maskVer = (target.maskVer || 0) + 1;
+    schedulePreview();
+  }
+
+  function drawResultToCanvas(res, full) {
+    let display = res;
+    if (layerState.enabled && layerState.showMask && Layers) {
+      const active = activeLayer();
+      if (!active.isBase && active.mask) {
+        const m = prepareLayerMask(active, res.width, res.height);
+        if (m) {
+          const tinted = Layers.drawMaskOverlay(res.data, res.width, res.height, m, res.width, res.height, !!active.inverted);
+          display = { data: tinted, width: res.width, height: res.height };
+        }
+      }
+    }
+    if (full) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.putImageData(toImageData(display), 0, 0);
+    } else {
+      buffer.width = display.width;
+      buffer.height = display.height;
+      bufferCtx.putImageData(toImageData(display), 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+      ctx.drawImage(buffer, 0, 0, el.canvas.width, el.canvas.height);
+    }
+  }
+
   // ---- rendering ----
 
   function toImageData(res) {
@@ -1430,24 +2059,15 @@
     if (!source) return;
     state.settings.glitches = deriveGlitches();
     if (full) recordHistory();
-    const res = D.process(source, state.settings);
+    const res = layerState.enabled ? renderComposite(source, full) : D.process(source, state.settings);
 
     if (full) state.result = res;
     showAlphaBehind(state.settings.alphaMode);
 
     if (!(text.on && drawTextResult(res))) {
-      if (full) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.putImageData(toImageData(res), 0, 0);
-      } else {
-        buffer.width = res.width;
-        buffer.height = res.height;
-        bufferCtx.putImageData(toImageData(res), 0, 0);
-        ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
-        ctx.drawImage(buffer, 0, 0, el.canvas.width, el.canvas.height);
-      }
+      drawResultToCanvas(res, full);
     }
+    if (full && layerState.enabled) renderLayerList();
     updateStats(res, full);
   }
 
@@ -1599,6 +2219,7 @@
     endHistoryGroup();
     state.settings.algorithm = id;
     el.algorithm.value = id;
+    el.thresholdRow.hidden = state.settings.palette !== 'bw' || id === 'none';
     syncScreenRows();
     render(true);
     syncGroupNotes();
@@ -1614,7 +2235,7 @@
     endHistoryGroup();
     state.settings.palette = id;
     el.palette.value = id;
-    el.thresholdRow.hidden = id !== 'bw';
+    el.thresholdRow.hidden = id !== 'bw' || state.settings.algorithm === 'none';
     buildSwatches();
     render(true);
     syncGroupNotes();
@@ -1800,7 +2421,7 @@
   }
 
   function showResult() {
-    if (state.result) ctx.putImageData(toImageData(state.result), 0, 0);
+    if (state.result) drawResultToCanvas(state.result, true);
   }
 
   function clampSplit(value) {
@@ -1873,7 +2494,14 @@
     videoStop();
     state.original = imageData;
     state.source = { data: imageData.data, width: imageData.width, height: imageData.height };
+    state.sourceSeq = (state.sourceSeq || 0) + 1;
     state.name = name;
+    layerState.cache.clear();
+    layerState.maskCache.clear();
+    if (layerState.items.length > 1) {
+      setLayerTool(null);
+      clearObjectLayers(true);
+    }
 
     const pw = Math.max(1, Math.round(imageData.width * PREVIEW_SCALE));
     const ph = Math.max(1, Math.round(imageData.height * PREVIEW_SCALE));
@@ -2143,8 +2771,16 @@
   function copyPNG() {
     if (!state.source && !state.videoOn) return;
     render(true);
+    let sourceCanvas = el.canvas;
+    if (!text.on && state.result && layerState.enabled && layerState.showMask) {
+      // Never copy the interactive mask highlight onto the clipboard.
+      buffer.width = state.result.width;
+      buffer.height = state.result.height;
+      bufferCtx.putImageData(toImageData(state.result), 0, 0);
+      sourceCanvas = buffer;
+    }
     if (desktop) {
-      el.canvas.toBlob(function (blob) {
+      sourceCanvas.toBlob(function (blob) {
         if (!blob) return;
         blob.arrayBuffer().then(function (data) {
           return desktop.copyImage({ mime: 'image/png', data: data });
@@ -2155,7 +2791,7 @@
       }, 'image/png');
       return;
     }
-    el.canvas.toBlob(function (blob) {
+    sourceCanvas.toBlob(function (blob) {
       if (!blob) return;
       if (!navigator.clipboard || !window.ClipboardItem) {
         el.statStatus.textContent = 'This browser cannot copy images';
@@ -2173,7 +2809,8 @@
   const RANDOM_TONES = ['none', 'none', 'sepia', 'blueprint', 'amber', 'cyanotype', 'forest', 'rose', 'thermal', 'gold'];
 
   function randomize() {
-    const algo = D.ALGORITHMS[(Math.random() * D.ALGORITHMS.length) | 0];
+    const algos = D.ALGORITHMS.filter(function (a) { return a.id !== 'none'; });
+    const algo = algos[(Math.random() * algos.length) | 0];
     const palette = D.PALETTES[(Math.random() * D.PALETTES.length) | 0];
     const next = {
       algorithm: algo.id,
@@ -2552,6 +3189,7 @@
     }
 
     let originPointer = null;
+    let layerPointer = null;
     el.canvas.addEventListener('pointerdown', function (e) {
       if (state.pickingOrigin) {
         e.preventDefault();
@@ -2559,6 +3197,19 @@
         try { el.canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic events */ }
         beginHistoryGroup('effect:' + state.pickingOrigin + ':origin');
         applyPickedOrigin(state.pickingOrigin, e.clientX, e.clientY);
+        return;
+      }
+      if (layerState.tool === 'pick') {
+        e.preventDefault();
+        const mode = e.shiftKey ? 'add' : e.altKey ? 'subtract' : 'replace';
+        applyCanvasPick(e.clientX, e.clientY, mode);
+        return;
+      }
+      if (layerState.tool === 'brush' || layerState.tool === 'erase') {
+        e.preventDefault();
+        layerPointer = e.pointerId;
+        try { el.canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic events */ }
+        applyCanvasBrush(e.clientX, e.clientY, layerState.tool === 'brush' ? 255 : 0);
         return;
       }
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -2578,6 +3229,10 @@
     el.canvas.addEventListener('pointermove', function (e) {
       if (originPointer === e.pointerId && state.pickingOrigin) {
         applyPickedOrigin(state.pickingOrigin, e.clientX, e.clientY);
+        return;
+      }
+      if (layerPointer === e.pointerId && (layerState.tool === 'brush' || layerState.tool === 'erase')) {
+        applyCanvasBrush(e.clientX, e.clientY, layerState.tool === 'brush' ? 255 : 0);
         return;
       }
       if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -2605,6 +3260,12 @@
           }
           return;
         }
+        if (layerPointer === e.pointerId) {
+          layerPointer = null;
+          renderLayerList();
+          render(true);
+          return;
+        }
         pointers.delete(e.pointerId);
         if (pointers.size < 2) pinchFrom = 0;
         if (!pointers.size) endPan();
@@ -2615,6 +3276,10 @@
         originPointer = null;
         setPickingOrigin(null);
         el.statStatus.textContent = 'Origin pick cancelled';
+      } else if (e.key === 'Escape' && layerState.tool) {
+        layerPointer = null;
+        setLayerTool(null);
+        el.statStatus.textContent = 'Layer tool off';
       }
     });
 
@@ -2729,6 +3394,81 @@
 
     window.addEventListener('resize', function () { applyZoom(); syncTabFades(); });
 
+    function bindLayers() {
+      ensureLayersInit();
+      renderLayerList();
+      if (el.layersEnabled) {
+        el.layersEnabled.addEventListener('change', function () {
+          enableLayers(el.layersEnabled.checked);
+        });
+      }
+      if (el.layersShowMask) {
+        el.layersShowMask.addEventListener('change', function () {
+          layerState.showMask = !!el.layersShowMask.checked;
+          if (state.result && !text.on) drawResultToCanvas(state.result, true);
+          else render(true);
+        });
+      }
+      if (el.layersDetect) el.layersDetect.addEventListener('click', detectObjectLayers);
+      if (el.layersPick) el.layersPick.addEventListener('click', function () { setLayerTool('pick'); });
+      if (el.layersBrush) el.layersBrush.addEventListener('click', function () { setLayerTool('brush'); });
+      if (el.layersErase) el.layersErase.addEventListener('click', function () { setLayerTool('erase'); });
+      if (el.layersTolerance) {
+        el.layersTolerance.addEventListener('input', function () {
+          layerState.tolerance = parseInt(el.layersTolerance.value, 10) || 34;
+          if (el.layersToleranceValue) el.layersToleranceValue.textContent = String(layerState.tolerance);
+        });
+      }
+      if (el.layersFeather) {
+        el.layersFeather.addEventListener('input', function () {
+          layerState.feather = parseInt(el.layersFeather.value, 10) || 0;
+          if (el.layersFeatherValue) el.layersFeatherValue.textContent = String(layerState.feather);
+          if (layerState.enabled) schedulePreview();
+        });
+        el.layersFeather.addEventListener('change', function () {
+          if (layerState.enabled) render(true);
+        });
+      }
+      if (el.layersBrushSize) {
+        el.layersBrushSize.addEventListener('input', function () {
+          layerState.brushSize = parseInt(el.layersBrushSize.value, 10) || 28;
+          if (el.layersBrushSizeValue) el.layersBrushSizeValue.textContent = String(layerState.brushSize);
+        });
+      }
+      if (el.layersContiguous) {
+        el.layersContiguous.addEventListener('change', function () {
+          layerState.contiguous = !!el.layersContiguous.checked;
+        });
+      }
+      if (el.layersOpacity) {
+        el.layersOpacity.addEventListener('input', function () {
+          const active = activeLayer();
+          const pct = parseInt(el.layersOpacity.value, 10);
+          active.opacity = Math.max(0, Math.min(1, pct / 100));
+          if (el.layersOpacityValue) el.layersOpacityValue.textContent = String(pct);
+          if (layerState.enabled) schedulePreview();
+        });
+        el.layersOpacity.addEventListener('change', function () {
+          if (layerState.enabled) render(true);
+        });
+      }
+      if (el.layersInvert) {
+        el.layersInvert.addEventListener('change', function () {
+          const active = activeLayer();
+          active.inverted = !!el.layersInvert.checked;
+          renderLayerList();
+          if (layerState.enabled) render(true);
+        });
+      }
+      if (el.layersAdd) el.layersAdd.addEventListener('click', addEmptyObjectLayer);
+      if (el.layersClear) el.layersClear.addEventListener('click', function () { clearObjectLayers(false); });
+      if (el.pressLayerJump) {
+        el.pressLayerJump.addEventListener('click', function () {
+          runCommand('window-panel-open', 'layers');
+        });
+      }
+    }
+
     buildJump();
     initGroups();
     loadGroups();
@@ -2738,6 +3478,7 @@
     markJump();
     syncTabFades();
     setQuality(state.quality);
+    bindLayers();
     syncUI();
     bindVideo();
     loadSample(0);
@@ -3075,6 +3816,35 @@
     animationStats: function () { return animation ? animation.stats() : null; },
     animationFrameSettings: function (index) { return animation ? animation.frameSettings(index) : null; },
     animationRecord: function () { return animation ? animation.record() : false; },
+    // --- layers & object detection ----------------------------------------
+    layersState: function () {
+      ensureLayersInit();
+      return {
+        enabled: !!layerState.enabled,
+        showMask: !!layerState.showMask,
+        tool: layerState.tool,
+        activeId: layerState.activeId,
+        count: layerState.items.length,
+        items: layerState.items.map(function (l) {
+          return {
+            id: l.id,
+            name: l.name,
+            isBase: !!l.isBase,
+            visible: !!l.visible,
+            opacity: l.opacity,
+            inverted: !!l.inverted,
+            algorithm: l.settings.algorithm,
+            palette: l.settings.palette,
+          };
+        }),
+      };
+    },
+    enableLayers: function (on) { return enableLayers(on); },
+    detectObjects: detectObjectLayers,
+    selectLayer: function (id) { return selectLayer(id); },
+    addObjectLayer: addEmptyObjectLayer,
+    clearObjectLayers: function () { clearObjectLayers(false); },
+    setLayerTool: function (tool) { setLayerTool(tool); return layerState.tool; },
     // Test hook: load a synthetic source (a data URL) without a file dialog.
     loadDataURL: function (url, name) {
       const img = new Image();
@@ -3370,7 +4140,10 @@
     }
     if (pkg.kind === 'palette-pack') {
       closeFeatureMenu();
-      return openPaletteManager();
+      const first = D.PALETTES.find(function (palette) { return palette.plugin === pkg.id; });
+      if (first) setPalette(first.id);
+      runCommand('window-panel-open', 'press');
+      return true;
     }
     return openPluginManager();
   }
@@ -3601,6 +4374,12 @@
       canRedo: history.future.length > 0,
       effects: activeEffects(),
       plugins: window.DitherPlugins ? window.DitherPlugins.installed().map(function (p) { return p.id; }) : [],
+      layers: {
+        enabled: !!layerState.enabled,
+        count: layerState.items.length,
+        activeId: layerState.activeId,
+        activeName: layerState.items.length ? activeLayer().name : 'Background',
+      },
       animation: animation ? animation.stats() : null,
       openGroups: GROUPS.filter(function (g) { return groupOpen(g.id); }).map(function (g) { return g.id; }),
       status: el.statStatus.textContent,

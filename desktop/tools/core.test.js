@@ -464,6 +464,59 @@ test('buildSelect falls back to the entry name, then to its id', function () {
   assert.deepStrictEqual(node.children.map(function (o) { return o.textContent; }), ['A', 'b']);
 });
 
+// ---- v1.0.0 plugins & layers engine ----
+
+group('v1.0.0 plugins & layers');
+
+test('all 24 bundled plugin packages validate cleanly', function () {
+  const fs = require('fs');
+  const path = require('path');
+  const dir = path.join(__dirname, '..', 'src', 'plugins');
+  const cat = JSON.parse(fs.readFileSync(path.join(dir, 'catalogue.json'), 'utf8'));
+  assert(cat.plugins.length >= 24, 'expected >= 24 catalogue entries, got ' + cat.plugins.length);
+  cat.plugins.forEach(function (entry) {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, entry.file), 'utf8'));
+    const valid = Core.validatePluginPackage(pkg);
+    assert.strictEqual(valid.id, entry.id);
+    assert.strictEqual(valid.kind, entry.kind);
+  });
+});
+
+test('layers engine detects distinct objects and composites per-layer buffers', function () {
+  const Layers = require('../src/renderer/layers.js');
+  const w = 120, h = 90;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      let r = 18, g = 24, b = 36;
+      if ((x - 35) * (x - 35) + (y - 45) * (y - 45) <= 18 * 18) { r = 240; g = 90; b = 60; }
+      else if (x >= 72 && x <= 104 && y >= 24 && y <= 66) { r = 60; g = 220; b = 150; }
+      rgba[i] = r; rgba[i + 1] = g; rgba[i + 2] = b; rgba[i + 3] = 255;
+    }
+  }
+  const img = { data: rgba, width: w, height: h };
+  const found = Layers.detectObjects(img, { maxObjects: 4, feather: 0 });
+  assert(found.length >= 2, 'expected >= 2 detected objects, got ' + found.length);
+
+  const sel = Layers.magicSelect(img, 35 / w, 45 / h, { tolerance: 30, feather: 0, contiguous: true });
+  assert(sel.coverage > 5, 'magicSelect should select the red circle, got ' + sel.coverage + '%');
+
+  const baseBuf = new Uint8ClampedArray(w * h * 4);
+  const objBuf = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < baseBuf.length; i += 4) {
+    baseBuf[i] = 10; baseBuf[i + 1] = 20; baseBuf[i + 2] = 30; baseBuf[i + 3] = 255;
+    objBuf[i] = 250; objBuf[i + 1] = 240; objBuf[i + 2] = 230; objBuf[i + 3] = 255;
+  }
+  const comp = Layers.compositeLayers(baseBuf, w, h, [
+    { data: objBuf, mask: sel.mask, maskW: w, maskH: h, opacity: 100, invert: false },
+  ]);
+  const inside = (45 * w + 35) * 4;
+  const outside = (5 * w + 5) * 4;
+  assert.strictEqual(comp[inside], 250);
+  assert.strictEqual(comp[outside], 10);
+});
+
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 if (failed) process.exitCode = 1;

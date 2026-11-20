@@ -879,6 +879,7 @@
     // shuffle it: the Source station holds the dropdown and the thumbnails.
     // Ctrl+D still steps through the table, for hands that live on the keys.
     demo: function () { run('window-panel-open', 'source'); },
+    layers: function () { run('window-panel-open', 'layers'); },
     random: function () { run('edit-random'); },
     webcam: function () { if ($('video-webcam')) $('video-webcam').click(); },
     video: function () { run('file-open-clip'); },
@@ -1072,6 +1073,7 @@
     paintRanges();
     appState = DS.state();
     markTool('compare', appState.compare);
+    markTool('layers', !!(appState.layers && appState.layers.enabled));
     syncTitle();
     pushToMain(false);
   }

@@ -84,6 +84,7 @@ pick a dense palette or the two-colour variant for a calmer screen.
 | [Timothy Lottes, `crt-lottes-fast.glsl`](https://github.com/libretro/glsl-shaders/blob/master/crt/shaders/crt-lottes-fast.glsl) (public domain / Unlicense) | The scanline cosine and RGB triad-mask formulas behind `phosphor`, extended with luminance compensation, highlight phosphor halation, and Aperture grille, Shadow mask and arcade Slot mask modes. |
 | [Adobe, *PostScript Language Reference*, 3rd edition — halftone dictionaries](https://www.adobe.com/products/postscript/pdfs/PLRM.pdf) | The rotated spot-function screen behind `riso`: frequency, screen angle and a round spot threshold, extended with subtractive ink overprinting on warm stock in Duotone, Black ink, Teal & amber and Crimson & ink. |
 | [Wolfram MathWorld — hypotrochoid](https://mathworld.wolfram.com/Hypotrochoid.html) and [epitrochoid](https://mathworld.wolfram.com/Epitrochoid.html) | The family of rolling-curve rosettes that informs `guilloche`, extended with Rosette, Banknote waves and Orbital engraving modes around the movable origin. |
+| [Free Dither Boy Downloads — Studio AAA](https://studioaaa.com/free-dither-boy-downloads/) (hub & linked effect/spotlight posts) | Informed the three v1.0.0 effect plugins — `modulation` (Modulation Lines: `waves`, `vertical`, `contour`, `orb`), `neoglow` (Neo Glow: `ascii`, `matrix`, `cyber`, `medieval`) and `paperdistress` (Paper Distress: `photocopy`, `parchment`, `halftone-tear`) — plus the five original **"Inspired"** palette packs (`inspired-paradise`, `inspired-halloween`, `inspired-moody-matrix`, `inspired-autumn`, `inspired-medieval`, 25 curated palettes total) and three artist-inspired preset packs (`retro-noctua`, `dread-punk`, `allan-marathon`). Every effect, palette and recipe is original work inspired by the themes on the hub; no Studio AAA code, preset JSON or palette files are copied or shipped. |
 
 The longer notes, including the equations and the decisions taken from them, are in
 [`docs/effects-research.md`](docs/effects-research.md).
@@ -200,7 +201,11 @@ The last pass added the supplied `arrow-left`, `arrows-horizontal`, `reload`,
 `square-check`, `square-uncheck`, `x` and `book` masks: back and close now use
 the same arrow and cross everywhere, the split grip uses the horizontal arrows,
 New seed uses reload, the tour's tick boxes use the square pair rather than a
-glyph, and the guide page uses the book.
+glyph, and the guide page uses the book. The 1.0.0 release added seventeen
+further official Tabler outline icons (`stack-2`, `focus-2`, `wand`, `brush`,
+`eraser`, `eye-off`, `wave-sine`, `terminal-2`, `notes`, `sunset-2`, `ghost-2`,
+`grid-dots`, `leaf`, `swords`, `flame`, `bolt` and `radar-2`) for the Layers &
+Object Detection tools and the new effect, palette and preset packages.
 
 
 The set follows [Tabler Icons](https://tabler.io/icons), which is MIT-licensed.

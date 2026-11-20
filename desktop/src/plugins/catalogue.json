@@ -35,10 +35,10 @@
     {
       "id": "crepuscular-rays",
       "name": "Crepuscular Rays",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "kind": "tool",
       "capability": "crepuscular-rays",
-      "summary": "Volumetric radial light shafts from bright pixels and thin dither lines, with Euphoria, Prismatic, Source light and Solar modes plus a placeable origin.",
+      "summary": "Adaptive volumetric radial light shafts from bright pixels and thin dither lines, with Euphoria, Prismatic, Source light and Solar modes plus canvas origin picking.",
       "author": "Dither Studio",
       "file": "crepuscular-rays.json"
     },
@@ -51,6 +51,36 @@
       "summary": "Thresholded two-octave retro bloom and chromatic halation that lets dither dots glow without washing out dark grounds.",
       "author": "Dither Studio",
       "file": "epsilon-glow.json"
+    },
+    {
+      "id": "modulation-lines",
+      "name": "Modulation Lines",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "modulation-lines",
+      "summary": "Oscilloscope and FM signal scanlines driven by pixel luminance, inspired by Studio AAA's Dither Boy Modulation Lines.",
+      "author": "Dither Studio",
+      "file": "modulation-lines.json"
+    },
+    {
+      "id": "neo-glow",
+      "name": "Neo Glow",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "neo-glow",
+      "summary": "Luminous ASCII and medieval script-rune glyph reveal over highlights, inspired by Dither Boy's Neo Glow & Script Slayer.",
+      "author": "Dither Studio",
+      "file": "neo-glow.json"
+    },
+    {
+      "id": "paper-distress",
+      "name": "Paper Distress",
+      "version": "1.0.0",
+      "kind": "tool",
+      "capability": "paper-distress",
+      "summary": "Procedural xerox toner dust, roller streaks, aged parchment fibers and zine wear, inspired by Studio AAA's Printer Trash workflow.",
+      "author": "Dither Studio",
+      "file": "paper-distress.json"
     },
     {
       "id": "riso-misprint",
@@ -83,6 +113,56 @@
       "file": "guilloche-plate.json"
     },
     {
+      "id": "inspired-paradise",
+      "name": "Paradise Palettes (Inspired)",
+      "version": "1.0.0",
+      "kind": "palette-pack",
+      "summary": "Five original Miami sunset, beach neon and coastal noir ink sets inspired by Studio AAA's Paradise Palettes for Dither Boy 6.",
+      "author": "Dither Studio · inspired by Studio AAA",
+      "homepage": "https://studioaaa.com/paradise-palettes-for-dither-boy/",
+      "file": "inspired-paradise.json"
+    },
+    {
+      "id": "inspired-halloween",
+      "name": "Spooky Halloween Palettes (Inspired)",
+      "version": "1.0.0",
+      "kind": "palette-pack",
+      "summary": "Five original pumpkin-glow, crypt and blood-moon ink sets inspired by Studio AAA's Spooky Halloween Palettes.",
+      "author": "Dither Studio · inspired by Studio AAA",
+      "homepage": "https://studioaaa.com/spooky-halloween-palettes-for-dither-boy/",
+      "file": "inspired-halloween.json"
+    },
+    {
+      "id": "inspired-moody-matrix",
+      "name": "Moody Matrix Palettes (Inspired)",
+      "version": "1.0.0",
+      "kind": "palette-pack",
+      "summary": "Five original dark, inky ordered-dither palettes tuned for Bayer and Void-and-Cluster screens, inspired by Studio AAA's Moody Matrix Palettes.",
+      "author": "Dither Studio · inspired by Studio AAA",
+      "homepage": "https://studioaaa.com/moody-matrix-palettes/",
+      "file": "inspired-moody-matrix.json"
+    },
+    {
+      "id": "inspired-autumn",
+      "name": "Autumn Palettes (Inspired)",
+      "version": "1.0.0",
+      "kind": "palette-pack",
+      "summary": "Five original maple-rust, ochre and woodland moss ink sets inspired by Studio AAA's Autumn Palettes.",
+      "author": "Dither Studio · inspired by Studio AAA",
+      "homepage": "https://studioaaa.com/autumn-palettes-download/",
+      "file": "inspired-autumn.json"
+    },
+    {
+      "id": "inspired-medieval",
+      "name": "Medieval Palettes (Inspired)",
+      "version": "1.0.0",
+      "kind": "palette-pack",
+      "summary": "Five original illuminated vellum, ironclad and cathedral-glass ink sets inspired by Studio AAA's Medieval Palettes & Script Slayer.",
+      "author": "Dither Studio · inspired by Studio AAA",
+      "homepage": "https://studioaaa.com/ye-olde-palettes/",
+      "file": "inspired-medieval.json"
+    },
+    {
       "id": "euphoria-bloom",
       "name": "Euphoria & Light",
       "version": "1.0.0",
@@ -91,6 +171,36 @@
       "author": "Dither Studio",
       "homepage": "https://studioaaa.com/product/dither-boy/",
       "file": "euphoria-bloom.json"
+    },
+    {
+      "id": "retro-noctua",
+      "name": "Retro Noctua Dark Fantasy (Inspired)",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Three original dark-fantasy dialogue and medieval knight recipes inspired by Retro Noctua's Dither Boy spotlight.",
+      "author": "Dither Studio · inspired by Retro Noctua",
+      "homepage": "https://studioaaa.com/retro-noctuas-viral-dithering-art/",
+      "file": "retro-noctua.json"
+    },
+    {
+      "id": "dread-punk",
+      "name": "Dread.jpg Punk Print (Inspired)",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Three original high-contrast Sierra and distressed xerox print recipes inspired by Dread.jpg's Dither Boy spotlight.",
+      "author": "Dither Studio · inspired by Dread.jpg",
+      "homepage": "https://studioaaa.com/dither-boy-spotlight-dread-jpg/",
+      "file": "dread-punk.json"
+    },
+    {
+      "id": "allan-marathon",
+      "name": "Marathon Graphic Press (Inspired)",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Three bold sci-fi poster and signal-line recipes inspired by Allan Parker's Marathon artwork with Dither Boy.",
+      "author": "Dither Studio · inspired by Allan Parker",
+      "homepage": "https://studioaaa.com/dither-boy-in-marathon-by-allan-parker/",
+      "file": "allan-marathon.json"
     },
     {
       "id": "nikos-glitch",

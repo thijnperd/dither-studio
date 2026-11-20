@@ -27,7 +27,7 @@
     return style.webkitMaskImage || style.maskImage || '';
   });
   check('every rail tool uses the supplied mask icon',
-    railMasks.length === 9 && railMasks.every(function (mask) {
+    railMasks.length === 10 && railMasks.every(function (mask) {
       return /\/src\/assets\/(icons|menu)\//.test(mask);
     }), railMasks.length + ' icons');
   check('the menu starts closed', overlay.hidden && !menu.isOpen());

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "neo-glow",
+  "name": "Neo Glow",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "neo-glow",
+  "summary": "Luminous ASCII and medieval script-rune glyph reveal over highlights, inspired by Dither Boy's Neo Glow & Script Slayer.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/ascii-reveal-animation-guide-dither-boy-free-download/",
+  "data": {
+    "modes": ["ascii", "matrix", "cyber", "medieval"]
+  }
+}

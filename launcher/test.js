@@ -319,7 +319,7 @@ test('every error-diffusion kernel is a proper normalised spread', function () {
 });
 
 test('every registered algorithm is reachable and keeps the canvas size', function () {
-  assert.strictEqual(D.ALGORITHMS.length, 46);
+  assert.strictEqual(D.ALGORITHMS.length, 47);
   const src = flat(20, 20, 100);
   D.ALGORITHMS.forEach(function (algo) {
     const res = D.process(src, { algorithm: algo.id, palette: 'bw', pixelSize: 2, seed: 9 });
@@ -327,6 +327,7 @@ test('every registered algorithm is reachable and keeps the canvas size', functi
     assert.strictEqual(res.height, 20, algo.id + ' height');
   });
   function count(kind) { return D.ALGORITHMS.filter(function (a) { return a.kind === kind; }).length; }
+  assert.strictEqual(count('none'), 1);
   assert.strictEqual(count('diffusion'), 14);
   assert.strictEqual(count('ordered'), 18);
   assert.strictEqual(count('yliluoma'), 3);
@@ -337,6 +338,17 @@ test('every registered algorithm is reachable and keeps the canvas size', functi
   // Every id is unique, or the picker would silently shadow one.
   const ids = new Set(D.ALGORITHMS.map(function (a) { return a.id; }));
   assert.strictEqual(ids.size, D.ALGORITHMS.length);
+});
+
+test('the none algorithm passes the original continuous image through untouched', function () {
+  const src = makeSource(16, 16, function (x, y) { return [x * 15, y * 15, 90]; });
+  const res = D.process(src, { algorithm: 'none', palette: 'bw', pixelSize: 1 });
+  assert.ok(sameBytes(res.data, src.data), 'none at pixelSize 1 preserves exact source RGB');
+  const glitched = D.process(src, {
+    algorithm: 'none', palette: 'bw', pixelSize: 1, seed: 3,
+    glitches: [{ id: 'grain', amount: 40 }],
+  });
+  assert.ok(!sameBytes(glitched.data, src.data), 'effects still run after none passthrough');
 });
 
 test('dither strength scales the mask down to a plain threshold', function () {
@@ -879,8 +891,8 @@ test('the new inks carry the levels they promise', function () {
   assert.strictEqual(palette('ice').colors.length, 2);
   assert.ok(palette('matrix').colors[1][1] > palette('matrix').colors[0][1], 'matrix green brightens green');
   assert.strictEqual(D.PALETTES.length, 30);
-  assert.strictEqual(D.GLITCHES.length, 22);
-  assert.strictEqual(D.ALGORITHMS.length, 46);
+  assert.strictEqual(D.GLITCHES.length, 25);
+  assert.strictEqual(D.ALGORITHMS.length, 47);
 });
 
 // ---- 13. tone maps and alpha ----
@@ -995,7 +1007,7 @@ function imageOf(w, h, fn) {
 }
 
 test('every glitch names itself and only offers modes it implements', function () {
-  assert.strictEqual(D.GLITCHES.length, 22);
+  assert.strictEqual(D.GLITCHES.length, 25);
   const ids = new Set();
   D.GLITCHES.forEach(function (g) {
     assert.ok(g.id && g.name && g.hint, 'metadata for ' + g.id);
@@ -1313,13 +1325,16 @@ test('Shape Press draws all six shape sets and responds to luminance in cross mo
   assert.ok(brightOn > darkOn, 'cross mode fills more pixels in bright cells than dark cells');
 });
 
-test('the five effect plugins declare their capabilities and change the frame', function () {
+test('the eight effect plugins declare their capabilities and change the frame', function () {
   const plugins = {
     crepuscular: 'crepuscular-rays',
     riso: 'riso-misprint',
     phosphor: 'phosphor-mask',
     guilloche: 'guilloche-plate',
     epsilonglow: 'epsilon-glow',
+    modulation: 'modulation-lines',
+    neoglow: 'neo-glow',
+    paperdistress: 'paper-distress',
   };
   const w = 48, h = 48;
   const src = makeSource(w, h, function (x, y) { return [x * 5, y * 5, (x + y) * 2]; }).data;
@@ -1431,7 +1446,7 @@ test('the whole glitch stack on a megapixel', function () {
     algorithm: 'bayer4', palette: 'c64', pixelSize: 1, seed: 1,
     glitches: D.GLITCHES.map(function (g) { return { id: g.id, amount: 50 }; }),
   };
-  budget('all 22 glitches', settings, 6000);
+  budget('all 25 glitches', settings, 6000);
 });
 
 test('a structure screen holds its sample budget on a big frame', function () {

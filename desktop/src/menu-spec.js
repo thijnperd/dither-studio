@@ -83,6 +83,7 @@
           { label: 'Print with Characters', command: 'image-textmode', accel: 'CmdOrCtrl+T', check: 'textMode' },
           { label: 'Character Ramp', catalogue: 'TEXT_RAMPS', command: 'image-ramp', radio: 'textRamp', check: 'textRamp' },
           { type: 'sep' },
+          { label: 'Show the Layers Panel', command: 'window-panel-open', arg: 'layers', accel: 'CmdOrCtrl+L' },
           { label: 'Show the Tone Panel', command: 'window-panel', arg: 'tone' },
           { label: 'Show the Detail Panel', command: 'window-panel', arg: 'detail' },
         ],

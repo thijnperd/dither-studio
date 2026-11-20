@@ -12,10 +12,13 @@
   check('the preload bridge is present', !!window.ditherDesktop);
   check('the menu bar has eight menus', document.querySelectorAll('.menubar .menu').length === 8,
     document.querySelectorAll('.menubar .menu').length);
-  check('the dock holds all eleven panels', document.querySelectorAll('#rail .group').length === 11,
+  check('the dock holds all twelve panels', document.querySelectorAll('#rail .group').length === 12,
     document.querySelectorAll('#rail .group').length);
   check('the algorithm list is filled', document.getElementById('algorithm').options.length === window.DitherLib.ALGORITHMS.length,
     document.getElementById('algorithm').options.length);
+  check('the no-dither algorithm is available', Array.prototype.some.call(document.getElementById('algorithm').options, function (o) {
+    return o.value === 'none';
+  }));
   check('the palette list is filled', document.getElementById('palette').options.length === window.DitherLib.PALETTES.length,
     document.getElementById('palette').options.length);
   check('the recipe list is filled', document.getElementById('preset').options.length >= 25,

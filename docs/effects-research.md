@@ -27,16 +27,19 @@ while empty dark pockets stay deep black.
 
 **What this implementation does (rebuilt in 0.7.1)**
 
-- **Dither-aware emitter map:** builds a half-resolution emitter field by
-  blending each block's mean and peak luminance (`0.64 * mean + 0.36 * peak`)
-  with a soft dark knee. Thin 1-bit lightning lines and sparse stipple dots
-  continue to emit directional shafts instead of disappearing below a high
-  box-average threshold.
-- **True outward radial march with IGN jitter:** marches 38 exponentially
+- **Adaptive highlight-aware emitter map:** measures the frame's luminance
+  distribution so dark-ground graphics (where nearly everything is black) emit
+  strongly even from sparse 1-bit dots and thin lines (`0.54 * mean + 0.46 *
+  peak`), while midtone/full-frame photos automatically raise the emission
+  threshold above background midtones so only true highlights cast distinct
+  shafts instead of flat fog.
+- **Full-reach outward radial march with IGN jitter:** marches 46 exponentially
   decayed steps from each pixel back toward the normalised origin (`Origin X/Y`,
   0–100%, or clicked/dragged directly on the proof via the crosshair Pick
-  button), jittered deterministically with Interleaved Gradient Noise so rays
-  never band or step.
+  button) across up to ~92% of the radial span, jittered deterministically with
+  Interleaved Gradient Noise and a gentle coherent dust-shaft modulation so
+  narrow portraits, smooth silhouettes and bright photos all project crisp,
+  long rays without banding.
 - **Four lighting modes:**
   - **Euphoria** (default) — icy-white figure core, orchid-violet inner halo,
     rose-magenta outward shafts, cool indigo edge shimmer, subtle chromatic
@@ -110,11 +113,42 @@ and dark ink on light grounds around the movable origin.
 `Banknote waves` (interlocking sinusoidal ribbons) and `Orbital` (harmonic
 spirograph rings).
 
+## Modulation lines
+
+**Source:** Inspired by Studio AAA's Dither Boy modulation / scan-displacement
+workflows and classic Rutt–Etra analog video synthesis.
+
+Modulates scanlines horizontally, vertically, along local gradient contours, or
+around radial orbits proportionally to source luminance, blending crisp
+phosphor scan traces over a dark ground.
+
+**Modes:** `Waves`, `Vertical`, `Contour` and `Orb`.
+
+## Neo glow
+
+**Source:** Inspired by Studio AAA's Dither Boy *Script Slayer* / glowing
+terminal-glyph workflows.
+
+Maps local cell luminance onto compact 5×5 bitmap glyphs and overlays them with
+thresholded phosphor glow in four colour/glyph styles.
+
+**Modes:** `ASCII`, `Matrix`, `Cyber` and `Medieval`.
+
+## Paper distress
+
+**Source:** Inspired by Studio AAA's Dither Boy *Printer Trash* / distressed
+paper workflows.
+
+Combines seeded fibre grain, tonal toner-drop speckle, fold creases and torn
+border noise for photocopier, aged parchment and halftone-tear finishes.
+
+**Modes:** `Photocopy`, `Parchment` and `Halftone tear`.
+
 ## Integration decisions
 
-- All six plugin effects run post-dither at chunk resolution, so algorithms,
-  palettes, animation, video and exports route through them without a second
-  pipeline.
+- All nine plugin effects run post-dither at chunk resolution, so algorithms,
+  palettes, layers, animation, video and exports route through them without a
+  second pipeline.
 - Each is gated by a declarative plugin capability (`desktop/src/plugins/`). No
   downloaded JavaScript is executed; the package only switches on built-in code.
 - Movable origins are stored as normalised percentages (`0–100`) and can be
@@ -124,6 +158,6 @@ spirograph rings).
 
 ## Performance notes
 
-Measured on a 1024×1024 frame at pixel size 1: the entire 22-effect stack runs
-in ~2.2 s (well under the 6 s budget in `launcher/test.js`), and individual
+Measured on a 1024×1024 frame at pixel size 1: the entire 25-effect stack runs
+in ~3–4.5 s (under the 6 s budget in `launcher/test.js`), and individual
 effects stay interactive in Live preview mode.

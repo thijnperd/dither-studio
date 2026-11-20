@@ -1,9 +1,12 @@
 # Dither Studio
 
 Dither Studio is an offline dithering workbench for images and video. Load a
-picture or a clip, choose one of **46 dither algorithms** and one of **30 ink
-sets**, grade the tone and detail, stack a few effects on top, and keep what
-comes out — a PNG at up to 8×, the clipboard, a grid of text characters, a WebM
+picture or a clip, choose one of **47 algorithms** (including a **No dither**
+passthrough) and one of **30 built-in ink sets** (plus **25 inspired palettes**
+across five installable palette packs), isolate subjects with **Layers & Object
+Detection** so each object can carry its own algorithm, palette and effects,
+grade the tone and detail, stack up to **25 effects**, and keep what comes out
+— a PNG at up to 8×, the clipboard, a grid of text characters, a WebM
 recording, or the recipe itself as JSON.
 
 Everything runs on your machine. The web demo is a static page: no server, no
@@ -40,29 +43,42 @@ shelf and the download links, is
 
 ## What it does
 
-- **46 algorithms.** Classic ordered screens (Bayer 2–16, clustered-dot,
+- **47 algorithms (including No dither).** A **No dither (original image)**
+  passthrough alongside classic ordered screens (Bayer 2–16, clustered-dot,
   halftone, line and diagonal screens, checks), void-and-cluster, blue noise,
   IGN, R2, crosshatch, stochastic dithers, three Yliluoma colour-mixing plans,
   fourteen error-diffusion kernels, and three structure-aware screens that read
   the image's own contours instead of tiling over it.
-- **30 ink sets.** 1-bit black and white, Game Boy, Game Boy Pocket, C64, NES,
+- **Layers & Object Detection (desktop).** Open the **Layers** station
+  (`Ctrl+L`, or the stack button in the tool rail) to run offline automatic
+  object detection, click objects directly on the proof with **Pick object**
+  (Shift adds, Alt subtracts), or refine masks with **Paint mask** and
+  **Erase mask**. Each detected object layer and the background layer keep
+  their own independent algorithm (including **No dither** to leave the
+  background untouched), palette, tone, detail, effects stack, glow, opacity,
+  feathering and mask inversion — composited live with clean mask-free PNG
+  exports.
+- **30 built-in ink sets + 25 inspired palettes.** 1-bit black and white, Game Boy, Game Boy Pocket, C64, NES,
   ZX Spectrum, CGA, EGA, Apple II, MSX, Macintosh II, Teletext, Virtual Boy,
   PICO-8, Gruvbox, Sweetie 16, Endesga 16, Nord, three Cyberpunk sets (Breach,
   Acid and Holo), three grey ramps, and six single-ink sets (amber, sepia, cyan,
-  blueprint, matrix green, ice). In a colour mode every output pixel is exactly
-  one of the palette's inks.
+  blueprint, matrix green, ice), plus five installable palette packs inspired by
+  Studio AAA's free downloads (**Paradise**, **Spooky Halloween**, **Moody
+  Matrix**, **Autumn**, and **Medieval**). In a colour mode every output pixel
+  is exactly one of the palette's inks.
 - **Tone, detail, ink.** Black and white point, gamma, brightness, contrast,
   saturation and hue; blur, unsharp mask and median denoise; and **13 tone
   maps** that re-ink a finished dither — so a 1-bit proof stays exactly two
   inks — including your own ink and paper.
-- **22 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
+- **25 effects in a stack.** Chromatic aberration, JPEG blocks, scanlines,
   grain, pixel sort, wave, drip, kaleidoscope, dead pixels, vignette, CRT
   bloom, ripple, starfield, tape tracking, channel roll, temporal variation,
-  Shape Press, crepuscular rays, Epsilon glow, riso misprint, phosphor mask and
-  guilloche plate (the last six with their plugins), added one at a time,
-  reorderable, each with its own amount and mode — plus a blurred **glow** pass
-  that adds in linear light. Crepuscular rays and guilloche plate also take a
-  movable origin you can slide or click directly onto the proof.
+  Shape Press, crepuscular rays, Epsilon glow, riso misprint, phosphor mask,
+  guilloche plate, modulation lines, neo glow and paper distress (the last nine
+  with their plugins), added one at a time, reorderable, each with its own
+  amount and mode — plus a blurred **glow** pass that adds in linear light.
+  Crepuscular rays and guilloche plate also take a movable origin you can slide
+  or click directly onto the proof.
 - **Chunky pixels.** A pixel size of 1–16 box-averages the picture before
   dithering and upscales it without smoothing, for pixel-art output.
 - **Text mode.** Print the proof as ASCII, blocks, shades, hex or binary, and
@@ -80,26 +96,33 @@ shelf and the download links, is
   size written on its row and the installed total below the list. A package
   switches on a capability or adds recipes; installed packages stay on the
   machine, and a declarative palette pack can also be installed from a file.
-  The bundled catalogue has thirteen packages — eight tools and five preset
-  packs. **Ink Extractor** pulls a palette out of the open photo; **Shape Press**
-  redraws the proof as barcode, cross-stitch, halftone, bitmap, diamond or
-  concentric-ring sets; **Color Scheme Maker** drafts lockable palettes from
-  harmony rules (or a Lospec palette, the open image, or pasted hex) and exports
-  them as shareable packs; **Crepuscular Rays** casts outward volumetric light
-  shafts from bright pixels and thin 1-bit lines in Euphoria, Prismatic, Source
-  light and Solar modes with a canvas origin picker; **Epsilon Glow** adds
-  dither-preserving two-octave retro bloom and chromatic halation (Euphoric
-  aura, Classic bloom, Film halation and CRT phosphor); and **Riso Misprint**,
+  The bundled catalogue has **twenty-four packages** — eleven tools, five
+  inspired palette packs, and eight preset packs. **Ink Extractor** pulls a
+  palette out of the open photo; **Shape Press** redraws the proof as barcode,
+  cross-stitch, halftone, bitmap, diamond or concentric-ring sets; **Color
+  Scheme Maker** drafts lockable palettes from harmony rules (or a Lospec
+  palette, the open image, or pasted hex) and exports them as shareable packs;
+  **Crepuscular Rays** casts outward volumetric light shafts from bright pixels
+  and thin 1-bit lines in Euphoria, Prismatic, Source light and Solar modes with
+  adaptive highlight thresholding and a canvas origin picker; **Epsilon Glow**
+  adds dither-preserving two-octave retro bloom and chromatic halation (Euphoric
+  aura, Classic bloom, Film halation and CRT phosphor); **Riso Misprint**,
   **Phosphor Mask** and **Guilloche Plate** add subtractive two-plate riso
   overprints, luminance-compensated CRT phosphor triads (Aperture grille,
-  Shadow mask and Slot mask) and security engraving plates. Preset packs —
-  including **Euphoria & Light**, **Dreamy Cyberpunk**, **Niko's Glitch
-  Universe**, **Caroline's Undead Dithering** and **2_s0ur's Broken Signal** —
-  add whole recipes. Installed tools can be launched directly with **Use** from
-  the Plugin Manager or the Studio menu. Saved schemes can be renamed, reopened
-  in the maker or deleted from *File ▸ Manage Color Schemes…*, and the Presets
-  picker gives each installed pack its own heading after the built-in recipes.
-  No downloaded JavaScript is ever executed.
+  Shadow mask and Slot mask) and security engraving plates; and **Modulation
+  Lines**, **Neo Glow** and **Paper Distress** add luminance-deflected CRT wave
+  lines, luminous ASCII/Matrix/Cyber/Medieval glyph overlays, and photocopier/parchment
+  paper distress. Five palette packs inspired by Studio AAA's free downloads
+  (**Inspired: Paradise**, **Spooky Halloween**, **Moody Matrix**, **Autumn**,
+  and **Medieval**) add 25 curated palettes, and eight preset packs — including
+  **Euphoria & Light**, **Dreamy Cyberpunk**, **Niko's Glitch Universe**,
+  **Caroline's Undead Dithering**, **2_s0ur's Broken Signal**, **Inspired: Retro
+  Noctua**, **Inspired: Dread.jpg Punk** and **Inspired: Allan Parker Marathon**
+  — add whole recipes. Installed tools can be launched directly with **Use**
+  from the Plugin Manager or the Studio menu. Saved schemes can be renamed,
+  reopened in the maker or deleted from *File ▸ Manage Color Schemes…*, and the
+  Presets picker gives each installed pack its own heading after the built-in
+  recipes. No downloaded JavaScript is ever executed.
 - **25 built-in recipes.** Whole setups — algorithm, palette, grading, effects
   and glow — applied in one pick, from Newsprint and Halftone Noir to VHS Decay,
   Sweetie Postcard, Tape Deck and the three structure-aware looks. The bundled

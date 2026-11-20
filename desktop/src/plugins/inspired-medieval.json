@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "id": "inspired-medieval",
+  "name": "Medieval Palettes (Inspired)",
+  "version": "1.0.0",
+  "kind": "palette-pack",
+  "summary": "Five original illuminated vellum, ironclad and cathedral-glass ink sets inspired by Studio AAA's Medieval Palettes & Script Slayer.",
+  "author": "Dither Studio · inspired by Studio AAA",
+  "homepage": "https://studioaaa.com/ye-olde-palettes/",
+  "data": {
+    "palettes": [
+      {
+        "id": "illuminated-vellum",
+        "name": "Medieval · Illuminated Vellum",
+        "colors": ["#140f0a", "#3d2c1e", "#7a5b3b", "#b89056", "#dec48e", "#f5ebd0"]
+      },
+      {
+        "id": "ironclad-keep",
+        "name": "Medieval · Ironclad Keep",
+        "colors": ["#0c0e12", "#232830", "#464f5c", "#74808f", "#aab4c2", "#e4e8ed"]
+      },
+      {
+        "id": "cathedral-glass",
+        "name": "Medieval · Cathedral Glass",
+        "colors": ["#0e0a14", "#24316b", "#8a1f2d", "#c98b24", "#3d8754", "#f0e1b9"]
+      },
+      {
+        "id": "apothecary-ink",
+        "name": "Medieval · Apothecary Ink",
+        "colors": ["#0d100c", "#263022", "#4d5e40", "#858f68", "#c2ba93", "#ede7cf"]
+      },
+      {
+        "id": "royal-tapestry",
+        "name": "Medieval · Royal Tapestry",
+        "colors": ["#14080c", "#471422", "#872334", "#bf5a38", "#dbb05a", "#f2e4bd"]
+      }
+    ]
+  }
+}
