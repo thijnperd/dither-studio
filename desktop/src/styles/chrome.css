@@ -26,8 +26,10 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  min-width: 26px;
+  min-height: 26px;
+  width: 26px;
+  height: 26px;
   border: none;
   border-radius: var(--radius-sm);
   background: none;
@@ -36,6 +38,7 @@
 }
 
 .sysmark:hover { background: var(--hover); }
+.sysmark:focus-visible { outline-offset: -2px; }
 
 /* The app's own name sits back; the document is the thing you're looking at. */
 .tb-title {
@@ -72,11 +75,29 @@
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
   color: var(--muted);
   font-size: var(--fs-small);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.tb-note.is-actionable {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .tb-note.is-actionable:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+}
+
+.tb-note:focus-visible { outline-offset: -2px; }
 
 .tb-buttons {
   flex: 0 0 auto;
@@ -99,6 +120,7 @@
 .wbtn:hover { background: var(--hover); color: var(--text); }
 
 .wbtn:active { background: var(--pressed); }
+.wbtn:focus-visible { outline-offset: -2px; }
 
 /* The one place a red is allowed: the button that ends the session. */
 .wbtn-close:hover {
@@ -121,6 +143,7 @@
 }
 
 .menu {
+  min-height: 24px;
   height: auto;
   padding: 0 10px;
   border: none;
@@ -133,13 +156,22 @@
 
 .menu:hover { background: var(--hover); }
 
-.menu.is-open { background: var(--pressed); }
+.menu.is-open,
+.menu[aria-expanded="true"] {
+  background: var(--pressed);
+  color: #ffffff;
+}
+
+.menu:focus-visible { outline-offset: -2px; }
 
 /* One popup serves every menu: the shell renders its items and positions it. */
 .menu-pop {
   position: fixed;
   z-index: 60;
-  min-width: 248px;
+  min-width: 256px;
+  max-height: min(78vh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 4px;
   border: 1px solid var(--edge);
   border-radius: var(--radius);
@@ -155,8 +187,9 @@
   align-items: center;
   gap: 9px;
   width: 100%;
-  height: 24px;
-  padding: 0 8px;
+  min-height: 28px;
+  height: 28px;
+  padding: 0 9px;
   border: none;
   border-radius: var(--radius-sm);
   background: none;
@@ -175,13 +208,19 @@
 }
 
 .menu-item:hover { background: var(--hover); }
+.menu-item:focus-visible {
+  background: var(--hover);
+  outline-offset: -2px;
+}
 
-.menu-item.is-on { color: var(--accent); }
+.menu-item.is-on,
+.menu-item[aria-checked="true"] { color: var(--accent); }
 
-.menu-item.is-on::before {
+.menu-item.is-on::before,
+.menu-item[aria-checked="true"]::before {
   content: "";
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   background: currentColor;
   -webkit-mask: url("../assets/icons/checkmark.svg") center / contain no-repeat;
   mask: url("../assets/icons/checkmark.svg") center / contain no-repeat;
@@ -202,9 +241,9 @@
 }
 
 .menu-sep {
-  height: 1px;
+  height: 0;
   margin: 4px 6px;
-  background: var(--edge-soft);
+  border-top: 1px solid var(--edge-soft);
 }
 
 /* ================================================================= options */
@@ -229,41 +268,77 @@
 
 .opt-sep {
   flex: 0 0 auto;
-  width: 1px;
+  width: 0;
   height: 18px;
   margin: 0 4px;
-  background: var(--edge-soft);
+  border-left: 1px solid var(--edge-soft);
 }
 
 .obtn {
-  height: 24px;
+  min-height: 26px;
+  height: 26px;
   padding: 0 9px;
   font-size: var(--fs-label);
   white-space: nowrap;
 }
 
 .obtn-icon {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
   width: 28px;
   padding: 0;
   font-size: 14px;
 }
 
-.obtn-icon .ui-glyph { display: block; margin: 0 auto; }
+.obtn-icon .ui-glyph,
+.obtn-icon svg { display: block; margin: 0 auto; }
+
+.obtn[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--edge));
+  background: color-mix(in srgb, var(--accent) 22%, var(--raised));
+  color: #f4f7ff;
+}
+
+.oread-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
+}
+
+@media (hover: hover) {
+  .oread-btn:hover {
+    border-color: var(--edge-soft);
+    background: var(--hover);
+    color: var(--text);
+  }
+}
+
+.oread-btn b { color: var(--text); font-weight: 600; }
 
 /* The update note is the only thing in the bar allowed to give way, so the
    Export button at the far end is never clipped in a narrow window. */
 .opt-group:has(> .oread.is-dim) { flex: 0 1 auto; min-width: 0; }
 
 .optbar .oread.is-dim {
-  max-width: 220px;
+  max-width: 210px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.optbar select { width: auto; min-width: 64px; }
+.optbar select { width: auto; min-width: 66px; }
 
 .optbar select,
-.optbar input[type="number"] { height: 24px; padding: 0 5px; }
+.optbar input[type="number"] { height: 26px; padding-top: 0; padding-bottom: 0; }
 
 .oread {
   color: var(--muted);
@@ -278,7 +353,9 @@
 .seg { display: inline-flex; }
 
 .seg-btn {
-  height: 24px;
+  position: relative;
+  min-height: 26px;
+  height: 26px;
   padding: 0 10px;
   border-radius: 0;
   font-size: var(--fs-small);
@@ -292,10 +369,14 @@
 
 .seg-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
 
-.seg-btn.is-on {
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--edge));
-  background: color-mix(in srgb, var(--accent) 20%, var(--raised));
-  color: color-mix(in srgb, var(--accent) 35%, #ffffff);
+.seg-btn:focus-visible { z-index: 2; }
+
+.seg-btn.is-on,
+.seg-btn[aria-checked="true"] {
+  z-index: 1;
+  border-color: color-mix(in srgb, var(--accent) 56%, var(--edge));
+  background: color-mix(in srgb, var(--accent) 22%, var(--raised));
+  color: #f4f7ff;
 }
 
 /* ============================================================ work area */
@@ -326,8 +407,10 @@
   position: relative;
   display: grid;
   place-items: center;
+  min-width: 36px;
+  min-height: 34px;
   width: 36px;
-  height: 32px;
+  height: 34px;
   padding: 0;
   border-color: transparent;
   background: none;
@@ -338,16 +421,19 @@
 .tool:hover { background: var(--hover); color: var(--text); }
 
 .tool:active { background: var(--pressed); }
+.tool:focus-visible { outline-offset: -2px; }
 
 /* The selected tool is marked three ways at once: fill, ink, and a strip on
    the edge — because at this size a single cue is easy to miss. */
-.tool.is-active {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--edge));
-  background: color-mix(in srgb, var(--accent) 16%, var(--raised));
+.tool.is-active,
+.tool[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--edge));
+  background: color-mix(in srgb, var(--accent) 18%, var(--raised));
   color: var(--accent);
 }
 
-.tool.is-active::before {
+.tool.is-active::before,
+.tool[aria-pressed="true"]::before {
   content: "";
   position: absolute;
   left: -5px;
@@ -362,9 +448,9 @@
 
 .tool-sep {
   flex: 0 0 auto;
-  height: 1px;
+  height: 0;
   margin: 5px 3px;
-  background: var(--edge-soft);
+  border-top: 1px solid var(--edge-soft);
 }
 
 .tool-grow { flex: 1 1 auto; }
@@ -548,7 +634,32 @@
 }
 
 .split-grip:focus-visible { outline: none; }
-.split-grip:focus-visible::after { box-shadow: var(--focus), 0 1px 4px rgba(0, 0, 0, 0.55); }
+.split-grip:focus-visible::after {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+.split-badges {
+  position: absolute;
+  inset: 8px 8px auto 8px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.split-badge {
+  padding: 3px 7px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--chrome) 86%, transparent);
+  color: var(--text);
+  font: 600 11px/1.1 var(--font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
 
 .canvas-wrap canvas.alpha-on {
   background-image:
@@ -558,6 +669,7 @@
   background-size: 12px 12px;
 }
 
+.canvas-wrap canvas.can-pan { cursor: grab; }
 .canvas-wrap canvas.panning { cursor: grabbing; }
 
 .drop-veil {
@@ -580,7 +692,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 28px;
+  height: 32px;
   padding: 0 var(--pad);
   background: var(--chrome-2);
   border-top: 1px solid var(--edge-soft);
@@ -590,14 +702,14 @@
 .transport { display: inline-flex; align-items: center; gap: 6px; }
 
 /* The viewport bar exists for the transport. With no clip loaded it is an
-   empty 28px band of chrome, so it leaves until there is something to drive.
+   empty band of chrome, so it leaves until there is something to drive.
    The transport's own `hidden` flag is the only switch, so the CSS cannot
    disagree with the app about whether video is on. */
 .viewport-bar:not(:has(#transport:not([hidden]), #animation-transport:not([hidden]))) { display: none; }
 
 .viewport-bar .readout { font-size: var(--fs-small); }
 
-.viewport-bar .obtn { height: 20px; padding: 0 9px; }
+.viewport-bar .obtn { min-height: 24px; height: 24px; padding: 0 10px; }
 
 /* ============================================================== animation */
 
@@ -1054,32 +1166,31 @@
 .tour-title {
   margin: 7px 0 0;
   color: var(--text);
-  font: 600 var(--fs-app)/1.35 var(--font);
+  font: 600 13.5px/1.35 var(--font);
   text-wrap: balance;
 }
 
 .tour-meta { font-variant-numeric: tabular-nums; }
 
 .tour-body {
-  margin: 6px 0 0;
+  margin: 7px 0 0;
   color: var(--text);
-  font: var(--fs-app)/1.5 var(--font);
+  font: 13px/1.55 var(--font-ui);
 }
 
 /* The reason it is worth doing, behind a hairline so it reads as an aside
    rather than as more instruction. */
 .tour-why {
-  margin: 8px 0 0;
-  padding-left: 9px;
-  border-left: 2px solid var(--edge);
+  margin: 9px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 45%, var(--edge));
   color: var(--muted);
-  font-size: var(--fs-small);
-  line-height: 1.5;
+  font: var(--fs-small)/1.5 var(--font-ui);
 }
 
 .tour-track {
-  height: 2px;
-  margin: 11px 0 0;
+  height: 3px;
+  margin: 12px 0 0;
   border-radius: 999px;
   background: var(--edge-soft);
   overflow: hidden;
@@ -1097,10 +1208,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 11px;
+  margin-top: 12px;
 }
 
-.tour-actions .btn { height: 24px; padding: 0 10px; }
+.tour-actions .btn { min-height: 26px; height: 26px; padding: 0 10px; }
 
 /* A step the app can see has been done says so by itself: a tick on the title,
    in the one accent, and nothing else moves. */
@@ -1119,18 +1230,18 @@
 /* The one way out of a tour the learner did not ask for: quiet, in the meta row
    beside the step count, and on the card only while the intro is unclaimed. */
 .tour-skip {
-  padding: 0 5px;
-  border: 1px solid var(--edge-soft);
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--edge);
   border-radius: var(--radius-sm);
   color: var(--muted);
   font-size: var(--fs-small);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  transition: border-color var(--fast), color var(--fast);
+  transition: border-color var(--fast), color var(--fast), background var(--fast);
 }
 
-.tour-skip:hover { border-color: var(--accent); color: var(--text); }
-.tour-skip:focus-visible { outline: none; box-shadow: var(--focus); }
+.tour-skip:hover { border-color: var(--accent); background: var(--hover); color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
   .tour-card { animation: none; }
@@ -1247,11 +1358,12 @@ body.dock-hidden .workarea {
 
 .cmdk-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  height: 30px;
+  min-height: 32px;
+  height: 32px;
   padding: 0 9px;
   border: none;
   border-radius: var(--radius-sm);
@@ -1262,13 +1374,36 @@ body.dock-hidden .workarea {
   box-shadow: none;
 }
 
-.cmdk-row.is-on { background: color-mix(in srgb, var(--accent) 20%, var(--panel-2)); }
+.cmdk-row.is-on { background: color-mix(in srgb, var(--accent) 22%, var(--panel-2)); }
 .cmdk-row.is-on .cmdk-name { color: #ffffff; }
 
 .cmdk-name {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.cmdk-extra {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.cmdk-swatches {
+  display: inline-flex;
+  width: 44px;
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  background: var(--sunken);
+}
+
+.cmdk-swatch {
+  flex: 1 1 0;
+  min-width: 2px;
+  height: 100%;
 }
 
 .cmdk-tag {
@@ -1290,6 +1425,7 @@ body.dock-hidden .workarea {
 
 .cmdk-foot {
   display: flex;
+  align-items: center;
   gap: 14px;
   padding: 7px 12px;
   border-top: 1px solid var(--edge-soft);
@@ -1298,6 +1434,7 @@ body.dock-hidden .workarea {
 }
 
 .cmdk-foot kbd { margin-right: 3px; }
+.cmdk-count { margin-left: auto; font-variant-numeric: tabular-nums; }
 
 @media (prefers-reduced-motion: reduce) {
   .cmdk, .cmdk-card { transition: none; }
@@ -1339,8 +1476,38 @@ body.dock-hidden .workarea {
 .pimport.is-in .pimport-card { transform: none; }
 
 .pimport-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
   padding: 18px 18px 14px;
   border-bottom: 1px solid var(--edge-soft);
+}
+
+.pimport-head-copy { flex: 1 1 auto; min-width: 0; }
+
+.modal-close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 28px;
+  min-height: 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  color: var(--muted);
+  box-shadow: var(--shadow-1);
+}
+
+@media (hover: hover) {
+  .modal-close:hover {
+    background: var(--hover);
+    border-color: color-mix(in srgb, var(--muted) 45%, var(--edge));
+    color: var(--text);
+  }
 }
 
 .pimport-kicker {
@@ -1515,8 +1682,8 @@ body.dock-hidden .workarea {
   font: 600 var(--fs-label)/1.35 var(--font-ui);
 }
 
-.palette-manager-name:hover { border-color: var(--edge-soft); }
-.palette-manager-name:focus { border-color: var(--accent); background: var(--panel); outline: none; }
+.palette-manager-name:hover { border-color: var(--edge); }
+.palette-manager-name:focus-visible { border-color: var(--accent); background: var(--panel); }
 
 .palette-manager-meta {
   padding-left: 7px;

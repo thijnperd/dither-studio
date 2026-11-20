@@ -31,6 +31,7 @@
   let list = null;
   let statusLine = null;
   let storageLine = null;
+  let restoreFocus = null;
 
   function note(text) {
     if (statusLine) statusLine.textContent = text;
@@ -254,6 +255,7 @@
     action.className = 'btn' + (pkg ? '' : ' btn-primary');
     action.type = 'button';
     action.textContent = pkg ? 'Remove' : 'Install';
+    action.setAttribute('aria-label', (pkg ? 'Remove ' : 'Install ') + (entry.name || entry.id));
     action.disabled = busy;
     action.addEventListener('click', function () {
       if (pkg) remove(entry.id);
@@ -338,6 +340,8 @@
     storageLine = $('plugin-storage');
     if (!overlay || !list) return false;
     $('plugin-close').addEventListener('click', close);
+    const xBtn = $('plugin-x');
+    if (xBtn) xBtn.addEventListener('click', close);
     $('plugin-refresh').addEventListener('click', function () { fetchCatalogue(true); });
     const fileInput = $('plugin-file-input');
     if (fileInput) {
@@ -358,9 +362,14 @@
         reader.readAsText(file);
       });
     }
-    overlay.addEventListener('pointerdown', function (event) { if (event.target === overlay) close(); });
+    if (global.DitherModal && global.DitherModal.bindBackdropDismiss) {
+      global.DitherModal.bindBackdropDismiss(overlay, close);
+    } else {
+      overlay.addEventListener('pointerdown', function (event) { if (event.target === overlay) close(); });
+    }
     overlay.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') { event.preventDefault(); close(); }
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return; }
+      if (event.key === 'Tab' && global.DitherModal) global.DitherModal.trapFocus(overlay, event);
     });
     return true;
   }
@@ -374,16 +383,27 @@
     if (global.DitherColorScheme && global.DitherColorScheme.isOpen && global.DitherColorScheme.isOpen()) global.DitherColorScheme.close();
     if (global.DitherPaletteManager && global.DitherPaletteManager.isOpen && global.DitherPaletteManager.isOpen()) global.DitherPaletteManager.close();
     overlay.hidden = false;
-    global.requestAnimationFrame(function () { overlay.classList.add('is-in'); });
+    restoreFocus = document.activeElement;
+    if (global.DitherModal) global.DitherModal.markOpen(overlay);
+    global.requestAnimationFrame(function () {
+      overlay.classList.add('is-in');
+      const refreshBtn = $('plugin-refresh');
+      if (refreshBtn) refreshBtn.focus();
+    });
     render();
     if (!catalogue) fetchCatalogue(false);
     return true;
   }
 
   function close() {
-    if (!overlay) return;
+    if (!overlay || overlay.hidden) return;
     overlay.classList.remove('is-in');
     overlay.hidden = true;
+    if (global.DitherModal) global.DitherModal.markClosed(overlay);
+    if (restoreFocus && restoreFocus.focus) {
+      try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
+    }
+    restoreFocus = null;
   }
 
   function isOpen() { return !!overlay && !overlay.hidden; }

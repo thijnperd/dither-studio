@@ -10,6 +10,17 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.7.0 — Accessible workbench and UI polish (2026-11-20)
+
+**A sharper instrument panel: full keyboard navigation, higher contrast, and faster everyday controls.**
+
+- **Higher contrast and clearer focus.** Muted labels, hints, and control borders now clear WCAG AA contrast across every dark surface, with `@media (prefers-contrast: more)` and Windows High Contrast (`forced-colors`) support so focus rings, separators, mask icons, and palette swatches remain legible in every display mode. Every interactive control uses a real `:focus-visible` outline and meets the 24×24 px minimum target size.
+- **Full keyboard and screen-reader architecture.** Added a `<main>` workspace landmark and skip link, WAI-ARIA roving tabindex on the menu bar (`ArrowLeft`/`ArrowRight`/`ArrowUp`/`ArrowDown`/`Home`/`End`, including submenu navigation and `Escape` focus return), roving tabindex on the vertical tool rail and update-mode radiogroup, accessible names on every icon-only stepper and row action, and keyboard-operable Compare and saved-file receipt buttons.
+- **Unified modal containment.** All seven modal windows now share one modal layer (`modal.js`) that marks the background workspace `inert` while open, traps Tab focus, prevents bare keys (`R`, `C`, `+`, `−`, `0`) and accelerators from leaking behind dialogs, requires both press and release on the backdrop to dismiss, and places a consistent close (`×`) button in every dialog header.
+- **Faster everyday controls.** Added Undo and Redo buttons to the options bar, double-click to reset any slider (with modified values highlighted in accent blue and per-station Reset buttons for Tone, Detail, Glow, and Effects), live percentage readouts in the effects stack, click-to-copy hex chips on palette swatches, `Ctrl+Wheel` zoom and click-to-toggle `Fit`/`1×` zoom, and `Source`/`Proof` edge badges during split compare.
+- **Better dock ergonomics and typography.** The panel dock is now resizable (280–460 px, drag or arrow keys, double-click to reset), its tab strip scrolls horizontally with the mouse wheel and fades cleanly at overflowing edges, active stations show an accent dot on their tab and header, and multi-line guidance in the tour card and panel hints uses the UI sans-serif font for easier reading. The Learn lesson list is height-bounded so Source and Press stay in view on boot, and the Command Palette shows palette swatches and shortcut keycaps alongside match counts.
+- **Smaller fixes.** Fixed the tutorial coach mark's trailing scroll throttle so the spotlight settles cleanly after smooth rail scrolls, silenced live-region spam during continuous video and animation playback, and enabled `willReadFrequently` on the canvas contexts to eliminate Chromium readback warnings.
+
 ## 0.6.1 — Rays, riso, phosphor and guilloche (2026-11-13)
 
 **Four new effect plugins, and a light origin you can place.**

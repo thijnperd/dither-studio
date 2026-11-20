@@ -290,8 +290,16 @@
 
   const pop = $('menu-pop');
   if (pop) pop.__level = 0;   // the drop-down itself; submenus count up from it
+  const menuButtons = Array.prototype.slice.call(document.querySelectorAll('.menubar .menu'));
   let subMenus = [];
   let openId = null;
+
+  function setMenuRoving(target) {
+    if (!target || menuButtons.indexOf(target) < 0) return;
+    menuButtons.forEach(function (btn) {
+      btn.tabIndex = btn === target ? 0 : -1;
+    });
+  }
 
   function accelText(accel) {
     if (!accel) return '';
@@ -312,7 +320,11 @@
   // box itself, or the item under the cursor deletes itself.
   function closeSubMenusFrom(level) {
     subMenus = subMenus.filter(function (node) {
-      if ((node.__level || 1) > level) { node.remove(); return false; }
+      if ((node.__level || 1) > level) {
+        if (node.__owner) node.__owner.setAttribute('aria-expanded', 'false');
+        node.remove();
+        return false;
+      }
       return true;
     });
   }
@@ -321,14 +333,19 @@
     closeSubMenusFrom(0);
   }
 
-  function closeMenus() {
+  function closeMenus(restoreTrigger) {
+    const activeTrigger = openId ? document.querySelector('.menu[data-menu="' + openId + '"]') : null;
     closeSubMenus();
     if (pop) { pop.hidden = true; pop.textContent = ''; }
-    Array.prototype.forEach.call(document.querySelectorAll('.menu.is-open'), function (button) {
+    menuButtons.forEach(function (button) {
       button.classList.remove('is-open');
       button.setAttribute('aria-expanded', 'false');
     });
     openId = null;
+    if (restoreTrigger && activeTrigger) {
+      setMenuRoving(activeTrigger);
+      activeTrigger.focus();
+    }
   }
 
   function place(box, rect, side) {
@@ -337,7 +354,11 @@
     const height = box.offsetHeight;
     let left = side === 'right' ? rect.right - 4 : rect.left;
     let top = side === 'right' ? rect.top - 5 : rect.bottom;
-    if (left + width > window.innerWidth - 6) left = Math.max(6, window.innerWidth - width - 6);
+    if (side === 'right' && left + width > window.innerWidth - 6) {
+      left = Math.max(6, rect.left - width + 4);
+    } else if (left + width > window.innerWidth - 6) {
+      left = Math.max(6, window.innerWidth - width - 6);
+    }
     if (top + height > window.innerHeight - 6) top = Math.max(6, window.innerHeight - height - 6);
     box.style.left = Math.round(left) + 'px';
     box.style.top = Math.round(top) + 'px';
@@ -349,13 +370,23 @@
       if (node.type === 'sep') {
         const line = document.createElement('div');
         line.className = 'menu-sep';
+        line.setAttribute('role', 'separator');
         box.appendChild(line);
         return;
       }
       const item = document.createElement('button');
       item.type = 'button';
       item.className = 'menu-item';
-      item.setAttribute('role', 'menuitem');
+      const checked = isOn(node);
+      if (node.radio) {
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', checked ? 'true' : 'false');
+      } else if (node.check) {
+        item.setAttribute('role', 'menuitemcheckbox');
+        item.setAttribute('aria-checked', checked ? 'true' : 'false');
+      } else {
+        item.setAttribute('role', 'menuitem');
+      }
       const label = document.createElement('span');
       label.textContent = node.label;
       item.appendChild(label);
@@ -369,12 +400,15 @@
         arrowGlyph.setAttribute('aria-hidden', 'true');
         arrow.appendChild(arrowGlyph);
         item.appendChild(arrow);
-        item.setAttribute('aria-haspopup', 'true');
+        item.setAttribute('aria-haspopup', 'menu');
+        item.setAttribute('aria-expanded', 'false');
         const level = box.__level || 0;
-        item.addEventListener('mouseenter', function () { openSubMenu(item, node.submenu, level); });
+        item.__submenu = node.submenu;
+        item.__level = level;
+        item.addEventListener('mouseenter', function () { openSubMenu(item, node.submenu, level, false); });
         item.addEventListener('click', function (event) {
           event.stopPropagation();
-          openSubMenu(item, node.submenu, level);
+          openSubMenu(item, node.submenu, level, true);
         });
       } else {
         if (node.accel) {
@@ -385,49 +419,88 @@
         }
         item.addEventListener('mouseenter', function () { closeSubMenusFrom(box.__level || 0); });
         item.addEventListener('click', function () {
-          closeMenus();
+          closeMenus(false);
           run(node.command, node.arg);
         });
       }
 
-      if (isOn(node)) item.classList.add('is-on');
+      if (checked) item.classList.add('is-on');
       box.appendChild(item);
     });
     place(box, anchor.getBoundingClientRect(), side || 'below');
   }
 
-  function openSubMenu(item, items, level) {
+  function openSubMenu(item, items, level, focusFirst) {
     const from = level || 0;
     closeSubMenusFrom(from);
     const box = document.createElement('div');
     box.className = 'menu-pop is-sub';
+    box.setAttribute('role', 'menu');
     box.__level = from + 1;
+    box.__owner = item;
+    item.setAttribute('aria-expanded', 'true');
     document.body.appendChild(box);
     subMenus.push(box);
     drawInto(box, items, item, 'right');
+    if (focusFirst) {
+      const first = box.querySelector('.menu-item:not([disabled])');
+      if (first) first.focus();
+    }
+    return box;
   }
 
   function openMenu(button) {
     const menu = menuById(button.getAttribute('data-menu'));
     if (!menu) return;
     const wasOpen = openId === menu.id;
-    closeMenus();
+    closeMenus(false);
+    setMenuRoving(button);
     if (wasOpen) return;
     openId = menu.id;
     button.classList.add('is-open');
     button.setAttribute('aria-expanded', 'true');
     drawInto(pop, menu.items, button, 'below');
-    const first = pop.querySelector('.menu-item');
+    const first = pop.querySelector('.menu-item:not([disabled])');
     if (first) first.focus();
     pushToMain(false);
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll('.menu'), function (button) {
-    button.setAttribute('aria-haspopup', 'true');
+  menuButtons.forEach(function (button, index) {
+    button.setAttribute('aria-haspopup', 'menu');
     button.setAttribute('aria-expanded', 'false');
     button.addEventListener('click', function (event) {
       event.stopPropagation();
       openMenu(button);
+    });
+    button.addEventListener('focus', function () {
+      setMenuRoving(button);
+    });
+    button.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        const next = menuButtons[(index + 1) % menuButtons.length];
+        setMenuRoving(next);
+        if (openId) openMenu(next);
+        else next.focus();
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        const prev = menuButtons[(index - 1 + menuButtons.length) % menuButtons.length];
+        setMenuRoving(prev);
+        if (openId) openMenu(prev);
+        else prev.focus();
+      } else if (event.key === 'ArrowDown' || event.key === 'Home') {
+        event.preventDefault();
+        if (openId !== button.getAttribute('data-menu')) openMenu(button);
+        else {
+          const first = pop && pop.querySelector('.menu-item:not([disabled])');
+          if (first) first.focus();
+        }
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        if (openId !== button.getAttribute('data-menu')) openMenu(button);
+        const list = pop ? pop.querySelectorAll('.menu-item:not([disabled])') : [];
+        if (list.length) list[list.length - 1].focus();
+      }
     });
     // Once a menu is open, sliding along the bar switches menus: the way a
     // desktop menu bar behaves, and the reason this cannot be a click-only menu.
@@ -438,7 +511,7 @@
     // Every popup, the drop-down and any submenu under it.
     if (event.target.closest && event.target.closest('.menu-pop')) return;
     if (event.target.closest && event.target.closest('.menu')) return;
-    closeMenus();
+    closeMenus(false);
   });
 
   // The left and right arrows walk the bar, wrapping in both directions.
@@ -452,12 +525,27 @@
   }
 
   document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') { closeMenus(); return; }
+    if (event.key === 'Escape') {
+      if (subMenus.length) {
+        event.preventDefault();
+        const deepest = subMenus[subMenus.length - 1];
+        const owner = deepest && deepest.__owner;
+        closeSubMenusFrom((deepest.__level || 1) - 1);
+        if (owner && owner.focus) owner.focus();
+        return;
+      }
+      if (openId) {
+        event.preventDefault();
+        closeMenus(true);
+      }
+      return;
+    }
     if (!openId) {
       // Alt plus the underlined letter opens a menu, as everywhere else.
       if (event.altKey && !event.ctrlKey && !event.metaKey) {
+        if (window.DitherModal && window.DitherModal.anyOpen()) return;
         const letter = String(event.key || '').toLowerCase();
-        const button = Array.prototype.find.call(document.querySelectorAll('.menu'), function (node) {
+        const button = menuButtons.find(function (node) {
           return node.textContent.toLowerCase().charAt(0) === letter;
         });
         if (button) {
@@ -467,9 +555,15 @@
       }
       return;
     }
-    const items = Array.prototype.filter.call(pop.querySelectorAll('.menu-item'), function (node) {
+    if (event.key === 'Tab') {
+      closeMenus(false);
+      return;
+    }
+    const activeBox = (document.activeElement && document.activeElement.closest &&
+      document.activeElement.closest('.menu-pop')) || (subMenus.length ? subMenus[subMenus.length - 1] : pop);
+    const items = activeBox ? Array.prototype.filter.call(activeBox.querySelectorAll('.menu-item'), function (node) {
       return !node.disabled;
-    });
+    }) : [];
     if (!items.length) return;
     const index = items.indexOf(document.activeElement);
     if (event.key === 'ArrowDown') {
@@ -478,10 +572,29 @@
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       items[(index - 1 + items.length) % items.length].focus();
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      items[0].focus();
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      items[items.length - 1].focus();
     } else if (event.key === 'ArrowRight') {
-      if (stepMenu(1)) event.preventDefault();
+      const current = document.activeElement;
+      if (current && current.__submenu) {
+        event.preventDefault();
+        openSubMenu(current, current.__submenu, current.__level || 0, true);
+      } else if (stepMenu(1)) {
+        event.preventDefault();
+      }
     } else if (event.key === 'ArrowLeft') {
-      if (stepMenu(-1)) event.preventDefault();
+      if (activeBox && activeBox.__level > 0) {
+        event.preventDefault();
+        const owner = activeBox.__owner;
+        closeSubMenusFrom(activeBox.__level - 1);
+        if (owner && owner.focus) owner.focus();
+      } else if (stepMenu(-1)) {
+        event.preventDefault();
+      }
     }
   });
 
@@ -551,12 +664,17 @@
       if (!hit) return;
       // Alt plus a letter belongs to the menu bar, not to an accelerator.
       if (event.altKey && !event.ctrlKey) return;
-      // A modal owns the keyboard while it is open. Ctrl+K is the one global
-      // exception: it closes Help (palette.open does that) and opens Find.
-      const modal = (window.DitherHelp && window.DitherHelp.isOpen()) ||
+      // A modal owns the keyboard while it is open. Ctrl+K and Ctrl+Shift+M
+      // are the two global surfaces that can still open cleanly.
+      const modal = (window.DitherModal && window.DitherModal.anyOpen()) ||
+        (window.DitherHelp && window.DitherHelp.isOpen()) ||
         (window.DitherPalette && window.DitherPalette.isOpen()) ||
         (window.DitherPaletteImport && window.DitherPaletteImport.isOpen()) ||
-        (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen());
+        (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen()) ||
+        (window.DitherPlugins && window.DitherPlugins.isOpen && window.DitherPlugins.isOpen()) ||
+        (window.DitherInkExtractor && window.DitherInkExtractor.isOpen && window.DitherInkExtractor.isOpen()) ||
+        (window.DitherColorScheme && window.DitherColorScheme.isOpen && window.DitherColorScheme.isOpen()) ||
+        (window.DitherPaletteManager && window.DitherPaletteManager.isOpen && window.DitherPaletteManager.isOpen());
       // Find and the studio menu are the two global surfaces: both can be
       // reached while another modal is up, and the menu can be toggled shut
       // with the same key that opened it.
@@ -651,12 +769,34 @@
   const tbNote = $('tb-note');
   let noteTimer = 0;
 
-  function note(text) {
+  function clearNoteAction() {
+    if (!tbNote) return;
+    delete tbNote.dataset.path;
+    tbNote.classList.remove('is-actionable');
+    tbNote.removeAttribute('tabindex');
+    tbNote.setAttribute('role', 'status');
+  }
+
+  function note(text, actionPath) {
     if (!tbNote) return;
     tbNote.textContent = text || '';
     tbNote.title = text || '';
     clearTimeout(noteTimer);
-    if (text) noteTimer = setTimeout(function () { tbNote.textContent = ''; }, 6000);
+    if (actionPath) {
+      tbNote.dataset.path = actionPath;
+      tbNote.classList.add('is-actionable');
+      tbNote.tabIndex = 0;
+      tbNote.setAttribute('role', 'button');
+    } else {
+      clearNoteAction();
+    }
+    if (text) {
+      noteTimer = setTimeout(function () {
+        tbNote.textContent = '';
+        tbNote.title = '';
+        clearNoteAction();
+      }, 6000);
+    }
   }
 
   function syncTitle() {
@@ -706,21 +846,27 @@
   window.addEventListener('ds:saved', function (event) {
     savedCount += 1;
     const detail = event.detail || {};
-    note('Saved ' + (detail.name || detail.path || 'the proof') + '. Click here to show it in its folder.');
+    note('Saved ' + (detail.name || detail.path || 'the proof') + '. Click or press Enter to show in folder.', detail.path || '');
     if (detail.path && tbNote) {
-      tbNote.title = detail.path + '. Click to show it in its folder.';
-      tbNote.dataset.path = detail.path;
+      tbNote.title = detail.path + '. Click or press Enter to show it in its folder.';
     }
     syncTitle();
   });
 
   // The receipt in the caption is also the shortcut to the file itself.
   if (tbNote) {
-    tbNote.addEventListener('click', function () {
+    function revealReceipt() {
       const target = tbNote.dataset.path;
       if (!target) return;
       desktop.reveal(target);
       note('Showing ' + target);
+    }
+    tbNote.addEventListener('click', revealReceipt);
+    tbNote.addEventListener('keydown', function (event) {
+      if ((event.key === 'Enter' || event.key === ' ') && tbNote.dataset.path) {
+        event.preventDefault();
+        revealReceipt();
+      }
     });
   }
 
@@ -740,25 +886,68 @@
     preset: function () { run('window-panel', 'preset'); },
   };
 
-  function markTool(name, on) {
-    const button = document.querySelector('.tool[data-tool="' + name + '"]');
-    if (button) button.classList.toggle('is-active', !!on);
+  const railEl = $('toolrail');
+  const railButtons = Array.prototype.slice.call(document.querySelectorAll('.toolrail .tool'));
+
+  function setRailRoving(target) {
+    if (!target || railButtons.indexOf(target) < 0) return;
+    railButtons.forEach(function (btn) {
+      btn.tabIndex = btn === target ? 0 : -1;
+    });
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll('.tool'), function (button) {
+  if (railEl && railButtons.length) {
+    railEl.addEventListener('focusin', function (event) {
+      const btn = event.target && event.target.closest && event.target.closest('.tool');
+      if (btn) setRailRoving(btn);
+    });
+    railEl.addEventListener('keydown', function (event) {
+      const current = railButtons.indexOf(document.activeElement);
+      if (current < 0) return;
+      let next = -1;
+      if (event.key === 'ArrowDown') next = (current + 1) % railButtons.length;
+      else if (event.key === 'ArrowUp') next = (current - 1 + railButtons.length) % railButtons.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = railButtons.length - 1;
+      else return;
+      event.preventDefault();
+      setRailRoving(railButtons[next]);
+      railButtons[next].focus();
+    });
+  }
+
+  function markTool(name, on) {
+    const button = document.querySelector('.tool[data-tool="' + name + '"]');
+    if (!button) return;
+    button.classList.toggle('is-active', !!on);
+    if (button.hasAttribute('aria-pressed')) {
+      button.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
+
+  railButtons.forEach(function (button) {
     const name = button.getAttribute('data-tool');
     if (name === 'compare') {
-      // Compare is a hold, exactly like the key: press to see the source.
+      // Pointer hold shows the source; keyboard Space/Enter toggles so keyboard
+      // users can compare just as easily.
       button.addEventListener('pointerdown', function (event) {
         event.preventDefault();
         run('view-compare', true);
-        button.classList.add('is-active');
+        markTool('compare', true);
       });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (type) {
         button.addEventListener(type, function () {
-          run('view-compare', false);
-          button.classList.remove('is-active');
+          if (appState.compare) {
+            run('view-compare', false);
+            markTool('compare', false);
+          }
         });
+      });
+      button.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          run('view-compare');
+        }
       });
       return;
     }
@@ -770,27 +959,44 @@
   // flash labels) and instantly on keyboard focus. It replaces the platform
   // title, whose one-second delay makes an unfamiliar icon feel like a guess.
   const tip = document.createElement('div');
+  tip.id = 'rail-tip';
   tip.className = 'tip';
+  tip.setAttribute('role', 'tooltip');
   tip.hidden = true;
   document.body.appendChild(tip);
   let tipTimer = 0;
+  let tipOwner = null;
 
   function hideTip() {
     clearTimeout(tipTimer);
     tip.hidden = true;
+    if (tipOwner) {
+      if (tipOwner.getAttribute('aria-describedby') === tip.id) {
+        tipOwner.removeAttribute('aria-describedby');
+      }
+      tipOwner = null;
+    }
   }
 
   function showTip(button) {
     const label = button.getAttribute('data-label');
     if (!label) return;
+    if (tipOwner && tipOwner !== button && tipOwner.getAttribute('aria-describedby') === tip.id) {
+      tipOwner.removeAttribute('aria-describedby');
+    }
+    tipOwner = button;
     tip.textContent = label;
     tip.hidden = false;
+    button.setAttribute('aria-describedby', tip.id);
     const rect = button.getBoundingClientRect();
-    tip.style.left = Math.round(rect.right + 8) + 'px';
-    tip.style.top = Math.round(rect.top + rect.height / 2 - tip.offsetHeight / 2) + 'px';
+    const top = Math.max(6, Math.min(window.innerHeight - tip.offsetHeight - 6,
+      rect.top + rect.height / 2 - tip.offsetHeight / 2));
+    const left = Math.min(window.innerWidth - tip.offsetWidth - 6, rect.right + 8);
+    tip.style.left = Math.round(left) + 'px';
+    tip.style.top = Math.round(top) + 'px';
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll('.toolrail .tool'), function (button) {
+  railButtons.forEach(function (button) {
     const label = button.getAttribute('title');
     if (label) {
       button.setAttribute('data-label', label);
@@ -798,12 +1004,16 @@
     }
     button.addEventListener('mouseenter', function () {
       clearTimeout(tipTimer);
-      tipTimer = setTimeout(function () { showTip(button); }, 380);
+      tipTimer = setTimeout(function () { showTip(button); }, 320);
     });
     button.addEventListener('mouseleave', hideTip);
     button.addEventListener('click', hideTip);
     button.addEventListener('focus', function () { showTip(button); });
     button.addEventListener('blur', hideTip);
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !tip.hidden) hideTip();
   });
 
   window.addEventListener('blur', hideTip);
@@ -830,7 +1040,10 @@
     const stats = api && api.videoStats ? api.videoStats() : null;
     const recording = !!(stats && stats.recording);
     const tool = document.querySelector('.tool[data-tool="record"]');
-    if (tool) tool.classList.toggle('is-recording', recording);
+    if (tool) {
+      tool.classList.toggle('is-recording', recording);
+      tool.setAttribute('aria-pressed', recording ? 'true' : 'false');
+    }
     if (tbNote && recording) note('Recording the playback…');
   }, 500);
 
@@ -858,6 +1071,7 @@
   function refresh() {
     paintRanges();
     appState = DS.state();
+    markTool('compare', appState.compare);
     syncTitle();
     pushToMain(false);
   }

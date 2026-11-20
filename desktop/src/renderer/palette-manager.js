@@ -98,12 +98,14 @@
     renameBtn.className = 'btn';
     renameBtn.type = 'button';
     renameBtn.textContent = 'Rename';
+    renameBtn.setAttribute('aria-label', 'Rename ' + palette.name);
     renameBtn.disabled = true;
     renameBtn.dataset.action = 'rename';
     const editBtn = document.createElement('button');
     editBtn.className = 'btn';
     editBtn.type = 'button';
     editBtn.textContent = 'Edit';
+    editBtn.setAttribute('aria-label', 'Edit ' + palette.name);
     editBtn.dataset.action = 'edit';
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn';
@@ -263,6 +265,8 @@
     if (!overlay || !list || !closeBtn) return false;
 
     closeBtn.addEventListener('click', close);
+    const xBtn = $('palette-manager-x');
+    if (xBtn) xBtn.addEventListener('click', close);
     overlay.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -270,11 +274,18 @@
         close();
         return;
       }
-      if (event.key === 'Tab') trapFocus(event);
+      if (event.key === 'Tab') {
+        if (global.DitherModal && global.DitherModal.trapFocus) global.DitherModal.trapFocus(overlay, event);
+        else trapFocus(event);
+      }
     });
-    overlay.addEventListener('pointerdown', function (event) {
-      if (event.target === overlay) close();
-    });
+    if (global.DitherModal && global.DitherModal.bindBackdropDismiss) {
+      global.DitherModal.bindBackdropDismiss(overlay, close);
+    } else {
+      overlay.addEventListener('pointerdown', function (event) {
+        if (event.target === overlay) close();
+      });
+    }
     return true;
   }
 
@@ -289,9 +300,10 @@
     render();
     overlay.hidden = false;
     restoreFocus = document.activeElement;
+    if (global.DitherModal) global.DitherModal.markOpen(overlay);
     global.requestAnimationFrame(function () {
       overlay.classList.add('is-in');
-      const first = overlay.querySelector('.palette-manager-name');
+      const first = overlay.querySelector('.palette-manager-name') || $('palette-manager-close');
       if (first) first.focus();
     });
     return true;
@@ -302,6 +314,7 @@
     overlay.classList.remove('is-in');
     overlay.hidden = true;
     resetDelete();
+    if (global.DitherModal) global.DitherModal.markClosed(overlay);
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }

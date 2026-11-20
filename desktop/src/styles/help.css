@@ -101,8 +101,9 @@
 }
 
 .help-search:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--edge));
-  box-shadow: var(--focus);
+  border-color: var(--accent);
+  outline: var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .help-search svg {
@@ -124,7 +125,8 @@
   font: var(--fs-label)/1 var(--font);
 }
 
-.help-search input:focus {
+.help-search input:focus,
+.help-search input:focus-visible {
   outline: none;
   border: none;
   box-shadow: none;
@@ -136,8 +138,10 @@
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
+  min-width: 24px;
+  min-height: 24px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: none;
   border-radius: 3px;
@@ -151,6 +155,8 @@
   background: var(--hover);
   color: var(--text);
 }
+
+.help-search-clear:focus-visible { outline-offset: -2px; }
 
 .help-nav-scroll {
   flex: 1 1 auto;
@@ -190,6 +196,8 @@
   background: var(--hover);
   color: var(--text);
 }
+
+.help-navitem:focus-visible { outline-offset: -2px; }
 
 .help-navitem[aria-current="page"] {
   background: var(--panel-2);

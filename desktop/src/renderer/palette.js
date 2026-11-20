@@ -30,6 +30,7 @@
   let overlay = null;
   let field = null;
   let list = null;
+  let countEl = null;
   let items = null;
   let shown = [];
   let active = 0;
@@ -102,6 +103,7 @@
         group: 'Palette',
         label: entry.name,
         meta: entry.colors.length + ' inks',
+        colors: entry.colors,
         keywords: entry.id + ' palette ink colour color',
         run: function () { DS.command('press-palette', entry.id); },
       });
@@ -147,6 +149,7 @@
       out.push({
         group: 'Action',
         label: action.label,
+        command: action.command || action.shell || '',
         keywords: action.keywords || '',
         run: function () {
           if (action.shell) {
@@ -228,6 +231,9 @@
     }
 
     list.textContent = '';
+    if (countEl) {
+      countEl.textContent = shown.length === 1 ? '1 match' : shown.length + ' matches';
+    }
     if (!shown.length) {
       const empty = document.createElement('p');
       empty.className = 'cmdk-empty';
@@ -251,6 +257,37 @@
       if (tokens.length) name.appendChild(highlighted(item.label, tokens[0]));
       else name.textContent = item.label;
       row.appendChild(name);
+
+      const extra = document.createElement('span');
+      extra.className = 'cmdk-extra';
+      if (item.colors && item.colors.length) {
+        const strip = document.createElement('span');
+        strip.className = 'cmdk-swatches';
+        strip.setAttribute('aria-hidden', 'true');
+        const step = item.colors.length > 6 ? item.colors.length / 6 : 1;
+        for (let c = 0; c < item.colors.length; c += step) {
+          const rgb = item.colors[Math.floor(c)];
+          const chip = document.createElement('span');
+          chip.className = 'cmdk-swatch';
+          chip.style.background = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
+          strip.appendChild(chip);
+        }
+        extra.appendChild(strip);
+      } else if (item.command && window.DitherShortcuts && window.DitherShortcuts.keysFor) {
+        const keys = window.DitherShortcuts.keysFor(item.command);
+        if (keys && keys.length) {
+          const cap = document.createElement('kbd');
+          cap.textContent = keys.map(function (k) {
+            if (!isMac) return k;
+            if (k === 'Ctrl') return '⌘';
+            if (k === 'Shift') return '⇧';
+            if (k === 'Alt') return '⌥';
+            return k;
+          }).join(isMac ? '' : '+');
+          extra.appendChild(cap);
+        }
+      }
+      row.appendChild(extra);
 
       const tag = document.createElement('span');
       tag.className = 'cmdk-tag';
@@ -276,6 +313,7 @@
     overlay = $('cmdk');
     field = $('cmdk-input');
     list = $('cmdk-list');
+    countEl = $('cmdk-count');
     if (!overlay || !field || !list) return false;
 
     field.setAttribute('role', 'combobox');
@@ -311,10 +349,13 @@
       }
     });
 
-    // The backdrop is a click target, the card is not.
-    overlay.addEventListener('pointerdown', function (event) {
-      if (event.target === overlay) close();
-    });
+    if (window.DitherModal && window.DitherModal.bindBackdropDismiss) {
+      window.DitherModal.bindBackdropDismiss(overlay, close);
+    } else {
+      overlay.addEventListener('pointerdown', function (event) {
+        if (event.target === overlay) close();
+      });
+    }
 
     const find = $('dock-find');
     if (find) {
@@ -334,19 +375,17 @@
   function open() {
     if (!overlay && !build()) return;
     if (!overlay) return;
-    // Ctrl+K is global. If the Help window is up, it gives the keyboard back
-    // rather than letting the two overlays fight over it.
-    if (window.DitherHelp && window.DitherHelp.isOpen && window.DitherHelp.isOpen()) {
-      window.DitherHelp.close();
-    }
-    if (window.DitherPaletteImport && window.DitherPaletteImport.isOpen && window.DitherPaletteImport.isOpen()) {
-      window.DitherPaletteImport.close();
-    }
-    if (window.DitherFeatureMenu && window.DitherFeatureMenu.isOpen && window.DitherFeatureMenu.isOpen()) {
-      window.DitherFeatureMenu.close();
-    }
+    // Ctrl+K is global. Close any other modal before taking the keyboard.
+    [
+      'DitherHelp', 'DitherPaletteImport', 'DitherFeatureMenu',
+      'DitherPlugins', 'DitherInkExtractor', 'DitherColorScheme', 'DitherPaletteManager',
+    ].forEach(function (name) {
+      const api = window[name];
+      if (api && api.isOpen && api.isOpen() && api.close) api.close();
+    });
     overlay.hidden = false;
     restoreFocus = document.activeElement;
+    if (window.DitherModal) window.DitherModal.markOpen(overlay);
     field.value = '';
     render();
     field.focus();
@@ -357,6 +396,7 @@
     if (!overlay || overlay.hidden) return;
     overlay.classList.remove('is-in');
     overlay.hidden = true;
+    if (window.DitherModal) window.DitherModal.markClosed(overlay);
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }

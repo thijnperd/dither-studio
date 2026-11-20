@@ -784,6 +784,10 @@
   // ---- opening and closing ----------------------------------------------
 
   function trapFocus(event) {
+    if (window.DitherModal && window.DitherModal.trapFocus) {
+      window.DitherModal.trapFocus(overlay, event);
+      return;
+    }
     const focusable = Array.prototype.filter.call(
       overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), a[href]'),
       function (el) { return !el.hidden && el.offsetParent !== null; }
@@ -879,10 +883,13 @@
       });
     }
 
-    // The backdrop is a click target, the window is not.
-    overlay.addEventListener('pointerdown', function (event) {
-      if (event.target === overlay) close();
-    });
+    if (window.DitherModal && window.DitherModal.bindBackdropDismiss) {
+      window.DitherModal.bindBackdropDismiss(overlay, close);
+    } else {
+      overlay.addEventListener('pointerdown', function (event) {
+        if (event.target === overlay) close();
+      });
+    }
     overlay.addEventListener('keydown', keydown);
     window.addEventListener('ds:shortcuts', function () {
       if (overlay && !overlay.hidden) renderAll({ keepScroll: true });
@@ -991,12 +998,11 @@
 
     if (overlay.hidden) {
       restoreFocus = document.activeElement;
-      previousOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
       query = '';
       field.value = '';
       clearButton.hidden = true;
       overlay.hidden = false;
+      if (window.DitherModal) window.DitherModal.markOpen(overlay);
       ensureRelease();
       ensureGuide();
       renderAll();
@@ -1013,7 +1019,7 @@
     if (!overlay || overlay.hidden) return;
     overlay.classList.remove('is-in');
     overlay.hidden = true;
-    document.body.style.overflow = previousOverflow;
+    if (window.DitherModal) window.DitherModal.markClosed(overlay);
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }

@@ -12,6 +12,7 @@
  */
 
 .dock {
+  position: relative;
   display: grid;
   /* An implicit column is sized to its items' min-content, and the tab strip's
      min-content is every chip plus the find button: the column quietly grew to
@@ -25,6 +26,43 @@
   border-left: 1px solid var(--edge-soft);
   background: var(--dock);
 }
+
+.dock-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  z-index: 10;
+  width: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.dock-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: transparent;
+  transition: background var(--fast);
+}
+
+@media (hover: hover) {
+  .dock-resizer:hover::after {
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+}
+
+.dock-resizer.is-dragging::after,
+.dock-resizer:focus-visible::after {
+  background: var(--accent);
+}
+
+.dock-resizer:focus-visible { outline-offset: -2px; }
 
 /* ---------------------------------------------------------------- panel tabs */
 
@@ -52,14 +90,31 @@
   scrollbar-width: none;
 }
 
+.dock-tabs.can-scroll-right {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 20px), transparent 100%);
+}
+
+.dock-tabs.can-scroll-left {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 100%);
+}
+
+.dock-tabs.can-scroll-left.can-scroll-right {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+}
+
 .dock-tabs::-webkit-scrollbar { height: 0; }
 
 .dock-find {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 23px;
-  height: 23px;
+  min-width: 26px;
+  min-height: 26px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: 1px solid var(--edge);
   border-bottom: none;
@@ -70,18 +125,24 @@
 }
 
 .dock-find:hover { background: var(--hover); color: var(--accent); }
+.dock-find:focus-visible { outline-offset: -2px; }
 .dock-find svg { display: block; }
 
 .jump-chip {
+  position: relative;
   flex: 0 0 auto;
-  height: 23px;
-  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  height: 26px;
+  padding: 0 9px;
   border: 1px solid transparent;
   border-bottom: none;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: transparent;
   color: var(--muted);
-  font: var(--fs-small)/20px var(--font);
+  font: var(--fs-small)/1 var(--font);
   letter-spacing: 0.02em;
   white-space: nowrap;
   cursor: default;
@@ -93,6 +154,16 @@
   border-color: var(--edge-soft);
   background: var(--dock-tab);
   color: var(--text);
+}
+
+.jump-chip:focus-visible { outline-offset: -2px; }
+
+.jump-chip.has-active::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 /* The selected tab: accent edge on top, its own ground, ink text. */
@@ -127,15 +198,23 @@
 /* The hint line at the foot of the dock carries three shortcuts on one line at
  * 336px, with an ellipsis as the safety net if a translation runs long. */
 .dock-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
   padding: 6px 10px;
   border-top: 1px solid var(--edge-soft);
+  background: var(--chrome);
   overflow: hidden;
   color: var(--muted);
-  font-size: var(--fs-small);
-  line-height: 1.4;
+  font: var(--fs-small)/1.4 var(--font-ui);
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.dock-hint kbd {
+  padding: 0 4px;
+  font-size: 11px;
 }
 
 .dock-hint b { color: var(--text); font-weight: 600; }
@@ -146,7 +225,7 @@
   border-bottom: 1px solid var(--edge-soft);
   /* The header is sticky, so "bring this station into view" must leave room
      for it or the heading arrives under its own bar. */
-  scroll-margin-top: 30px;
+  scroll-margin-top: 32px;
 }
 
 .group:first-child { border-top: 1px solid var(--edge-soft); }
@@ -155,9 +234,6 @@
 
 /* The panel header. Caret, uppercase name, then the note pushed right: the
    note is the panel's state readout while it is collapsed. */
-/* The header stays at the top of the scroll port while its station is open:
-   ten stations in one column, and a slider halfway down it used to leave no
-   way to tell which station the thumb belonged to. */
 .group-head {
   position: sticky;
   top: 0;
@@ -166,7 +242,8 @@
   align-items: center;
   gap: 7px;
   width: calc(100% + 20px);
-  height: 30px;
+  min-height: 32px;
+  height: 32px;
   margin: 0 -10px;
   padding: 0 12px;
   border: none;
@@ -175,12 +252,20 @@
   font: inherit;
   text-align: left;
   cursor: default;
+  transition: background var(--fast);
 }
+
+@media (hover: hover) {
+  .group-head:hover { background: color-mix(in srgb, var(--hover) 55%, var(--dock)); }
+}
+
+.group-head:focus-visible { outline-offset: -2px; }
 
 /* Open stations name themselves at full strength; closed ones step back to the
    muted ink, so a scan of the column shows what is unfolded. */
-.group[data-open="true"] > .group-head .group-name { color: var(--text); }
+.group[data-open="true"] > .group-head .group-name { color: var(--text); font-weight: 600; }
 .group[data-open="false"] > .group-head .group-name { color: var(--muted); }
+.group.has-active > .group-head .group-note { color: var(--accent); }
 
 .group > .group-head:hover .group-name { color: var(--accent); }
 
@@ -248,18 +333,49 @@
 }
 
 /* Slider readings are right-aligned and tabular: the row never reflows as the
-   number grows from "0" to "255". */
+   number grows from "0" to "255". Modified values step forward in the accent. */
 .field > span > em {
   font-style: normal;
   font-weight: 600;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  transition: color var(--fast);
+}
+
+.field.is-modified > span > em {
+  color: var(--accent);
+}
+
+.station-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.btn-quiet {
+  min-height: 24px;
+  height: 24px;
+  padding: 0 9px;
+  border-color: var(--edge-soft);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .btn-quiet:hover:not(:disabled) {
+    border-color: var(--edge);
+    background: var(--hover);
+    color: var(--text);
+  }
 }
 
 .check {
   display: flex;
   align-items: center;
   gap: 7px;
+  min-height: 24px;
   color: var(--muted);
   font-size: var(--fs-label);
   cursor: default;
@@ -269,12 +385,11 @@
 
 .hint {
   color: var(--muted);
-  font-size: var(--fs-small);
-  line-height: 1.5;
+  font: var(--fs-small)/1.52 var(--font-ui);
   text-wrap: pretty;
 }
 
-.hint b { color: var(--text); font-weight: 600; }
+.hint b { color: var(--text); font: 600 var(--fs-small)/1.4 var(--font); }
 
 /* ----------------------------------------------------------------- rows/groups */
 
@@ -286,7 +401,15 @@
 
 .buttons-1 { grid-template-columns: 1fr; }
 
+/* Three-button layout (e.g. Learn: Take the Tour + Reset / Hide Learn): the
+   primary action spans the full first row so the pair below stays balanced. */
+.buttons > .btn-primary:first-child:nth-last-child(3) {
+  grid-column: 1 / -1;
+}
+
 .btn-step {
+  min-width: 26px;
+  min-height: var(--row);
   height: var(--row);
   padding: 0;
   font-size: 9px;
@@ -297,7 +420,7 @@
 
 .row-stepper {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px 24px;
+  grid-template-columns: minmax(0, 1fr) 26px 26px;
   gap: 4px;
 }
 
@@ -323,12 +446,23 @@
 }
 
 .swatch {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
+  padding: 0;
   border: 1px solid var(--edge);
   border-radius: 3px;
   /* Light inks need an edge of their own against the dock's dark ground. */
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 90ms var(--ease-out), border-color var(--fast);
+}
+
+@media (hover: hover) {
+  .swatch:hover {
+    border-color: var(--text);
+    transform: scale(1.16);
+    z-index: 1;
+  }
 }
 
 /* ------------------------------------------------------- the built-in sources */
@@ -346,7 +480,7 @@
   font-size: var(--fs-label);
 }
 
-.row-stepper-tight { grid-template-columns: minmax(0, 1fr) 24px 24px; }
+.row-stepper-tight { grid-template-columns: minmax(0, 1fr) 26px 26px; }
 
 .samples {
   display: grid;
@@ -400,17 +534,16 @@
 
 .stack-empty {
   margin: 0;
-  padding: 10px 6px;
+  padding: 10px 8px;
   color: var(--muted);
-  font-size: var(--fs-small);
-  line-height: 1.5;
+  font: var(--fs-small)/1.5 var(--font-ui);
   text-align: center;
 }
 
 .stack-row {
   display: grid;
-  gap: 4px;
-  padding: 5px 6px 6px;
+  gap: 5px;
+  padding: 6px 7px 7px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: var(--panel);
@@ -431,7 +564,7 @@
 
 .stack-top {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
   min-width: 0;
@@ -441,12 +574,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 3px;
   background: var(--raised);
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -459,12 +592,16 @@
   font-size: var(--fs-label);
 }
 
-.stack-tools { display: flex; gap: 3px; }
+.stack-tools { display: flex; gap: 2px; }
 
-/* ↑ ↓ ✕: a column of small square buttons that stay quiet until hovered. */
+/* ↑ ↓ ✕: 24×24px minimum target size per WCAG 2.5.8. */
 .icon-btn {
-  width: 18px;
-  height: 18px;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  min-height: 24px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 3px;
@@ -477,62 +614,68 @@
   transition: color var(--fast), border-color var(--fast), background var(--fast);
 }
 
-.icon-btn:hover {
-  border-color: var(--edge);
-  background: var(--raised);
-  color: var(--text);
+@media (hover: hover) {
+  .icon-btn:hover:not(:disabled) {
+    border-color: var(--edge);
+    background: var(--raised);
+    color: var(--text);
+  }
 }
 
-.icon-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-.icon-btn:disabled { opacity: 0.3; }
+.icon-btn:disabled { opacity: 0.32; }
 
 /* The tool that removes is not a destructive-looking button until you are on
    it — then it says so in a muted red. */
-.icon-btn:last-child:hover {
-  border-color: color-mix(in srgb, #ff8080 40%, var(--edge));
-  color: #ff8080;
+@media (hover: hover) {
+  .icon-btn:last-child:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--danger) 45%, var(--edge));
+    color: var(--danger);
+  }
 }
 
-/* Second line: the amount slider, and the mode select where the effect has one. */
+/* Second line: the amount slider, its live readout, and the mode select. */
 .stack-line {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 32px auto;
   align-items: center;
   gap: 6px;
 }
 
-.stack-line > input[type="range"] { height: 12px; }
+.stack-val {
+  color: var(--text);
+  font-style: normal;
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.stack-line > input[type="range"] { height: 18px; }
 
 .stack-line > input[type="range"]::-webkit-slider-thumb {
-  width: 9px;
-  height: 9px;
+  width: 11px;
+  height: 11px;
   margin-top: -3px;
 }
 
 .stack-line > input[type="range"]::-moz-range-thumb {
-  width: 9px;
-  height: 9px;
+  width: 11px;
+  height: 11px;
 }
 
 .stack-line > select {
-  height: 20px;
-  padding: 0 4px;
+  height: 24px;
+  padding: 0 22px 0 6px;
   font-size: var(--fs-small);
 }
 
-/* A point-based effect's origin: one compact line, two axis sliders. Kept to
-   the same height as the amount line so a long stack stays readable. */
+/* A point-based effect's origin: one compact line, two axis sliders. */
 .stack-origin {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10.5px;
 }
 
 .stack-origin-label {
@@ -542,7 +685,7 @@
 
 .stack-origin-axis {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 16px;
+  grid-template-columns: auto minmax(0, 1fr) 20px;
   align-items: center;
   gap: 3px;
   min-width: 0;
@@ -562,28 +705,30 @@
 
 .stack-origin-axis > input[type="range"] {
   width: 100%;
-  height: 10px;
+  height: 16px;
 }
 
 .stack-origin-axis > input[type="range"]::-webkit-slider-thumb {
-  width: 8px;
-  height: 8px;
-  margin-top: -3px;
+  width: 10px;
+  height: 10px;
+  margin-top: -2.5px;
 }
 
 .stack-origin-axis > input[type="range"]::-moz-range-thumb {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 /* -------------------------------------------------------------------- the tour */
 
-/* The Learn panel: the lessons the Tutorial can run. A row is the same weight
-   as an effect in the stack, and the box in front of it ticks when the lesson
-   is finished; the theme headings keep eleven rows readable as five groups. */
+/* The Learn panel: the lessons the Tutorial can run. Bounded in height so
+   opening Learn does not push Source and Press off the bottom of the window. */
 .tour-list {
   display: grid;
   gap: 4px;
+  max-height: 248px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 4px;
   border: 1px solid var(--edge-soft);
   border-radius: var(--radius-sm);
@@ -603,10 +748,10 @@
 
 .tour-row {
   display: grid;
-  grid-template-columns: 13px minmax(0, 1fr) auto;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
   align-items: start;
   gap: 7px;
-  padding: 5px 6px 6px;
+  padding: 6px 6px 6px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: var(--panel);
@@ -618,6 +763,7 @@
 }
 
 .tour-row:hover { border-color: var(--edge-soft); background: var(--hover); }
+.tour-row:focus-visible { outline-offset: -2px; }
 
 .tour-row-mark { color: var(--muted); font-size: var(--fs-small); line-height: 1.5; }
 
@@ -625,10 +771,10 @@
 .tour-row-text b { display: block; font-weight: 600; }
 .tour-row-text em {
   display: block;
+  margin-top: 1px;
   color: var(--muted);
-  font-size: var(--fs-small);
+  font: var(--fs-small)/1.45 var(--font-ui);
   font-style: normal;
-  line-height: 1.45;
 }
 
 .tour-row-when {

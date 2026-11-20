@@ -454,6 +454,8 @@
     $('scheme-copy').addEventListener('click', copyHex);
     addBtn.addEventListener('click', add);
     $('scheme-cancel').addEventListener('click', close);
+    const xBtn = $('scheme-x');
+    if (xBtn) xBtn.addEventListener('click', close);
     saveBtn.addEventListener('click', save);
     $('scheme-import-load').addEventListener('click', importValue);
     $('scheme-image').addEventListener('click', seedFromImage);
@@ -466,9 +468,17 @@
     harmonySelect.addEventListener('change', function () {
       setStatus('Harmony set to ' + HARMONY_LABELS[harmonySelect.value].split(' — ')[0] + ' · press Generate');
     });
-    overlay.addEventListener('pointerdown', function (event) { if (event.target === overlay) close(); });
+    if (global.DitherModal && global.DitherModal.bindBackdropDismiss) {
+      global.DitherModal.bindBackdropDismiss(overlay, close);
+    } else {
+      overlay.addEventListener('pointerdown', function (event) { if (event.target === overlay) close(); });
+    }
     overlay.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') { event.preventDefault(); close(); return; }
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return; }
+      if (event.key === 'Tab' && global.DitherModal) {
+        global.DitherModal.trapFocus(overlay, event);
+        return;
+      }
       // Coolors' best habit: spacebar is Generate, as long as a field is not
       // taking the key. A button keeps its own activation behaviour.
       const tag = event.target && event.target.tagName;
@@ -504,6 +514,7 @@
     if (global.DitherPaletteManager && global.DitherPaletteManager.isOpen && global.DitherPaletteManager.isOpen()) global.DitherPaletteManager.close();
     overlay.hidden = false;
     restoreFocus = document.activeElement;
+    if (global.DitherModal) global.DitherModal.markOpen(overlay);
     global.requestAnimationFrame(function () {
       overlay.classList.add('is-in');
       const generateBtn = $('scheme-generate');
@@ -513,10 +524,11 @@
   }
 
   function close() {
-    if (!overlay) return;
+    if (!overlay || overlay.hidden) return;
     overlay.classList.remove('is-in');
     overlay.hidden = true;
     editId = null;
+    if (global.DitherModal) global.DitherModal.markClosed(overlay);
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }

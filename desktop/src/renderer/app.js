@@ -97,8 +97,12 @@
     statFile: $('stat-file'), statSize: $('stat-size'), statAlgorithm: $('stat-algorithm'),
     statPalette: $('stat-palette'), statColors: $('stat-colors'), statRender: $('stat-render'),
     statStatus: $('stat-status'), statZoom: $('stat-zoom'),
-    zoomOut: $('zoom-out'), zoomFit: $('zoom-fit'), zoomIn: $('zoom-in'), compare: $('compare'),
-    split: $('split'), splitLayer: $('split-layer'), splitGrip: $('split-grip'),
+    zoomOut: $('zoom-out'), zoomFit: $('zoom-fit'), zoomIn: $('zoom-in'), zoomToggle: $('zoom-toggle'),
+    undoBtn: $('undo-btn'), redoBtn: $('redo-btn'),
+    compare: $('compare'),
+    split: $('split'), splitLayer: $('split-layer'), splitGrip: $('split-grip'), splitBadges: $('split-badges'),
+    toneReset: $('tone-reset'), detailReset: $('detail-reset'), glowReset: $('glow-reset'),
+    effectsClearBtn: $('effects-clear-btn'), dockResizer: $('dock-resizer'),
     exportScale: $('export-scale'), export: $('export'),
     videoWebcam: $('video-webcam'), videoOpen: $('video-open'), videoFile: $('video-file'),
     videoToggle: $('video-toggle'), videoFps: $('video-fps'), videoFpsValue: $('video-fps-value'),
@@ -120,8 +124,9 @@
     notePreset: $('note-preset'),
   };
 
-  const ctx = el.canvas.getContext('2d');
+  const ctx = el.canvas.getContext('2d', { willReadFrequently: true });
   const buffer = document.createElement('canvas');
+  const bufferCtx = buffer.getContext('2d', { willReadFrequently: true });
 
   // The rail's stations: every panel group is collapsible, and the chips above
   // the rail scroll to one. Order here is the order of the jump strip.
@@ -180,6 +185,11 @@
     };
   }
 
+  function syncHistoryButtons() {
+    if (el.undoBtn) el.undoBtn.disabled = history.past.length < 2;
+    if (el.redoBtn) el.redoBtn.disabled = history.future.length === 0;
+  }
+
   function resetHistory() {
     state.settings.glitches = deriveGlitches();
     const snap = historySnapshot();
@@ -188,6 +198,7 @@
     history.suspended = false;
     history.group = null;
     history.lastKey = JSON.stringify(snap);
+    syncHistoryButtons();
   }
 
   function beginHistoryGroup(name) {
@@ -213,6 +224,7 @@
     history.lastKey = key;
     history.future = [];
     if (history.past.length > history.limit) history.past.shift();
+    syncHistoryButtons();
   }
 
   function restoreHistory(snap) {
@@ -226,6 +238,7 @@
     render(true);
     history.lastKey = JSON.stringify(historySnapshot());
     history.suspended = false;
+    syncHistoryButtons();
   }
 
   function undoRecipe() {
@@ -370,6 +383,55 @@
     el.streakRow.hidden = !structure;
   }
 
+  function syncSliderStates() {
+    const s = state.settings;
+    BINDINGS.forEach(function (binding) {
+      const def = getPath(D.DEFAULTS, binding.path);
+      const cur = parseFloat(getPath(s, binding.path));
+      const changed = Math.abs(cur - parseFloat(def)) > 1e-4;
+      const field = binding.input && binding.input.closest('.field');
+      if (field) field.classList.toggle('is-modified', changed);
+    });
+    if (el.textSize) {
+      const field = el.textSize.closest('.field');
+      if (field) field.classList.toggle('is-modified', text.size !== 10);
+    }
+  }
+
+  function syncStationIndicators() {
+    const s = state.settings;
+    const a = s.adjustments;
+    const toneActive = a.black !== 0 || a.white !== 255 ||
+      Math.abs(a.gamma - 1) > 0.001 || Math.abs(a.brightness - 1) > 0.001 ||
+      Math.abs(a.contrast - 1) > 0.001 || Math.abs(a.saturation - 1) > 0.001 || a.hue !== 0;
+    const inkActive = s.toneMap !== 'none' || s.alphaMode !== 'matte';
+    const detailActive = a.blur !== 0 || a.sharpen !== 0 || !!a.denoise;
+    const effectsActive = activeEffects().length > 0;
+    const glowActive = s.glow.radius > 0 && s.glow.intensity > 0;
+    const motionActive = !!(state.videoOn || (animation && animation.isActive()));
+    const typeActive = !!text.on;
+
+    const flags = {
+      tone: toneActive,
+      ink: inkActive,
+      detail: detailActive,
+      effects: effectsActive,
+      glow: glowActive,
+      motion: motionActive,
+      type: typeActive,
+    };
+    Object.keys(flags).forEach(function (id) {
+      const group = groupEl(id);
+      if (group) group.classList.toggle('has-active', flags[id]);
+      const chip = el.jump && el.jump.querySelector('.jump-chip[data-target="' + id + '"]');
+      if (chip) chip.classList.toggle('has-active', flags[id]);
+    });
+    if (el.toneReset) el.toneReset.disabled = !toneActive;
+    if (el.detailReset) el.detailReset.disabled = !detailActive;
+    if (el.glowReset) el.glowReset.disabled = !(s.glow.radius > 0 || s.glow.intensity > 0);
+    if (el.effectsClearBtn) el.effectsClearBtn.disabled = !effectsActive;
+  }
+
   function syncUI() {
     const s = state.settings;
     el.algorithm.value = s.algorithm;
@@ -391,10 +453,12 @@
     showAlphaBehind(s.alphaMode);
     syncTextUI();
     syncScreenRows();
+    syncSliderStates();
     buildEffectList();
     syncEffectChoices();
     buildSwatches();
     syncGroupNotes();
+    syncHistoryButtons();
     // The desktop chrome: the title bar, the menu ticks, the filled part of
     // every slider: listens for this one event instead of reaching in here.
     window.dispatchEvent(new CustomEvent('ds:ui'));
@@ -607,6 +671,7 @@
     setNote(el.noteMotion, motionSummary());
     setNote(el.noteType, text.on ? text.ramp + ' · ' + text.size + 'px' : 'off');
     setNote(el.notePreset, PRESETS.length + ' recipes');
+    syncStationIndicators();
     syncConsoleNote();
   }
 
@@ -651,7 +716,7 @@
   }
 
   // The ink strip under the palette picker: the actual colours the press
-  // will use.
+  // will use. Clicking any chip copies its hex code to the clipboard.
   function buildSwatches() {
     const palette = paletteById(state.settings.palette);
     const colors = palette.colors.slice();
@@ -659,11 +724,23 @@
     const step = colors.length > 16 ? colors.length / 16 : 1;
     el.swatches.textContent = '';
     for (let i = 0; i < colors.length; i += step) {
-      const chip = document.createElement('span');
+      const chip = document.createElement('button');
       const c = colors[Math.floor(i)];
+      const hex = rgbToHex(c);
+      chip.type = 'button';
       chip.className = 'swatch';
       chip.style.background = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
-      chip.title = 'rgb(' + c.join(', ') + ')';
+      chip.title = hex + ' · rgb(' + c.join(', ') + ') · click to copy';
+      chip.setAttribute('aria-label', 'Copy ' + hex);
+      chip.addEventListener('click', function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(hex).then(function () {
+            el.statStatus.textContent = 'Copied ' + hex;
+          }).catch(function () {
+            el.statStatus.textContent = 'Could not copy ' + hex;
+          });
+        }
+      });
       el.swatches.appendChild(chip);
     }
     el.swatches.setAttribute('aria-label', palette.name + ': ' + colors.length + ' inks');
@@ -767,7 +844,12 @@
       amount.max = '100';
       amount.step = '1';
       amount.value = String(glitches.amount[id]);
+      amount.title = 'Double-click to reset to 50%';
       amount.setAttribute('aria-label', meta.name + ' amount');
+
+      const amountVal = document.createElement('em');
+      amountVal.className = 'stack-val';
+      amountVal.textContent = glitches.amount[id] + '%';
 
       const up = document.createElement('button');
       up.className = 'icon-btn';
@@ -778,6 +860,7 @@
       upGlyph.setAttribute('aria-hidden', 'true');
       up.appendChild(upGlyph);
       up.title = 'Move earlier in the stack';
+      up.setAttribute('aria-label', 'Move ' + meta.name + ' earlier in the stack');
       up.disabled = index === 0;
       const down = document.createElement('button');
       down.className = 'icon-btn';
@@ -788,6 +871,7 @@
       downGlyph.setAttribute('aria-hidden', 'true');
       down.appendChild(downGlyph);
       down.title = 'Move later in the stack';
+      down.setAttribute('aria-label', 'Move ' + meta.name + ' later in the stack');
       down.disabled = index === active.length - 1;
       const remove = document.createElement('button');
       remove.className = 'icon-btn';
@@ -804,12 +888,12 @@
       tools.appendChild(down);
       tools.appendChild(remove);
 
-      // Two lines per effect: index + name + tools, then the amount with the
-      // effect's mode beside it. The name gets the whole first line, which
-      // "Chromatic aberration" needs.
+      // Two lines per effect: index + name + tools, then the amount slider,
+      // live readout, and optional mode selector.
       const line = document.createElement('div');
       line.className = 'stack-line';
       line.appendChild(amount);
+      line.appendChild(amountVal);
       if (mode) line.appendChild(mode);
 
       row.appendChild(top);
@@ -867,9 +951,18 @@
       amount.addEventListener('input', function () {
         beginHistoryGroup('effect:' + id);
         glitches.amount[id] = parseInt(amount.value, 10);
+        amountVal.textContent = glitches.amount[id] + '%';
         schedulePreview();
       });
       amount.addEventListener('change', function () { render(true); endHistoryGroup(); });
+      amount.addEventListener('dblclick', function () {
+        endHistoryGroup();
+        glitches.amount[id] = 50;
+        amount.value = '50';
+        amountVal.textContent = '50%';
+        render(true);
+        window.dispatchEvent(new CustomEvent('ds:ui'));
+      });
       up.addEventListener('click', function () { moveEffect(index, -1); });
       down.addEventListener('click', function () { moveEffect(index, 1); });
       remove.addEventListener('click', function () { removeEffect(id); });
@@ -1290,8 +1383,7 @@
       } else {
         buffer.width = res.width;
         buffer.height = res.height;
-        const bctx = buffer.getContext('2d');
-        bctx.putImageData(toImageData(res), 0, 0);
+        bufferCtx.putImageData(toImageData(res), 0, 0);
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
         ctx.drawImage(buffer, 0, 0, el.canvas.width, el.canvas.height);
@@ -1432,6 +1524,7 @@
       const on = btn.getAttribute('data-value') === mode;
       btn.classList.toggle('is-on', on);
       btn.setAttribute('aria-checked', on ? 'true' : 'false');
+      btn.tabIndex = on ? 0 : -1;
     });
     el.qualityNote.textContent = QUALITY_NOTES[mode];
     return state.quality;
@@ -1626,9 +1719,13 @@
 
   function applyZoom() {
     const scale = effectiveScale();
-    el.canvas.style.width = Math.max(1, Math.round(el.canvas.width * scale)) + 'px';
-    el.canvas.style.height = Math.max(1, Math.round(el.canvas.height * scale)) + 'px';
+    const w = Math.max(1, Math.round(el.canvas.width * scale));
+    const h = Math.max(1, Math.round(el.canvas.height * scale));
+    el.canvas.style.width = w + 'px';
+    el.canvas.style.height = h + 'px';
     el.statZoom.textContent = state.zoom === null ? 'Fit' : state.zoom + '×';
+    const pannable = w > el.wrap.clientWidth + 1 || h > el.wrap.clientHeight + 1;
+    el.canvas.classList.toggle('can-pan', pannable);
   }
 
   function zoomStep(direction) {
@@ -1673,6 +1770,7 @@
     el.split.setAttribute('aria-pressed', on ? 'true' : 'false');
     el.splitGrip.hidden = !on;
     el.splitLayer.hidden = !on || !!state.compareOn;
+    if (el.splitBadges) el.splitBadges.hidden = !on || !!state.compareOn;
     if (!on) return;
     const pct = Math.round(state.splitAt * 100);
     el.splitGrip.style.left = pct + '%';
@@ -1695,14 +1793,18 @@
     if (on) {
       ctx.putImageData(state.original, 0, 0);
       if (el.splitLayer) el.splitLayer.hidden = true;
+      if (el.splitBadges) el.splitBadges.hidden = true;
     } else {
       showResult();
       if (state.splitOn) {
         if (el.splitLayer) el.splitLayer.hidden = false;
+        if (el.splitBadges) el.splitBadges.hidden = false;
         drawSplitLayer();
       }
     }
     el.compare.classList.toggle('btn-primary', on);
+    el.compare.setAttribute('aria-pressed', on ? 'true' : 'false');
+    window.dispatchEvent(new CustomEvent('ds:ui'));
   }
 
   // ---- loading images ----
@@ -2059,19 +2161,79 @@
     buildSamplePicker();
 
     BINDINGS.forEach(function (binding) {
+      const def = getPath(D.DEFAULTS, binding.path);
+      const resetBinding = function () {
+        endHistoryGroup();
+        setPath(state.settings, binding.path, def);
+        binding.input.value = def;
+        binding.label.textContent = binding.fmt(parseFloat(def));
+        syncSliderStates();
+        render(true);
+        syncGroupNotes();
+        window.dispatchEvent(new CustomEvent('ds:ui'));
+      };
+      binding.input.title = 'Double-click to reset to ' + binding.fmt(parseFloat(def));
       binding.input.addEventListener('input', function () {
         beginHistoryGroup('slider:' + binding.path);
         const value = parseFloat(binding.input.value);
         setPath(state.settings, binding.path, value);
         binding.label.textContent = binding.fmt(value);
+        syncSliderStates();
         schedulePreview();
       });
       binding.input.addEventListener('change', function () {
         setPath(state.settings, binding.path, parseFloat(binding.input.value));
+        syncSliderStates();
         render(true);
         endHistoryGroup();
       });
+      binding.input.addEventListener('dblclick', resetBinding);
+      const field = binding.input.closest('.field');
+      const header = field && field.querySelector(':scope > span');
+      if (header) header.addEventListener('dblclick', resetBinding);
     });
+
+    if (el.toneReset) {
+      el.toneReset.addEventListener('click', function () {
+        endHistoryGroup();
+        const d = D.DEFAULTS.adjustments;
+        state.settings.adjustments.black = d.black;
+        state.settings.adjustments.white = d.white;
+        state.settings.adjustments.gamma = d.gamma;
+        state.settings.adjustments.brightness = d.brightness;
+        state.settings.adjustments.contrast = d.contrast;
+        state.settings.adjustments.saturation = d.saturation;
+        state.settings.adjustments.hue = d.hue;
+        syncUI();
+        render(true);
+        el.statStatus.textContent = 'Tone reset';
+      });
+    }
+    if (el.detailReset) {
+      el.detailReset.addEventListener('click', function () {
+        endHistoryGroup();
+        const d = D.DEFAULTS.adjustments;
+        state.settings.adjustments.blur = d.blur;
+        state.settings.adjustments.sharpen = d.sharpen;
+        state.settings.adjustments.denoise = d.denoise;
+        syncUI();
+        render(true);
+        el.statStatus.textContent = 'Detail reset';
+      });
+    }
+    if (el.glowReset) {
+      el.glowReset.addEventListener('click', function () {
+        endHistoryGroup();
+        state.settings.glow.radius = D.DEFAULTS.glow.radius;
+        state.settings.glow.intensity = D.DEFAULTS.glow.intensity;
+        syncUI();
+        render(true);
+        el.statStatus.textContent = 'Glow reset';
+      });
+    }
+    if (el.effectsClearBtn) {
+      el.effectsClearBtn.addEventListener('click', clearStack);
+    }
 
     el.algorithm.addEventListener('change', function () { setAlgorithm(el.algorithm.value); });
     el.algorithmPrev.addEventListener('click', function () { stepAlgorithm(-1); });
@@ -2087,8 +2249,21 @@
       if (id) addEffect(id);
     });
 
-    Array.prototype.forEach.call(el.quality.children, function (btn) {
+    const qualityButtons = Array.prototype.slice.call(el.quality.children);
+    qualityButtons.forEach(function (btn, index) {
       btn.addEventListener('click', function () { setQuality(btn.getAttribute('data-value')); });
+      btn.addEventListener('keydown', function (event) {
+        let next = -1;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (index + 1) % qualityButtons.length;
+        else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (index - 1 + qualityButtons.length) % qualityButtons.length;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = qualityButtons.length - 1;
+        else return;
+        event.preventDefault();
+        const target = qualityButtons[next];
+        setQuality(target.getAttribute('data-value'));
+        target.focus();
+      });
     });
 
     el.seed.addEventListener('change', function () {
@@ -2155,12 +2330,22 @@
       beginHistoryGroup('text-size');
       text.size = parseInt(el.textSize.value, 10) || 10;
       el.textSizeValue.textContent = String(text.size);
+      syncSliderStates();
       schedulePreview();
     });
     el.textSize.addEventListener('change', function () {
       text.size = parseInt(el.textSize.value, 10) || 10;
+      syncSliderStates();
       render(true);
       endHistoryGroup();
+    });
+    el.textSize.addEventListener('dblclick', function () {
+      endHistoryGroup();
+      text.size = 10;
+      syncTextUI();
+      syncSliderStates();
+      render(true);
+      window.dispatchEvent(new CustomEvent('ds:ui'));
     });
     el.exportTxt.addEventListener('click', exportTXT);
     el.copy.addEventListener('click', copyPNG);
@@ -2217,13 +2402,34 @@
     el.zoomIn.addEventListener('click', function () { zoomStep(1); });
     el.zoomOut.addEventListener('click', function () { zoomStep(-1); });
     el.zoomFit.addEventListener('click', function () { state.zoom = null; applyZoom(); });
+    if (el.zoomToggle) {
+      el.zoomToggle.addEventListener('click', function () {
+        state.zoom = state.zoom === null ? 1 : null;
+        applyZoom();
+      });
+    }
+    if (el.undoBtn) el.undoBtn.addEventListener('click', undoRecipe);
+    if (el.redoBtn) el.redoBtn.addEventListener('click', redoRecipe);
+
+    // Ctrl+Wheel zooms the proof cleanly without scaling the window chrome.
+    el.wrap.addEventListener('wheel', function (event) {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      zoomStep(event.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
 
     el.compare.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       setCompare(true);
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (type) {
-      el.compare.addEventListener(type, function () { setCompare(false); });
+      el.compare.addEventListener(type, function () { if (state.compareOn) setCompare(false); });
+    });
+    el.compare.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setCompare(!state.compareOn);
+      }
     });
 
     el.split.addEventListener('click', function () { setSplit(!state.splitOn); });
@@ -2345,6 +2551,8 @@
     });
 
     window.addEventListener('keydown', function (e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (window.DitherModal && window.DitherModal.anyOpen()) return;
       const tag = (document.activeElement && document.activeElement.tagName) || '';
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
       if (e.key === 'c' || e.key === 'C') setCompare(true);
@@ -2354,10 +2562,81 @@
       else if (e.key === '0') { state.zoom = null; applyZoom(); }
     });
     window.addEventListener('keyup', function (e) {
-      if (e.key === 'c' || e.key === 'C') setCompare(false);
+      if (e.key === 'c' || e.key === 'C') {
+        if (state.compareOn) setCompare(false);
+      }
     });
 
-    window.addEventListener('resize', applyZoom);
+    // Horizontal wheel scrolling + edge-fade hints for the dock tab strip.
+    function syncTabFades() {
+      if (!el.jump) return;
+      const max = el.jump.scrollWidth - el.jump.clientWidth;
+      el.jump.classList.toggle('can-scroll-left', el.jump.scrollLeft > 2);
+      el.jump.classList.toggle('can-scroll-right', max > 2 && el.jump.scrollLeft < max - 2);
+    }
+    if (el.jump) {
+      el.jump.addEventListener('wheel', function (event) {
+        if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+          el.jump.scrollLeft += event.deltaY;
+          event.preventDefault();
+          syncTabFades();
+        }
+      }, { passive: false });
+      el.jump.addEventListener('scroll', syncTabFades, { passive: true });
+    }
+
+    // Resizable panel dock (280..460px, default 336px, double-click to reset).
+    (function initDockResizer() {
+      if (!el.dockResizer) return;
+      const STORE = 'dither-studio.dock-w';
+      const MIN = 280;
+      const MAX = 460;
+      const DEF = 336;
+      function applyDockWidth(px, persist) {
+        const w = Math.max(MIN, Math.min(MAX, Math.round(px)));
+        document.documentElement.style.setProperty('--dock-w', w + 'px');
+        el.dockResizer.setAttribute('aria-valuenow', String(w));
+        if (persist) {
+          try { window.localStorage.setItem(STORE, String(w)); } catch (err) { /* ignore */ }
+        }
+        applyZoom();
+        syncTabFades();
+      }
+      try {
+        const saved = parseInt(window.localStorage.getItem(STORE), 10);
+        if (saved >= MIN && saved <= MAX) applyDockWidth(saved, false);
+      } catch (err) { /* ignore */ }
+
+      let dragging = false;
+      el.dockResizer.addEventListener('pointerdown', function (event) {
+        event.preventDefault();
+        dragging = true;
+        el.dockResizer.classList.add('is-dragging');
+        try { el.dockResizer.setPointerCapture(event.pointerId); } catch (err) { /* ignore */ }
+      });
+      el.dockResizer.addEventListener('pointermove', function (event) {
+        if (!dragging) return;
+        applyDockWidth(window.innerWidth - event.clientX, false);
+      });
+      ['pointerup', 'pointercancel'].forEach(function (type) {
+        el.dockResizer.addEventListener(type, function () {
+          if (!dragging) return;
+          dragging = false;
+          el.dockResizer.classList.remove('is-dragging');
+          const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dock-w'), 10) || DEF;
+          applyDockWidth(cur, true);
+        });
+      });
+      el.dockResizer.addEventListener('dblclick', function () { applyDockWidth(DEF, true); });
+      el.dockResizer.addEventListener('keydown', function (event) {
+        const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dock-w'), 10) || DEF;
+        if (event.key === 'ArrowLeft') { event.preventDefault(); applyDockWidth(cur + 16, true); }
+        else if (event.key === 'ArrowRight') { event.preventDefault(); applyDockWidth(cur - 16, true); }
+        else if (event.key === 'Home') { event.preventDefault(); applyDockWidth(DEF, true); }
+      });
+    }());
+
+    window.addEventListener('resize', function () { applyZoom(); syncTabFades(); });
 
     buildJump();
     initGroups();
@@ -2366,6 +2645,7 @@
     // With no saved stations, nothing above has marked the strip yet, and the
     // chip strip is also the position readout (and the console bar's subject).
     markJump();
+    syncTabFades();
     setQuality(state.quality);
     syncUI();
     bindVideo();
@@ -2396,6 +2676,7 @@
       getBaseSettings: function () { return state.settings; },
       onFrame: renderAnimationFrame,
       onStop: function () {
+        el.statStatus.setAttribute('aria-live', 'polite');
         el.statStatus.textContent = 'Animation closed';
         render(true);
       },
@@ -2438,6 +2719,7 @@
       ctx.putImageData(toImageData(res), 0, 0);
     }
     updateStats(res, true);
+    el.statStatus.setAttribute('aria-live', 'off');
     el.statStatus.textContent = 'Animation · frame ' + (frameIndex + 1) + ' / ' + total;
     return performance.now() - t0;
   }
@@ -2470,6 +2752,7 @@
     const frame = Math.max(0, s.frame - 1);
     const tail = (s.dropped ? ' · ' + s.dropped + ' dropped' : '') + (s.recording ? ' · REC' : '');
     el.statFile.textContent = 'video frame ' + frame;
+    el.statStatus.setAttribute('aria-live', s.playing ? 'off' : 'polite');
     el.statStatus.textContent = 'Video ' + s.fps + ' fps' + tail;
     if (el.videoReadout) {
       el.videoReadout.textContent = 'frame ' + frame + ' · ' + s.fps + ' fps' + tail;
@@ -2566,6 +2849,7 @@
     el.videoToggle.textContent = 'Play';
     videoShowRows(false);
     el.statFile.textContent = state.name;
+    el.statStatus.setAttribute('aria-live', 'polite');
     el.statStatus.textContent = 'Ready';
     videoStatus('Play a clip or the webcam through the press. Transport and frame readout sit under the viewport.');
   }

@@ -235,14 +235,50 @@
   await wait(80);
   const splitLayer = document.getElementById('split-layer');
   const splitGrip = document.getElementById('split-grip');
-  check('split compare opens the source layer and its grip',
+  const splitBadges = document.getElementById('split-badges');
+  check('split compare opens the source layer, badges and grip',
     DS.state().split === true && !splitLayer.hidden && !splitGrip.hidden &&
+      !!splitBadges && !splitBadges.hidden &&
       splitLayer.width === document.getElementById('canvas').width,
     JSON.stringify({ split: DS.state().split, layer: splitLayer.hidden, grip: splitGrip.hidden }));
   DS.command('view-split', false);
   await wait(60);
   check('split compare closes again',
-    DS.state().split === false && splitLayer.hidden && splitGrip.hidden);
+    DS.state().split === false && splitLayer.hidden && splitGrip.hidden &&
+      (!splitBadges || splitBadges.hidden));
+
+  /* ---- accessibility, focus, and UI ergonomics -------------------- */
+
+  check('the workspace has a main landmark and skip link',
+    !!document.querySelector('main#main-workspace') && !!document.querySelector('a.skip-link[href="#main-workspace"]'));
+  check('the menu bar is a WAI-ARIA menubar with a single roving tab stop',
+    document.getElementById('menubar').getAttribute('role') === 'menubar' &&
+      document.querySelectorAll('#menubar .menu[tabindex="0"]').length === 1);
+  check('the tool rail is a vertical WAI-ARIA toolbar with a single roving tab stop',
+    document.getElementById('toolrail').getAttribute('role') === 'toolbar' &&
+      document.getElementById('toolrail').getAttribute('aria-orientation') === 'vertical' &&
+      document.querySelectorAll('#toolrail .tool[tabindex="0"]').length === 1);
+  check('every icon-only stepper carries an accessible name',
+    ['algorithm-prev', 'algorithm-next', 'palette-prev', 'palette-next', 'reseed'].every(function (id) {
+      const node = document.getElementById(id);
+      return !!node && !!node.getAttribute('aria-label');
+    }));
+  check('undo and redo buttons reflect recipe history',
+    document.getElementById('undo-btn').disabled === !DS.state().canUndo &&
+      document.getElementById('redo-btn').disabled === !DS.state().canRedo);
+
+  const strengthSlider = document.getElementById('strength');
+  strengthSlider.value = '160';
+  strengthSlider.dispatchEvent(new Event('input', { bubbles: true }));
+  strengthSlider.dispatchEvent(new Event('change', { bubbles: true }));
+  await wait(80);
+  const strengthModified = strengthSlider.closest('.field').classList.contains('is-modified');
+  strengthSlider.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+  await wait(80);
+  check('double-clicking a slider resets it to default',
+    strengthModified && strengthSlider.value === '100' &&
+      !strengthSlider.closest('.field').classList.contains('is-modified'),
+    strengthSlider.value);
 
   /* ---- palette import --------------------------------------------- */
 
@@ -370,12 +406,21 @@
     catalogueEffects.join('|') === sortedCatalogueEffects.join('|'),
     catalogueEffects.slice(0, 4).join(', '));
 
+  DS.command('window-panel-open', 'effects');
   DS.command('effects-add', 'grain');
   DS.command('effects-add', 'scanlines');
   await wait(160);
   const rows = document.querySelectorAll('#effect-list .stack-row');
   check('the effects stack shows a row per effect', rows.length === 2, rows.length);
   check('the stack rows are the real markup', !!document.querySelector('#effect-list .stack-row .stack-name'));
+  check('each stack row displays its live amount readout',
+    !!document.querySelector('#effect-list .stack-row .stack-val') &&
+      /%$/.test(document.querySelector('#effect-list .stack-row .stack-val').textContent));
+  const stackBtn = document.querySelector('#effect-list .stack-row .icon-btn');
+  const stackBtnBox = stackBtn ? stackBtn.getBoundingClientRect() : null;
+  check('effect stack buttons meet the 24px minimum target size',
+    !!stackBtnBox && stackBtnBox.width >= 24 && stackBtnBox.height >= 24,
+    stackBtnBox ? stackBtnBox.width + 'x' + stackBtnBox.height : null);
   report.notes.stackHtml = document.getElementById('effect-list').innerHTML.slice(0, 400);
   report.notes.effects = window.DS.state().effects;
 
@@ -636,6 +681,8 @@
   await wait(60);
   check('the palette opens, with the field ready to type', palette.isOpen() === true &&
     document.activeElement === document.getElementById('cmdk-input'));
+  check('an open modal marks the background workspace inert',
+    document.querySelector('.workarea').hasAttribute('inert'));
   const names = palette.search('bayer');
   report.notes.palette = palette.diagnose('bayer');
   check('the palette finds an algorithm by name', names.length > 0 && /Bayer/.test(names[0]),
@@ -645,7 +692,8 @@
     rooms.some(function (name) { return /Open Presets/.test(name); }), rooms.slice(0, 3).join(', '));
   palette.close();
   await wait(40);
-  check('and Escape-grade closing puts the window back', palette.isOpen() === false);
+  check('and Escape-grade closing puts the window back', palette.isOpen() === false &&
+    !document.querySelector('.workarea').hasAttribute('inert'));
   check('the palette did not scroll the window sideways',
     document.scrollingElement.scrollLeft === 0 && document.body.scrollLeft === 0,
     document.scrollingElement.scrollLeft + ' / ' + document.body.scrollLeft);

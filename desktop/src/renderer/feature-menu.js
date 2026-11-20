@@ -438,7 +438,13 @@
     backBtn.addEventListener('click', function () { go('menu'); });
     closeBtn.addEventListener('click', close);
     const scrim = overlay.querySelector('[data-fm-close]');
-    if (scrim) scrim.addEventListener('click', close);
+    if (scrim) {
+      if (global.DitherModal && global.DitherModal.bindBackdropDismiss) {
+        global.DitherModal.bindBackdropDismiss(scrim, close);
+      } else {
+        scrim.addEventListener('click', close);
+      }
+    }
     overlay.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -447,7 +453,10 @@
         else close();
         return;
       }
-      if (event.key === 'Tab') trapFocus(event);
+      if (event.key === 'Tab') {
+        if (global.DitherModal && global.DitherModal.trapFocus) global.DitherModal.trapFocus(overlay, event);
+        else trapFocus(event);
+      }
     });
     return true;
   }
@@ -462,6 +471,7 @@
     render();
     overlay.hidden = false;
     restoreFocus = document.activeElement;
+    if (global.DitherModal) global.DitherModal.markOpen(overlay);
     global.requestAnimationFrame(function () {
       overlay.classList.add('is-in');
       focusFirst();
@@ -474,6 +484,7 @@
     overlay.classList.remove('is-in');
     overlay.hidden = true;
     view = 'menu';
+    if (global.DitherModal) global.DitherModal.markClosed(overlay);
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }

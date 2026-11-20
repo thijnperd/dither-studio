@@ -17,6 +17,7 @@
   <!-- The window is frameless (see electron/main.js), so this bar *is* the
        caption. The window buttons talk to the main process over preload. -->
   <header class="titlebar" id="titlebar">
+    <a href="#main-workspace" class="skip-link visually-hidden">Skip to workspace</a>
     <button class="sysmark" id="sysmark" type="button" title="Find anything (Ctrl K)" aria-label="Find anything" aria-keyshortcuts="Control+K">
       <span class="ui-glyph ui-glyph--sm" style="--ui-icon: url('../assets/icons/search.svg')" aria-hidden="true"></span>
     </button>
@@ -38,104 +39,107 @@
   </header>
 
   <!-- menu bar -->
-  <nav class="menubar" id="menubar" aria-label="Menu bar">
-    <button class="menu" type="button" data-menu="file">File</button>
-    <button class="menu" type="button" data-menu="edit">Edit</button>
-    <button class="menu" type="button" data-menu="image">Image</button>
-    <button class="menu" type="button" data-menu="press">Press</button>
-    <button class="menu" type="button" data-menu="effects">Effects</button>
-    <button class="menu" type="button" data-menu="view">View</button>
-    <button class="menu" type="button" data-menu="window">Window</button>
-    <button class="menu" type="button" data-menu="help">Help</button>
-  </nav>
+  <div class="menubar" id="menubar" role="menubar" aria-label="Menu bar">
+    <button class="menu" type="button" role="menuitem" tabindex="0" aria-haspopup="menu" aria-expanded="false" data-menu="file">File</button>
+    <button class="menu" type="button" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" data-menu="edit">Edit</button>
+    <button class="menu" type="button" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" data-menu="image">Image</button>
+    <button class="menu" type="button" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" data-menu="press">Press</button>
+    <button class="menu" type="button" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" data-menu="effects">Effects</button>
+    <button class="menu" type="button" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" data-menu="view">View</button>
+    <button class="menu" type="button" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" data-menu="window">Window</button>
+    <button class="menu" type="button" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" data-menu="help">Help</button>
+  </div>
   <div class="menu-pop" id="menu-pop" role="menu" hidden></div>
 
   <!-- options bar -->
-  <div class="optbar" id="optbar">
-    <div class="opt-group">
-      <button id="zoom-out" class="obtn obtn-icon" title="Zoom out (−)" aria-label="Zoom out">
+  <div class="optbar" id="optbar" role="toolbar" aria-label="Proof options">
+    <div class="opt-group" role="group" aria-label="Zoom">
+      <button id="zoom-out" class="obtn obtn-icon" type="button" title="Zoom out (−)" aria-label="Zoom out">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/minus.svg')" aria-hidden="true"></span>
       </button>
-      <button id="zoom-fit" class="obtn" title="Fit in window (0)">Fit</button>
-      <button id="zoom-in" class="obtn obtn-icon" title="Zoom in (+)" aria-label="Zoom in">
+      <button id="zoom-fit" class="obtn" type="button" title="Fit in window (0)">Fit</button>
+      <button id="zoom-in" class="obtn obtn-icon" type="button" title="Zoom in (+)" aria-label="Zoom in">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/plus.svg')" aria-hidden="true"></span>
       </button>
-      <span class="oread">Zoom <b id="stat-zoom">Fit</b></span>
+      <button id="zoom-toggle" class="oread-btn" type="button" title="Click to toggle Fit and 1× zoom">Zoom <b id="stat-zoom">Fit</b></button>
     </div>
-    <span class="opt-sep"></span>
-    <div class="opt-group">
+    <span class="opt-sep" role="separator" aria-orientation="vertical"></span>
+    <div class="opt-group" role="group" aria-label="Update mode">
       <span class="oread">Update</span>
       <div class="seg" id="quality" role="radiogroup" aria-label="Update mode">
-        <button class="seg-btn" type="button" role="radio" data-value="full" aria-checked="false">Full</button>
-        <button class="seg-btn is-on" type="button" role="radio" data-value="live" aria-checked="true">Live</button>
-        <button class="seg-btn" type="button" role="radio" data-value="still" aria-checked="false">Still</button>
+        <button class="seg-btn" type="button" role="radio" tabindex="-1" data-value="full" aria-checked="false">Full</button>
+        <button class="seg-btn is-on" type="button" role="radio" tabindex="0" data-value="live" aria-checked="true">Live</button>
+        <button class="seg-btn" type="button" role="radio" tabindex="-1" data-value="still" aria-checked="false">Still</button>
       </div>
       <span class="oread is-dim" id="quality-note" aria-live="polite">Live: half-res while dragging</span>
     </div>
-    <span class="opt-sep"></span>
-    <div class="opt-group">
-      <button id="compare" class="obtn" title="Hold to compare with the source (C)">Compare</button>
-      <button id="split" class="obtn" aria-pressed="false" title="Split compare the source and the proof">Split</button>
-      <button id="random" class="obtn" title="Roll a fresh recipe (R)">Random</button>
+    <span class="opt-sep" role="separator" aria-orientation="vertical"></span>
+    <div class="opt-group" role="group" aria-label="History and proof comparison">
+      <button id="undo-btn" class="obtn obtn-icon" type="button" title="Undo recipe change (Ctrl+Z)" aria-label="Undo" disabled>
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 4.5 2.5 7.5l3 3"/><path d="M3 7.5h6.5a3.5 3.5 0 1 1 0 7H8"/></svg>
+      </button>
+      <button id="redo-btn" class="obtn obtn-icon" type="button" title="Redo recipe change (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 4.5 13.5 7.5l-3 3"/><path d="M13 7.5H6.5a3.5 3.5 0 1 0 0 7H8"/></svg>
+      </button>
+      <button id="compare" class="obtn" type="button" aria-pressed="false" title="Hold or press Space/Enter to compare with the source (C)">Compare</button>
+      <button id="split" class="obtn" type="button" aria-pressed="false" title="Split compare the source and the proof">Split</button>
+      <button id="random" class="obtn" type="button" title="Roll a fresh recipe (R)">Random</button>
     </div>
     <span class="opt-grow"></span>
-    <div class="opt-group">
-      <button id="copy" class="obtn" title="Copy the proof to the clipboard">Copy PNG</button>
+    <div class="opt-group" role="group" aria-label="Export">
+      <button id="copy" class="obtn" type="button" title="Copy the proof to the clipboard (Ctrl+Shift+C)">Copy PNG</button>
       <label class="inline"><span>Scale</span>
-        <select id="export-scale">
+        <select id="export-scale" aria-label="Export scale">
           <option value="1" selected>1×</option>
           <option value="2">2×</option>
           <option value="4">4×</option>
           <option value="8">8×</option>
         </select>
       </label>
-      <button id="export" class="obtn obtn-primary" title="Export the proof as a PNG (Ctrl+S)">Export PNG</button>
+      <button id="export" class="obtn obtn-primary" type="button" title="Export the proof as a PNG (Ctrl+S)">Export PNG</button>
     </div>
   </div>
 
   <!-- work area -->
   <div class="workarea">
 
-    <!-- the tool rail: one button per verb, Photoshop's left column.
-         The glyphs come from the project's Tabler-style set and are applied as
-         CSS masks from src/assets/icons/, so they inherit the rail's ink and
-         stay legible at 18px. See SOURCES.md. -->
-    <nav class="toolrail" id="toolrail" aria-label="Tools">
-      <button class="tool" type="button" data-tool="menu" title="Studio menu (Ctrl+Shift+M)" aria-label="Studio menu">
+    <!-- the tool rail: one button per verb, Photoshop's left column. -->
+    <div class="toolrail" id="toolrail" role="toolbar" aria-orientation="vertical" aria-label="Tools">
+      <button class="tool" type="button" tabindex="0" data-tool="menu" title="Studio menu (Ctrl+Shift+M)" aria-label="Studio menu">
         <span class="ui-glyph" style="--ui-icon: url('../assets/menu/menu-launcher.svg')" aria-hidden="true"></span>
       </button>
-      <span class="tool-sep" role="separator"></span>
-      <button class="tool" type="button" data-tool="open" title="Open image… (Ctrl+O)" aria-label="Open image">
+      <span class="tool-sep" role="separator" aria-orientation="horizontal"></span>
+      <button class="tool" type="button" tabindex="-1" data-tool="open" title="Open image… (Ctrl+O)" aria-label="Open image">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/open-image.svg')" aria-hidden="true"></span>
       </button>
-      <button class="tool" type="button" data-tool="demo" title="Built-in sources" aria-label="Built-in sources">
+      <button class="tool" type="button" tabindex="-1" data-tool="demo" title="Built-in sources" aria-label="Built-in sources">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/built-in-source.svg')" aria-hidden="true"></span>
       </button>
-      <span class="tool-sep" role="separator"></span>
-      <button class="tool" type="button" data-tool="compare" title="Hold to compare with the source (C)" aria-label="Compare">
+      <span class="tool-sep" role="separator" aria-orientation="horizontal"></span>
+      <button class="tool" type="button" tabindex="-1" data-tool="compare" aria-pressed="false" title="Hold to compare with the source (C)" aria-label="Compare">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/compare.svg')" aria-hidden="true"></span>
       </button>
-      <button class="tool" type="button" data-tool="random" title="Roll a fresh recipe (R)" aria-label="Random recipe">
+      <button class="tool" type="button" tabindex="-1" data-tool="random" title="Roll a fresh recipe (R)" aria-label="Random recipe">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/random-recipe.svg')" aria-hidden="true"></span>
       </button>
-      <span class="tool-sep" role="separator"></span>
-      <button class="tool" type="button" data-tool="webcam" title="Webcam" aria-label="Webcam">
+      <span class="tool-sep" role="separator" aria-orientation="horizontal"></span>
+      <button class="tool" type="button" tabindex="-1" data-tool="webcam" title="Webcam" aria-label="Webcam">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/webcam.svg')" aria-hidden="true"></span>
       </button>
-      <button class="tool" type="button" data-tool="video" title="Open a clip" aria-label="Open video">
+      <button class="tool" type="button" tabindex="-1" data-tool="video" title="Open a clip" aria-label="Open video">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/open-clip.svg')" aria-hidden="true"></span>
       </button>
-      <button class="tool" type="button" data-tool="record" title="Record the playback as WebM" aria-label="Record">
+      <button class="tool" type="button" tabindex="-1" data-tool="record" aria-pressed="false" title="Record the playback as WebM" aria-label="Record">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/record.svg')" aria-hidden="true"></span>
       </button>
       <span class="tool-grow"></span>
-      <button class="tool" type="button" data-tool="preset" title="Presets" aria-label="Presets">
+      <button class="tool" type="button" tabindex="-1" data-tool="preset" title="Presets" aria-label="Presets">
         <span class="ui-glyph" style="--ui-icon: url('../assets/icons/presets.svg')" aria-hidden="true"></span>
       </button>
-    </nav>
+    </div>
 
     <!-- the document column: tab strip, the proof well, the viewport bar -->
-    <section class="doccol">
+    <main class="doccol" id="main-workspace" tabindex="-1" aria-label="Proof workspace">
       <div class="doctabs" id="doc-tabs">
         <div class="doctab is-active" id="doc-tab" title="The open proof">
           <span class="doctab-mark" aria-hidden="true"></span>
@@ -148,6 +152,10 @@
         <div class="canvas-frame" id="canvas-frame">
           <canvas id="canvas" role="img" aria-label="Dithered preview"></canvas>
           <canvas id="split-layer" class="split-layer" aria-hidden="true" hidden></canvas>
+          <div id="split-badges" class="split-badges" aria-hidden="true" hidden>
+            <span class="split-badge">Source</span>
+            <span class="split-badge">Proof</span>
+          </div>
           <div id="split-grip" class="split-grip" role="slider" tabindex="0"
             aria-label="Split comparison" aria-valuemin="0" aria-valuemax="100"
             aria-valuenow="50" aria-valuetext="50% source, 50% proof"
@@ -158,7 +166,7 @@
         <p class="drop-veil" id="drop-veil" hidden>Drop to load</p>
       </div>
 
-      <footer class="viewport-bar" id="viewport-bar">
+      <footer class="viewport-bar" id="viewport-bar" role="region" aria-label="Playback transport">
         <span class="opt-grow"></span>
         <div class="transport" id="transport" hidden>
           <button id="video-toggle" class="obtn obtn-primary" type="button" disabled>Play</button>
@@ -169,10 +177,13 @@
           <span class="readout" id="animation-readout">frame 1 / 72 · 24 fps</span>
         </div>
       </footer>
-    </section>
+    </main>
 
     <!-- the dock: panel tabs on top, the stacked panels below -->
     <aside class="dock" aria-label="Panels">
+      <div class="dock-resizer" id="dock-resizer" role="separator" aria-orientation="vertical"
+        aria-label="Resize panel dock" tabindex="0" aria-valuemin="280" aria-valuemax="460"
+        aria-valuenow="336" title="Drag to resize panel dock; double-click to reset"></div>
       <div class="dock-head">
         <div class="dock-tabs" id="jump" aria-label="Panels"></div>
         <button class="dock-find" id="dock-find" type="button"
@@ -243,23 +254,23 @@
             <div class="group-body">
               <div class="row-stepper">
                 <select id="algorithm" aria-label="Algorithm"></select>
-                <button class="btn btn-step" id="algorithm-prev" type="button" title="Previous algorithm">
+                <button class="btn btn-step" id="algorithm-prev" type="button" title="Previous algorithm (Ctrl+↑)" aria-label="Previous algorithm">
                   <span class="ui-glyph ui-glyph--step ui-glyph--flip" style="--ui-icon: url('../assets/icons/chevron-right.svg')" aria-hidden="true"></span>
                 </button>
-                <button class="btn btn-step" id="algorithm-next" type="button" title="Next algorithm">
+                <button class="btn btn-step" id="algorithm-next" type="button" title="Next algorithm (Ctrl+↓)" aria-label="Next algorithm">
                   <span class="ui-glyph ui-glyph--step" style="--ui-icon: url('../assets/icons/chevron-right.svg')" aria-hidden="true"></span>
                 </button>
               </div>
               <div class="row-stepper">
                 <select id="palette" aria-label="Palette"></select>
-                <button class="btn btn-step" id="palette-prev" type="button" title="Previous palette">
+                <button class="btn btn-step" id="palette-prev" type="button" title="Previous palette (Ctrl+←)" aria-label="Previous palette">
                   <span class="ui-glyph ui-glyph--step ui-glyph--flip" style="--ui-icon: url('../assets/icons/chevron-right.svg')" aria-hidden="true"></span>
                 </button>
-                <button class="btn btn-step" id="palette-next" type="button" title="Next palette">
+                <button class="btn btn-step" id="palette-next" type="button" title="Next palette (Ctrl+→)" aria-label="Next palette">
                   <span class="ui-glyph ui-glyph--step" style="--ui-icon: url('../assets/icons/chevron-right.svg')" aria-hidden="true"></span>
                 </button>
               </div>
-              <div class="swatches" id="swatches" aria-label="Palette inks"></div>
+              <div class="swatches" id="swatches" role="group" aria-label="Palette inks"></div>
               <label class="field">
                 <span>Pixel size <em id="pixel-size-value">2</em></span>
                 <input type="range" id="pixel-size" min="1" max="16" step="1" value="2" />
@@ -287,12 +298,11 @@
               <label class="check"><input type="checkbox" id="serpentine" /> Serpentine sweep</label>
               <div class="seed-row">
                 <input type="number" id="seed" min="0" max="4294967295" step="1" value="20261008" aria-label="Seed" />
-                <button id="reseed" class="btn btn-step" type="button" title="New seed">
+                <button id="reseed" class="btn btn-step" type="button" title="New seed (Ctrl+Shift+R)" aria-label="New seed">
                   <span class="ui-glyph ui-glyph--step" style="--ui-icon: url('../assets/icons/reload.svg')" aria-hidden="true"></span>
                 </button>
               </div>
-              <p class="hint">Strength scales the screen away from mid-grey; the seed drives
-                every random stage. Masks stay fixed.</p>
+              <p class="hint">Double-click any slider to reset it. Click an ink chip to copy its hex value.</p>
             </div>
           </section>
 
@@ -331,6 +341,9 @@
                 <span>Hue <em id="hue-value">0°</em></span>
                 <input type="range" id="hue" min="-180" max="180" step="1" value="0" />
               </label>
+              <div class="station-foot">
+                <button id="tone-reset" class="btn btn-quiet" type="button" disabled>Reset tone</button>
+              </div>
             </div>
           </section>
 
@@ -384,6 +397,9 @@
                 <input type="range" id="sharpen" min="0" max="2" step="0.05" value="0" />
               </label>
               <label class="check"><input type="checkbox" id="denoise" /> Denoise (3×3 median)</label>
+              <div class="station-foot">
+                <button id="detail-reset" class="btn btn-quiet" type="button" disabled>Reset detail</button>
+              </div>
             </div>
           </section>
 
@@ -399,6 +415,9 @@
                 <select id="effect-add"><option value="">Choose an effect…</option></select>
               </label>
               <div class="stack" id="effect-list"></div>
+              <div class="station-foot">
+                <button id="effects-clear-btn" class="btn btn-quiet" type="button" disabled>Clear stack</button>
+              </div>
               <p class="hint">Effects run top to bottom after the dither. Add what you need,
                 reorder with the arrows.</p>
             </div>
@@ -419,6 +438,9 @@
                 <span>Intensity <em id="glow-intensity-value">0</em></span>
                 <input type="range" id="glow-intensity" min="0" max="100" step="1" value="0" />
               </label>
+              <div class="station-foot">
+                <button id="glow-reset" class="btn btn-quiet" type="button" disabled>Reset glow</button>
+              </div>
             </div>
           </section>
 
@@ -522,7 +544,7 @@
           </section>
 
         </div>
-        <p class="dock-hint"><b id="hint-key">Ctrl K</b> find · <b>C</b> compare · <b>R</b> recipe</p>
+        <p class="dock-hint"><kbd id="hint-key">Ctrl K</kbd> find · <kbd>C</kbd> compare · <kbd>R</kbd> recipe</p>
       </div>
     </aside>
   </div>
@@ -555,9 +577,14 @@
   <div class="pimport" id="palette-import" hidden>
     <section class="pimport-card" role="dialog" aria-modal="true" aria-labelledby="palette-import-title">
       <header class="pimport-head">
-        <span class="pimport-kicker">Press · Ink set</span>
-        <h2 class="pimport-title" id="palette-import-title">Import a color palette</h2>
-        <p class="pimport-note">Paste JSON or a list of hex colors. Two to 64 inks; imports stay on this machine and join the palette menu.</p>
+        <div class="pimport-head-copy">
+          <span class="pimport-kicker">Press · Ink set</span>
+          <h2 class="pimport-title" id="palette-import-title">Import a color palette</h2>
+          <p class="pimport-note">Paste JSON or a list of hex colors. Two to 64 inks; imports stay on this machine and join the palette menu.</p>
+        </div>
+        <button class="modal-close" id="palette-import-x" type="button" title="Close (Esc)" aria-label="Close palette import">
+          <span class="ui-glyph ui-glyph--sm" style="--ui-icon: url('../assets/icons/x.svg')" aria-hidden="true"></span>
+        </button>
       </header>
       <div class="pimport-body">
         <label class="pimport-field">
@@ -593,9 +620,14 @@
   <div class="pimport" id="palette-manager" hidden>
     <section class="pimport-card palette-manager-card" role="dialog" aria-modal="true" aria-labelledby="palette-manager-title">
       <header class="pimport-head">
-        <span class="pimport-kicker">Press · Color schemes</span>
-        <h2 class="pimport-title" id="palette-manager-title">Your color schemes</h2>
-        <p class="pimport-note">Saved from Color Scheme Maker or imported from a file. Rename one here, edit its inks in the maker, or delete it from this machine.</p>
+        <div class="pimport-head-copy">
+          <span class="pimport-kicker">Press · Color schemes</span>
+          <h2 class="pimport-title" id="palette-manager-title">Your color schemes</h2>
+          <p class="pimport-note">Saved from Color Scheme Maker or imported from a file. Rename one here, edit its inks in the maker, or delete it from this machine.</p>
+        </div>
+        <button class="modal-close" id="palette-manager-x" type="button" title="Close (Esc)" aria-label="Close color schemes manager">
+          <span class="ui-glyph ui-glyph--sm" style="--ui-icon: url('../assets/icons/x.svg')" aria-hidden="true"></span>
+        </button>
       </header>
       <div class="pimport-body">
         <div class="palette-manager-list" id="palette-manager-list"></div>
@@ -615,9 +647,14 @@
   <div class="pimport" id="plugin-manager" hidden>
     <section class="pimport-card plugin-card" role="dialog" aria-modal="true" aria-labelledby="plugin-title">
       <header class="pimport-head">
-        <span class="pimport-kicker">File · Plugins</span>
-        <h2 class="pimport-title" id="plugin-title">Plugin manager</h2>
-        <p class="pimport-note">Functionality tools switch on a built-in capability; preset and palette packs add recipes or color schemes. Every package is declarative JSON, never downloaded code, and its size on disk is shown before you install it. You can also install a pack exported by another Dither Studio.</p>
+        <div class="pimport-head-copy">
+          <span class="pimport-kicker">File · Plugins</span>
+          <h2 class="pimport-title" id="plugin-title">Plugin manager</h2>
+          <p class="pimport-note">Functionality tools switch on a built-in capability; preset and palette packs add recipes or color schemes. Every package is declarative JSON, never downloaded code, and its size on disk is shown before you install it. You can also install a pack exported by another Dither Studio.</p>
+        </div>
+        <button class="modal-close" id="plugin-x" type="button" title="Close (Esc)" aria-label="Close plugin manager">
+          <span class="ui-glyph ui-glyph--sm" style="--ui-icon: url('../assets/icons/x.svg')" aria-hidden="true"></span>
+        </button>
       </header>
       <div class="pimport-body">
         <div class="plugin-bar">
@@ -643,9 +680,14 @@
   <div class="pimport" id="ink-extractor" hidden>
     <section class="pimport-card" role="dialog" aria-modal="true" aria-labelledby="ink-title">
       <header class="pimport-head">
-        <span class="pimport-kicker">Plugins · Ink Extractor</span>
-        <h2 class="pimport-title" id="ink-title">Extract a palette from an image</h2>
-        <p class="pimport-note">Four retro-leaning quantizers: CINS, Median cut, Octree and Polarity. The result is sorted dark to light and can be edited before it is imported.</p>
+        <div class="pimport-head-copy">
+          <span class="pimport-kicker">Plugins · Ink Extractor</span>
+          <h2 class="pimport-title" id="ink-title">Extract a palette from an image</h2>
+          <p class="pimport-note">Four retro-leaning quantizers: CINS, Median cut, Octree and Polarity. The result is sorted dark to light and can be edited before it is imported.</p>
+        </div>
+        <button class="modal-close" id="ink-x" type="button" title="Close (Esc)" aria-label="Close Ink Extractor">
+          <span class="ui-glyph ui-glyph--sm" style="--ui-icon: url('../assets/icons/x.svg')" aria-hidden="true"></span>
+        </button>
       </header>
       <div class="pimport-body">
         <div class="ink-controls">
@@ -680,10 +722,15 @@
   <div class="pimport" id="color-scheme" hidden>
     <section class="pimport-card scheme-card" role="dialog" aria-modal="true" aria-labelledby="scheme-title">
       <header class="pimport-head">
-        <span class="pimport-kicker">Plugins · Color Scheme Maker</span>
-        <h2 class="pimport-title" id="scheme-title">Draft a color scheme</h2>
-        <p class="pimport-note">Start from a base ink and a harmony rule. Lock the colors you want to keep,
-          generate the rest, then sort, copy or save the set into the palette menu.</p>
+        <div class="pimport-head-copy">
+          <span class="pimport-kicker">Plugins · Color Scheme Maker</span>
+          <h2 class="pimport-title" id="scheme-title">Draft a color scheme</h2>
+          <p class="pimport-note">Start from a base ink and a harmony rule. Lock the colors you want to keep,
+            generate the rest, then sort, copy or save the set into the palette menu.</p>
+        </div>
+        <button class="modal-close" id="scheme-x" type="button" title="Close (Esc)" aria-label="Close Color Scheme Maker">
+          <span class="ui-glyph ui-glyph--sm" style="--ui-icon: url('../assets/icons/x.svg')" aria-hidden="true"></span>
+        </button>
       </header>
       <div class="pimport-body">
         <div class="scheme-controls">
@@ -753,6 +800,7 @@
         <span><kbd>↑</kbd><kbd>↓</kbd> move</span>
         <span><kbd>↵</kbd> run</span>
         <span><kbd id="cmdk-key">Ctrl K</kbd> anywhere</span>
+        <span class="cmdk-count" id="cmdk-count" role="status" aria-live="polite"></span>
       </div>
     </section>
   </div>
@@ -851,6 +899,7 @@
   <script src="renderer/video.js"></script>
   <script src="renderer/webm-duration.js"></script>
   <script src="renderer/core.js"></script>
+  <script src="renderer/modal.js"></script>
   <script src="renderer/plugins.js"></script>
   <script src="renderer/animation.js"></script>
   <script src="renderer/app.js"></script>

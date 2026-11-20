@@ -74,7 +74,6 @@
 }
 
 .fm-iconbtn:hover { background: var(--hover); color: var(--text); }
-.fm-iconbtn:focus-visible { outline: none; box-shadow: var(--focus); }
 .fm-iconbtn svg { display: block; }
 
 .fm-headcopy { flex: 1 1 auto; min-width: 0; }
@@ -122,8 +121,6 @@
   border-color: color-mix(in srgb, var(--fm-pigment) 42%, var(--edge-soft));
   background: var(--panel-2);
 }
-
-.fm-feature:focus-visible { outline: none; box-shadow: var(--focus); }
 
 /* One accent for every plate. The four pigments made the index read like a
    different app; the instrument panel keeps a single blue and lets the label
@@ -242,8 +239,6 @@
   background: var(--panel-2);
 }
 
-.fm-package:focus-visible { outline: none; box-shadow: var(--focus); }
-
 .fm-package-icon {
   display: grid;
   place-items: center;
@@ -342,7 +337,6 @@
 }
 
 .fm-text-action:hover { border-bottom-color: var(--muted); color: var(--text); }
-.fm-text-action:focus-visible { outline: none; box-shadow: var(--focus); }
 
 .fm-effects-list {
   margin-top: 8px;
@@ -407,7 +401,6 @@
 
 .fm-switch.is-on > span { background: var(--accent); transform: translateX(13px); }
 .fm-switch:hover { border-color: color-mix(in srgb, var(--accent) 65%, var(--edge)); }
-.fm-switch:focus-visible { outline: none; box-shadow: var(--focus); }
 
 /* ---------------------------------------------------------------- recipes */
 
@@ -430,7 +423,7 @@
 .fm-palette-row:hover { background: var(--hover); }
 
 .fm-recipe:focus-visible,
-.fm-palette-row:focus-visible { outline: none; box-shadow: var(--focus); }
+.fm-palette-row:focus-visible { outline-offset: -2px; }
 
 .fm-recipe-swatches,
 .fm-palette-swatches {
@@ -538,8 +531,6 @@
   color: var(--text);
 }
 
-.fm-wide:focus-visible { outline: none; box-shadow: var(--focus); }
-
 .fm-wide-copy {
   display: flex;
   align-items: center;
@@ -584,7 +575,6 @@
 }
 
 .fm-empty-action:hover { background: color-mix(in srgb, var(--accent) 22%, var(--raised)); }
-.fm-empty-action:focus-visible { outline: none; box-shadow: var(--focus); }
 
 /* ----------------------------------------------------------------- footer */
 

@@ -179,6 +179,8 @@
 
     $('palette-import-file').addEventListener('click', chooseFile);
     $('palette-import-cancel').addEventListener('click', close);
+    const xBtn = $('palette-import-x');
+    if (xBtn) xBtn.addEventListener('click', close);
     $('palette-import-go').addEventListener('click', submit);
 
     fileInput.addEventListener('change', function () {
@@ -199,7 +201,8 @@
         return;
       }
       if (event.key === 'Tab') {
-        trapFocus(event);
+        if (window.DitherModal && window.DitherModal.trapFocus) window.DitherModal.trapFocus(overlay, event);
+        else trapFocus(event);
         return;
       }
       if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
@@ -208,10 +211,13 @@
       }
     });
 
-    // The backdrop is a click target, the card is not.
-    overlay.addEventListener('pointerdown', function (event) {
-      if (event.target === overlay) close();
-    });
+    if (window.DitherModal && window.DitherModal.bindBackdropDismiss) {
+      window.DitherModal.bindBackdropDismiss(overlay, close);
+    } else {
+      overlay.addEventListener('pointerdown', function (event) {
+        if (event.target === overlay) close();
+      });
+    }
 
     return true;
   }
@@ -235,6 +241,7 @@
     clearError();
     overlay.hidden = false;
     restoreFocus = document.activeElement;
+    if (window.DitherModal) window.DitherModal.markOpen(overlay);
     window.requestAnimationFrame(function () { overlay.classList.add('is-in'); });
     textArea.focus();
   }
@@ -243,6 +250,7 @@
     if (!overlay || overlay.hidden) return;
     overlay.classList.remove('is-in');
     overlay.hidden = true;
+    if (window.DitherModal) window.DitherModal.markClosed(overlay);
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }

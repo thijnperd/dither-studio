@@ -135,6 +135,8 @@
     $('ink-file').addEventListener('click', chooseFile);
     $('ink-current').addEventListener('click', useCurrent);
     $('ink-cancel').addEventListener('click', close);
+    const xBtn = $('ink-x');
+    if (xBtn) xBtn.addEventListener('click', close);
     $('ink-import').addEventListener('click', function () {
       if (!colors || !opts || typeof opts.onImport !== 'function') return;
       opts.onImport({ name: currentName.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim() || 'Extracted palette', colors: colors });
@@ -147,9 +149,14 @@
       fileInput.value = '';
       readFile(file);
     });
-    overlay.addEventListener('pointerdown', function (event) { if (event.target === overlay) close(); });
+    if (global.DitherModal && global.DitherModal.bindBackdropDismiss) {
+      global.DitherModal.bindBackdropDismiss(overlay, close);
+    } else {
+      overlay.addEventListener('pointerdown', function (event) { if (event.target === overlay) close(); });
+    }
     overlay.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') { event.preventDefault(); close(); }
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return; }
+      if (event.key === 'Tab' && global.DitherModal) global.DitherModal.trapFocus(overlay, event);
     });
     return true;
   }
@@ -177,14 +184,20 @@
     if (global.DitherPaletteManager && global.DitherPaletteManager.isOpen && global.DitherPaletteManager.isOpen()) global.DitherPaletteManager.close();
     overlay.hidden = false;
     restoreFocus = document.activeElement;
-    global.requestAnimationFrame(function () { overlay.classList.add('is-in'); });
+    if (global.DitherModal) global.DitherModal.markOpen(overlay);
+    global.requestAnimationFrame(function () {
+      overlay.classList.add('is-in');
+      const currentBtn = $('ink-current');
+      if (currentBtn) currentBtn.focus();
+    });
     return true;
   }
 
   function close() {
-    if (!overlay) return;
+    if (!overlay || overlay.hidden) return;
     overlay.classList.remove('is-in');
     overlay.hidden = true;
+    if (global.DitherModal) global.DitherModal.markClosed(overlay);
     if (restoreFocus && restoreFocus.focus) {
       try { restoreFocus.focus(); } catch (err) { /* the control may be gone */ }
     }

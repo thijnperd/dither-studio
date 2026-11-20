@@ -346,12 +346,23 @@
     card.classList.toggle('is-free', !rect);
   }
 
-  // A slider drag fires ds:ui per input event, so repositioning follows the app
-  // rather than racing it: at most one placement per 80 ms, no timer, no frame.
+  // A slider drag or rail scroll fires repeatedly, so throttle at 80 ms with a
+  // trailing pass so the hole always settles over the target once motion stops.
+  let placeTimer = 0;
   function placeSoon() {
     if (!running) return;
-    if (Date.now() - lastPlace < 80) return;
-    place();
+    const elapsed = Date.now() - lastPlace;
+    if (elapsed >= 80) {
+      if (placeTimer) { clearTimeout(placeTimer); placeTimer = 0; }
+      place();
+      return;
+    }
+    if (!placeTimer) {
+      placeTimer = window.setTimeout(function () {
+        placeTimer = 0;
+        if (running) place();
+      }, 80 - elapsed);
+    }
   }
 
   // ---- the runner --------------------------------------------------------

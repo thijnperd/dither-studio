@@ -15,37 +15,39 @@
      app's ground rather than the OS light theme. */
   color-scheme: dark;
 
-  /* ---- the house palette (frozen web versions use these exact values) ---- */
-  --bg: #0e0f13;
-  --panel: #15171d;
-  --panel-2: #1b1e26;
-  --line: #262a34;
-  --text: #e8eaf0;
-  --muted: #8b91a3;
-  --accent: #7aa2ff;
-  --well: #0b0c10;
+  /* ---- the house palette (high-contrast obsidian, charcoal, slate, ivory, one blue) ---- */
+  --bg: #0e1016;
+  --panel: #151922;
+  --panel-2: #1c202c;
+  --line: #282e3d;
+  --text: #eef0f6;
+  /* Lifted to clear WCAG AA 4.5:1 on every raised surface, even with .is-dim. */
+  --muted: #9da6ba;
+  --accent: #84a9ff;
+  --danger: #ff7a80;
+  --well: #090b0f;
 
   /* ---- application chrome ---- */
-  --chrome: #12141a;        /* caption + menu bar                    */
-  --chrome-2: #171a21;      /* options bar, status bar               */
-  --dock: #13151b;          /* the panel dock                        */
-  --dock-tab: #1a1d24;      /* an inactive panel tab                 */
-  --sunken: #0a0b0f;        /* wells: the proof, the stack           */
-  --edge: #2c3140;          /* control borders                       */
-  --edge-soft: #222732;     /* hairlines                             */
-  --hover: #20242e;
-  --pressed: #262b37;
-  --raised: #1e222b;
+  --chrome: #11141b;        /* caption + menu bar                    */
+  --chrome-2: #171b24;      /* options bar, status bar               */
+  --dock: #13161e;          /* the panel dock                        */
+  --dock-tab: #1b202b;      /* an inactive panel tab                 */
+  --sunken: #0b0d12;        /* wells: the proof, the stack           */
+  --edge: #353d52;          /* control borders                       */
+  --edge-soft: #242a38;     /* hairlines                             */
+  --hover: #252b3b;
+  --pressed: #2d3448;
+  --raised: #1e2330;
 
   /* ---- measures ---- */
   --title-h: 34px;
-  --menu-h: 26px;
-  --opt-h: 36px;
-  --status-h: 24px;
+  --menu-h: 28px;
+  --opt-h: 38px;
+  --status-h: 26px;
   --rail-w: 46px;
   --dock-w: 336px;
-  --row: 26px;
-  --gap: 8px;
+  --row: 28px;
+  --gap: 9px;
   --pad: 11px;
   --radius: 6px;
   --radius-sm: 4px;
@@ -61,17 +63,25 @@
   --fs-small: 12px;
 
   /* ---- motion: quick, ease-out, never showy ---- */
-  /* The built-in easings are too weak to read as deliberate at these
-     durations, so the two curves are authored once and used everywhere. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --fast: 120ms var(--ease-out);
   --med: 180ms var(--ease-out);
 
   /* ---- a control that reads as a physical thing ---- */
-  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-pop: 0 14px 34px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--edge);
-  --focus: 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent);
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 1px 2px rgba(0, 0, 0, 0.38);
+  --shadow-pop: 0 16px 38px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--edge);
+  --focus-ring: 2px solid var(--accent);
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --text: #ffffff;
+    --muted: #bcc5d9;
+    --accent: #9bbaff;
+    --edge: #535f7d;
+    --edge-soft: #3a435a;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -80,6 +90,36 @@ html, body { height: 100%; }
 
 /* An author `display` must never defeat the `hidden` attribute. */
 [hidden] { display: none !important; }
+
+/* Visually hidden utility: stays in the accessibility tree and reappears on
+   keyboard focus for skip links. */
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+.skip-link {
+  position: fixed;
+  top: 6px;
+  left: 6px;
+  z-index: 120;
+  padding: 5px 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text);
+  font: 600 var(--fs-label)/1.2 var(--font-ui);
+  text-decoration: none;
+  box-shadow: var(--shadow-pop);
+  -webkit-app-region: no-drag;
+}
 
 /* Browser surfaces that belong to no design system until one claims them. */
 ::selection {
@@ -95,6 +135,7 @@ mark {
 }
 
 kbd {
+  display: inline-block;
   padding: 1px 5px;
   border: 1px solid var(--edge);
   border-bottom-width: 2px;
@@ -117,8 +158,8 @@ body {
      sideways by a couple of hundred pixels (the dock ended up sliced off the
      right edge). An application window never scrolls. */
   overflow: clip;
-  /* An application, not a page: no text selection, no rubber-banding, no
-     accidental drags leaving the window. Fields opt back in below. */
+  /* An application, not a page: no text selection outside fields/reading prose,
+     no rubber-banding, no accidental drags leaving the window. */
   user-select: none;
   -webkit-user-select: none;
   cursor: default;
@@ -132,19 +173,22 @@ input, textarea { caret-color: var(--accent); }
 
 /* Frameless window: the caption bar is the drag handle, its buttons are not. */
 .titlebar { -webkit-app-region: drag; }
-.wbtn, .sysmark, .menubar, .optbar, .toolrail, .statusbar, .dock-tabs { -webkit-app-region: no-drag; }
+.wbtn, .sysmark, .tb-note, .menubar, .optbar, .toolrail, .statusbar, .dock-tabs { -webkit-app-region: no-drag; }
 
 /* ---------------------------------------------------------------- scrollbars */
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: color-mix(in srgb, var(--sunken) 70%, transparent); }
+::-webkit-scrollbar-track { background: color-mix(in srgb, var(--sunken) 75%, transparent); }
 ::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
-  background: var(--edge);
+  background: color-mix(in srgb, var(--muted) 48%, var(--edge));
   background-clip: content-box;
 }
-::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--edge) 70%, var(--muted)); background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted) 78%, var(--edge));
+  background-clip: content-box;
+}
 ::-webkit-scrollbar-corner { background: transparent; }
 
 /* ---------------------------------------------------------------- controls */
@@ -167,71 +211,126 @@ button {
   transition: background var(--fast), border-color var(--fast), color var(--fast);
 }
 
-.btn:hover, .obtn:hover, .seg-btn:hover, .btn-step:hover { background: var(--hover); }
+@media (hover: hover) {
+  .btn:hover:not(:disabled),
+  .obtn:hover:not(:disabled),
+  .seg-btn:hover:not(:disabled),
+  .btn-step:hover:not(:disabled) {
+    background: var(--hover);
+    border-color: color-mix(in srgb, var(--muted) 45%, var(--edge));
+  }
+}
 
-.btn:active, .obtn:active, .seg-btn:active, .btn-step:active { background: var(--pressed); }
+.btn:active:not(:disabled),
+.obtn:active:not(:disabled),
+.seg-btn:active:not(:disabled),
+.btn-step:active:not(:disabled) {
+  background: var(--pressed);
+}
 
 /* A press has to be felt, not only seen: the control gives a hair under the
    pointer. 90 ms, so holding a click does not look like drift. */
-.btn, .obtn, .seg-btn, .btn-step, .jump-chip, .dock-find, .icon-btn, .sample-tile {
+.btn, .obtn, .seg-btn, .btn-step, .jump-chip, .dock-find, .icon-btn, .sample-tile, .modal-close {
   transition: transform 90ms var(--ease-out), background var(--fast),
     border-color var(--fast), color var(--fast);
 }
 
-.btn:active, .obtn:active, .seg-btn:active, .btn-step:active,
-.jump-chip:active, .dock-find:active, .icon-btn:active, .sample-tile:active {
+.btn:active:not(:disabled), .obtn:active:not(:disabled), .seg-btn:active:not(:disabled),
+.btn-step:active:not(:disabled), .jump-chip:active, .dock-find:active,
+.icon-btn:active:not(:disabled), .sample-tile:active, .modal-close:active {
   transform: scale(0.97);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn, .obtn, .seg-btn, .btn-step, .jump-chip, .dock-find, .icon-btn, .sample-tile {
+  .btn, .obtn, .seg-btn, .btn-step, .jump-chip, .dock-find, .icon-btn, .sample-tile, .modal-close {
     transition: none;
   }
-  .btn:active, .obtn:active, .seg-btn:active, .btn-step:active,
-  .jump-chip:active, .dock-find:active, .icon-btn:active, .sample-tile:active {
+  .btn:active:not(:disabled), .obtn:active:not(:disabled), .seg-btn:active:not(:disabled),
+  .btn-step:active:not(:disabled), .jump-chip:active, .dock-find:active,
+  .icon-btn:active:not(:disabled), .sample-tile:active, .modal-close:active {
     transform: none;
   }
 }
 
-.btn:focus-visible, .obtn:focus-visible, .wbtn:focus-visible, .tool:focus-visible,
-.menu:focus-visible, .seg-btn:focus-visible, .btn-step:focus-visible,
-.jump-chip:focus-visible, .dock-find:focus-visible, .menu-item:focus-visible,
-.sample-tile:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
+/* Real outline focus indicators: never rely on box-shadow alone, which
+   disappears in Windows High Contrast / Forced Colors Mode. */
+:where(button, a[href], input, select, textarea, [tabindex]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
-.btn:disabled, .obtn:disabled, .btn-step:disabled { opacity: 0.4; }
+.btn:disabled, .obtn:disabled, .btn-step:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
 
-.btn { height: var(--row); padding: 0 10px; }
+.btn {
+  min-height: var(--row);
+  height: var(--row);
+  padding: 0 10px;
+}
 
 .btn-primary, .obtn-primary {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--edge));
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--edge));
   background: color-mix(in srgb, var(--accent) 22%, var(--raised));
-  color: color-mix(in srgb, var(--accent) 30%, #ffffff);
+  color: #f4f7ff;
 }
 
-.btn-primary:hover, .obtn-primary:hover {
-  background: color-mix(in srgb, var(--accent) 32%, var(--raised));
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled),
+  .obtn-primary:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--accent) 78%, var(--edge));
+    background: color-mix(in srgb, var(--accent) 32%, var(--raised));
+  }
 }
 
-select, input[type="number"], input[type="text"] {
+select, input[type="number"], input[type="text"], textarea {
   width: 100%;
   min-width: 0;
-  height: var(--row);
-  padding: 0 6px;
   border: 1px solid var(--edge);
   border-radius: var(--radius-sm);
   background: var(--sunken);
   color: var(--text);
-  font: var(--fs-label)/1 var(--font);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  font: var(--fs-label)/1.25 var(--font);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  transition: border-color var(--fast), background var(--fast);
 }
 
-select:focus, input[type="number"]:focus, input[type="text"]:focus {
-  outline: none;
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--edge));
-  box-shadow: var(--focus);
+select, input[type="number"], input[type="text"] {
+  height: var(--row);
+  padding: 0 8px;
+}
+
+textarea {
+  padding: 8px 10px;
+}
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%239da6ba' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px 12px;
+}
+
+@media (hover: hover) {
+  select:hover:not(:disabled),
+  input[type="number"]:hover:not(:disabled),
+  input[type="text"]:hover:not(:disabled),
+  textarea:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--muted) 55%, var(--edge));
+  }
+}
+
+select:focus-visible,
+input[type="number"]:focus-visible,
+input[type="text"]:focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent);
+  outline: var(--focus-ring);
+  outline-offset: 1px;
 }
 
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
@@ -239,7 +338,7 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 input[type="color"] {
-  width: 34px;
+  width: 36px;
   height: var(--row);
   padding: 2px;
   border: 1px solid var(--edge);
@@ -249,69 +348,89 @@ input[type="color"] {
 }
 
 input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   margin: 0;
   accent-color: var(--accent);
   cursor: pointer;
 }
 
-/* The slider: a hairline track with the travelled part inked in the accent.
-   `--fill` is written by shell.js on input and after every UI sync, which is
-   what gives it the "set amount" look every editing app has. */
+/* The slider: a crisp track with the travelled part inked in the accent.
+   `--fill` is written by shell.js on input and after every UI sync. */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 16px;
+  height: 20px;
   margin: 0;
   background: none;
   cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 3px;
+  height: 5px;
+  border-radius: 999px;
   background:
     linear-gradient(to right,
       var(--accent) 0 var(--fill, 0%),
-      color-mix(in srgb, var(--edge) 80%, var(--sunken)) var(--fill, 0%) 100%);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+      color-mix(in srgb, var(--edge) 92%, var(--sunken)) var(--fill, 0%) 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px;
-  height: 12px;
-  margin-top: -4px;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--edge));
+  width: 14px;
+  height: 14px;
+  margin-top: -4.5px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, #ffffff);
   border-radius: 50%;
-  background: linear-gradient(180deg, #dfe7ff, var(--accent));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, #e7eeff, var(--accent));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  transition: transform 90ms var(--ease-out), box-shadow var(--fast);
 }
 
-input[type="range"]:focus-visible { outline: none; }
-input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus), 0 1px 3px rgba(0, 0, 0, 0.6); }
+@media (hover: hover) {
+  input[type="range"]:hover::-webkit-slider-thumb {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 1px 3px rgba(0, 0, 0, 0.65);
+  }
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.14);
+}
+
+input[type="range"]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
 
 input[type="range"]::-moz-range-track {
-  height: 4px;
-  border-radius: 3px;
+  height: 5px;
+  border-radius: 999px;
   background: var(--sunken);
 }
 
 input[type="range"]::-moz-range-progress {
-  height: 4px;
-  border-radius: 3px;
+  height: 5px;
+  border-radius: 999px;
   background: var(--accent);
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--edge));
+  width: 14px;
+  height: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, #ffffff);
   border-radius: 50%;
   background: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  input[type="range"]::-webkit-slider-thumb { transition: none; }
+  input[type="range"]:hover::-webkit-slider-thumb,
+  input[type="range"]:active::-webkit-slider-thumb { transform: none; }
 }
 
 /* ---------------------------------------------------------------- utilities */
@@ -326,9 +445,9 @@ input[type="range"]::-moz-range-thumb {
 
 .readout b { color: var(--text); font-weight: 600; }
 
-/* Dim enough to sit behind the main readout, bright enough to stay over 4.5:1
-   against the options bar's raised ground. */
-.is-dim { opacity: 0.88; }
+/* Dim enough to sit behind the main readout, bright enough to stay well over
+   4.5:1 against the options bar's raised ground. */
+.is-dim { opacity: 0.9; }
 
 .opt-grow { flex: 1 1 auto; min-width: 0; }
 
@@ -337,9 +456,48 @@ input[type="range"]::-moz-range-thumb {
 
 .hint {
   margin: 0;
-  font-size: var(--fs-small);
-  line-height: 1.5;
+  font: var(--fs-small)/1.52 var(--font-ui);
   color: var(--muted);
 }
 
-.hint b { color: var(--text); font-weight: 600; }
+.hint b {
+  color: var(--text);
+  font: 600 var(--fs-small)/1.4 var(--font);
+}
+
+/* ----------------------------------------------------------- forced colors */
+
+@media (forced-colors: active) {
+  :where(button, a[href], input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  select {
+    background-image: none;
+    padding-right: 8px;
+    appearance: auto;
+  }
+
+  .btn-primary, .obtn-primary,
+  .seg-btn[aria-checked="true"],
+  .tool.is-active,
+  .tool[aria-pressed="true"],
+  .obtn[aria-pressed="true"],
+  .jump-chip[aria-current="true"],
+  .help-navitem[aria-current="page"],
+  .menu-item.is-on,
+  .cmdk-row.is-on,
+  .sample-tile.is-on {
+    border-color: Highlight;
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  /* CSS-mask icons and palette colour chips carry essential information that
+     must survive Forced Colors Mode. */
+  .ui-glyph, .fm-glyph,
+  .swatch, .pimport-chip, .fm-swatch, .palette-manager-swatch {
+    forced-color-adjust: none;
+  }
+}
