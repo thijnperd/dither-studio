@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-13",
+  "updated": "2026-11-20",
   "plugins": [
     {
       "id": "ink-extractor",
@@ -15,10 +15,10 @@
     {
       "id": "shape-press",
       "name": "Shape Press",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "kind": "tool",
       "capability": "shape-press",
-      "summary": "Render the proof as barcode, cross-stitch, halftone or bitmap shape sets.",
+      "summary": "Render the proof as barcode, cross-stitch, halftone, bitmap, diamond or concentric-ring shape sets.",
       "author": "Dither Studio",
       "file": "shape-press.json"
     },
@@ -35,42 +35,62 @@
     {
       "id": "crepuscular-rays",
       "name": "Crepuscular Rays",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "kind": "tool",
       "capability": "crepuscular-rays",
-      "summary": "Turn bright areas into radial light shafts, with an origin you can place anywhere in the frame.",
+      "summary": "Volumetric radial light shafts from bright pixels and thin dither lines, with Euphoria, Prismatic, Source light and Solar modes plus a placeable origin.",
       "author": "Dither Studio",
       "file": "crepuscular-rays.json"
     },
     {
-      "id": "riso-misprint",
-      "name": "Riso Misprint",
+      "id": "epsilon-glow",
+      "name": "Epsilon Glow",
       "version": "1.0.0",
       "kind": "tool",
+      "capability": "epsilon-glow",
+      "summary": "Thresholded two-octave retro bloom and chromatic halation that lets dither dots glow without washing out dark grounds.",
+      "author": "Dither Studio",
+      "file": "epsilon-glow.json"
+    },
+    {
+      "id": "riso-misprint",
+      "name": "Riso Misprint",
+      "version": "1.1.0",
+      "kind": "tool",
       "capability": "riso-misprint",
-      "summary": "Overprint two rotated halftone plates with a small registration slip and a warm paper stock.",
+      "summary": "Subtractive two-plate halftone overprint with registration slip on warm stock, in Duotone, Black ink, Teal & amber and Crimson & ink.",
       "author": "Dither Studio",
       "file": "riso-misprint.json"
     },
     {
       "id": "phosphor-mask",
       "name": "Phosphor Mask",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "kind": "tool",
       "capability": "phosphor-mask",
-      "summary": "Lay a CRT scanline and RGB phosphor triad over the proof, with aperture-grille and shadow-mask variants.",
+      "summary": "CRT scanlines, RGB phosphor triad and highlight halation, with Aperture grille, Shadow mask and arcade Slot mask variants.",
       "author": "Dither Studio",
       "file": "phosphor-mask.json"
     },
     {
       "id": "guilloche-plate",
       "name": "Guilloche Plate",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "kind": "tool",
       "capability": "guilloche-plate",
-      "summary": "Engrave banknote rosettes around a moveable point, with fine light and dark line work.",
+      "summary": "Engrave security rosettes, banknote wave ribbons or orbital spirograph rings around a placeable origin.",
       "author": "Dither Studio",
       "file": "guilloche-plate.json"
+    },
+    {
+      "id": "euphoria-bloom",
+      "name": "Euphoria & Light",
+      "version": "1.0.0",
+      "kind": "preset-pack",
+      "summary": "Three original light-ray and Epsilon Glow recipes inspired by Studio AAA's Dither Boy glow workflows.",
+      "author": "Dither Studio",
+      "homepage": "https://studioaaa.com/product/dither-boy/",
+      "file": "euphoria-bloom.json"
     },
     {
       "id": "nikos-glitch",

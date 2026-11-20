@@ -32,6 +32,7 @@
   let statusLine = null;
   let storageLine = null;
   let restoreFocus = null;
+  let opener = null;
 
   function note(text) {
     if (statusLine) statusLine.textContent = text;
@@ -251,6 +252,21 @@
     text.appendChild(name);
     text.appendChild(summary);
     text.appendChild(meta);
+    const actions = document.createElement('div');
+    actions.className = 'plugin-actions';
+    if (pkg && typeof opener === 'function') {
+      const useBtn = document.createElement('button');
+      useBtn.className = 'btn btn-primary';
+      useBtn.type = 'button';
+      useBtn.textContent = 'Use';
+      useBtn.setAttribute('aria-label', 'Use ' + (entry.name || entry.id));
+      useBtn.disabled = busy;
+      useBtn.addEventListener('click', function () {
+        close();
+        opener(entry.id);
+      });
+      actions.appendChild(useBtn);
+    }
     const action = document.createElement('button');
     action.className = 'btn' + (pkg ? '' : ' btn-primary');
     action.type = 'button';
@@ -261,8 +277,9 @@
       if (pkg) remove(entry.id);
       else install(entry.id);
     });
+    actions.appendChild(action);
     box.appendChild(text);
-    box.appendChild(action);
+    box.appendChild(actions);
     return box;
   }
 
@@ -429,6 +446,7 @@
     installed: function () { return Array.from(installed.values()); },
     catalogue: function () { return catalogue; },
     onChange: onChange,
+    setOpener: function (fn) { opener = typeof fn === 'function' ? fn : null; },
     status: function () { return statusLine ? statusLine.textContent : ''; },
   };
 }(typeof window !== 'undefined' ? window : globalThis));

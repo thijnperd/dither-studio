@@ -317,29 +317,40 @@ Studio.
   second confirmation. It is the Coolors/Lospec-shaped drafting table, built on
   the app's own palette store rather than a second format.
 - **Shape Press** (tool) adds one effect to the stack: barcode, cross-stitch,
-  halftone or bitmap shapes. It is hidden from the effect picker until the tool
-  is installed; a recipe that names it still renders through the engine.
-- **Crepuscular Rays** (tool) adds the *Crepuscular rays* effect: a radial
-  gather through the proof's bright areas, with an Origin X/Y row so the shafts
-  can converge anywhere, from a figure's chest to a point outside the frame.
-- **Riso Misprint** (tool) adds a two-plate riso screen with rotated halftone
-  dots, a deliberate registration slip and warm paper. Its modes are Duotone
-  and Black ink.
-- **Phosphor Mask** (tool) adds scanlines, an RGB triad and a little chroma
-  bleed, with Aperture grille and Shadow mask variants.
-- **Guilloche Plate** (tool) engraves banknote rosettes in fine light and dark
-  lines. Its Origin X/Y row places the centre, and its amount controls how
-  strongly the engraving sits over the proof.
+  halftone, bitmap, diamond or concentric-ring shapes. It is hidden from the
+  effect picker until the tool is installed; a recipe that names it still
+  renders through the engine.
+- **Crepuscular Rays** (tool) adds the *Crepuscular rays* effect: true outward
+  volumetric radial light scattering from bright pixels and thin 1-bit dither
+  lines, in four modes (**Euphoria**, **Prismatic**, **Source light** and
+  **Solar**), with an Origin X/Y row and a crosshair **Pick** button so you can
+  click or drag directly on the proof to place the light centre.
+- **Epsilon Glow** (tool) adds *Epsilon glow*, inspired by Studio AAA's Dither
+  Boy glow workflow: a dither-preserving, thresholded two-octave bloom and
+  chromatic halation pass (**Euphoric aura**, **Classic bloom**, **Film
+  halation** and **CRT phosphor**) that lets bright dots glow without washing
+  out dark grounds.
+- **Riso Misprint** (tool) adds a subtractive two-plate riso screen with rotated
+  halftone dots, registration slip and warm stock, in **Duotone**, **Black
+  ink**, **Teal & amber** and **Crimson & ink**.
+- **Phosphor Mask** (tool) adds scanlines, a luminance-compensated RGB triad and
+  highlight halation, with **Aperture grille**, **Shadow mask** and arcade
+  **Slot mask** variants.
+- **Guilloche Plate** (tool) engraves security **Rosette**, **Banknote waves**
+  or **Orbital** spirograph lines in fine light and dark ink. Its Origin X/Y row
+  and crosshair **Pick** button place the centre directly on the proof.
 - **Palette packs** add colour schemes to the palette picker. A pack exported
   from the Color Scheme Maker is one; removing the pack removes its inks and
   falls back to the built-in palette if one was selected.
 - **Preset packs** add whole recipes to the Presets station. The picker keeps
   the built-ins under **Built-in recipes** and gives each installed pack its own
   heading, so it is clear where a recipe came from. The bundled catalogue
-  includes Niko's Glitch Universe, Caroline's Undead Dithering, 2_s0ur's Broken
-  Signal and Dreamy Cyberpunk, the last adapted from Studio AAA's Dither Boy
-  download. Removing a pack removes its heading and recipes and leaves the rest
-  of the catalogue alone.
+  includes **Euphoria & Light**, Niko's Glitch Universe, Caroline's Undead
+  Dithering, 2_s0ur's Broken Signal and Dreamy Cyberpunk (the last adapted from
+  Studio AAA's Dither Boy download). Removing a pack removes its heading and
+  recipes and leaves the rest of the catalogue alone. Installed packages also
+  carry a **Use** button inside the Plugin Manager and open directly from the
+  Studio menu.
 
 **Animate the still.** *Effects ▸ Animate the Still* puts a timeline over the
 proof. Set the duration (1–12 s) and frame rate (6–30 fps), then add tracks for

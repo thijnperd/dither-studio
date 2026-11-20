@@ -2,11 +2,13 @@
   "schema": 1,
   "id": "phosphor-mask",
   "name": "Phosphor Mask",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "tool",
   "capability": "phosphor-mask",
-  "summary": "Lay a CRT scanline and RGB phosphor triad over the proof, with aperture-grille and shadow-mask variants.",
+  "summary": "CRT scanlines, RGB phosphor triad and highlight halation, with Aperture grille, Shadow mask and arcade Slot mask variants.",
   "author": "Dither Studio",
   "homepage": "https://github.com/libretro/glsl-shaders/blob/master/crt/shaders/crt-lottes-fast.glsl",
-  "data": {}
+  "data": {
+    "modes": ["aperture", "shadow", "slot"]
+  }
 }

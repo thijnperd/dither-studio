@@ -561,7 +561,7 @@
   const PLUGIN_KINDS = ['tool', 'preset-pack', 'palette-pack'];
   const PLUGIN_CAPABILITIES = [
     'ink-extractor', 'shape-press', 'color-scheme-maker',
-    'crepuscular-rays', 'riso-misprint', 'phosphor-mask', 'guilloche-plate',
+    'crepuscular-rays', 'epsilon-glow', 'riso-misprint', 'phosphor-mask', 'guilloche-plate',
   ];
   const EXTRACT_LABELS = { cins: 'CINS', median: 'Median cut', octree: 'Octree', polarity: 'Polarity' };
 
@@ -599,6 +599,11 @@
         } else {
           if (Array.isArray(pkg.data.methods)) {
             out.data.methods = pkg.data.methods.filter(function (m) { return EXTRACT_METHODS.indexOf(m) >= 0; });
+          }
+          if (Array.isArray(pkg.data.modes)) {
+            out.data.modes = pkg.data.modes
+              .filter(function (m) { return typeof m === 'string' && /^[a-z0-9-]{1,32}$/.test(m); })
+              .slice(0, 16);
           }
           if (pkg.data.defaultCount) out.data.defaultCount = Math.max(2, Math.min(32, Math.round(pkg.data.defaultCount)));
         }

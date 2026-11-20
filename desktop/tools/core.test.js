@@ -315,18 +315,20 @@ test('a scheme-maker package keeps only its harmony defaults', function () {
   assert.strictEqual(pkg.data.methods, undefined);
 });
 
-test('the four effect plugins pass the capability allowlist', function () {
-  ['crepuscular-rays', 'riso-misprint', 'phosphor-mask', 'guilloche-plate'].forEach(function (capability) {
+test('the five effect plugins pass the capability allowlist and preserve mode lists', function () {
+  ['crepuscular-rays', 'epsilon-glow', 'riso-misprint', 'phosphor-mask', 'guilloche-plate'].forEach(function (capability) {
     const pkg = Core.validatePluginPackage({
       schema: 1,
       id: capability,
       name: capability,
-      version: '1.0.0',
+      version: '1.1.0',
       kind: 'tool',
       capability: capability,
       summary: 'A declarative effect package',
+      data: { modes: ['a', 'b', 'BAD MODE!'] },
     });
     assert.strictEqual(pkg.capability, capability);
+    assert.deepStrictEqual(pkg.data.modes, ['a', 'b']);
   });
 });
 

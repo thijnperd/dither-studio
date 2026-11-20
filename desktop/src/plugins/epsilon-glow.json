@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "epsilon-glow",
+  "name": "Epsilon Glow",
+  "version": "1.0.0",
+  "kind": "tool",
+  "capability": "epsilon-glow",
+  "summary": "Thresholded two-octave retro bloom and chromatic halation that lets dither dots glow without washing out dark grounds.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/product/dither-boy/",
+  "data": {
+    "modes": ["aura", "soft", "halation", "neon"]
+  }
+}

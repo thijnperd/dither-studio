@@ -3,7 +3,7 @@
 Dither Studio is a print shop for pixels that lives in a folder. You load an
 image or a video, choose a press and an ink set, grade and stack a few effects,
 and pull a proof — as pixels, as characters, as a PNG, or as a WebM recording.
-Forty-six dither algorithms, thirty palettes, twenty-five presets, twenty-one
+Forty-six dither algorithms, thirty palettes, twenty-five presets, twenty-two
 effects. No install, no build step, no uploads; the press works offline.
 
 The five-minute path: **open the web demo** at
@@ -30,11 +30,11 @@ Every section, in order:
   - [Installed from the browser instead](#installed-from-the-browser-instead)
   - [Keeping it portable](#keeping-it-portable)
 - [2. The console, station by station](#2-the-console-station-by-station) — the rail, panel by panel
-- [3. The catalogue](#3-the-catalogue) — 46 algorithms, 30 palettes, 13 tone maps, 21 effects, 5 text ramps
+- [3. The catalogue](#3-the-catalogue) — 46 algorithms, 30 palettes, 13 tone maps, 22 effects, 5 text ramps
   - [Algorithms (46)](#algorithms-46)
   - [Palettes (30)](#palettes-30)
   - [Tone maps (13)](#tone-maps-13)
-  - [Effects (15)](#effects-15)
+  - [Effects (22)](#effects-22)
   - [Text ramps (5)](#text-ramps-5)
 - [4. How a proof is made](#4-how-a-proof-is-made) — the pipeline, in order
 - [5. The three structure-aware looks](#5-the-three-structure-aware-looks) — Matrix Rain, Ice Dot Field, Smooth Diffusion
@@ -132,7 +132,7 @@ rail lights up as you scroll, so the strip doubles as a position readout.
 | **Tone** | Black point, white point, gamma, brightness, contrast, saturation and hue — applied before dithering, in linear light where it matters. The header note shows the current gamma (`ct 1.20`). |
 | **Ink** | Eleven **tone maps** that re-ink the finished dither (Halftone noir, Amber CRT, Thermal, Matrix green, Ice …), a **custom** entry that takes your own ink and paper colours, and the **Alpha** rule: flatten onto paper, dither the matte to hard edges, or keep a real PNG alpha channel. |
 | **Detail** | **Blur** (0–4), **Sharpen** (unsharp mask, 0–2) and a 3×3 **median denoise** toggle. |
-| **Effects** | **Add to the stack** — twenty-one effects in the desktop app (Shape Press, Crepuscular rays, Riso misprint, Phosphor mask and Guilloche plate arrive with their plugins; the web builds offer the other sixteen), added one at a time, each row with its amount, its mode where it has one, and ↑ ↓ ✕ to reorder or remove. Crepuscular rays and Guilloche plate also give you an Origin X/Y row. Effects run top to bottom, after the dither. |
+| **Effects** | **Add to the stack** — twenty-two effects in the desktop app (Shape Press, Crepuscular rays, Epsilon glow, Riso misprint, Phosphor mask and Guilloche plate arrive with their plugins; the web builds offer the other sixteen), added one at a time, each row with its amount, its mode where it has one, and ↑ ↓ ✕ to reorder or remove. Crepuscular rays and Guilloche plate also give you an Origin X/Y row and a crosshair Pick button to place the origin directly on the proof. Effects run top to bottom, after the dither. |
 | **Glow** | A blurred screen-blend pass after the effects: **Radius** 0–8 and **Intensity** 0–100, added in linear light. |
 | **Motion** | Video mode: **Webcam** / **Open video…**, then frame rate, temporal rule and **Record WebM**. The transport (Play/Pause and the frame readout) sits under the viewport. |
 | **Type** | **Print with characters**, the character **ramp**, the **cell** size in pixels (6–24), and **Export .txt**. |
@@ -213,7 +213,7 @@ two inks even after an effect stack has run over it. Thirteen entries: eleven
 ready grades, **None**, and a **custom** entry that reads your own ink and paper
 pickers. This is where the Matrix-green and Ice-ink posters come from.
 
-### Effects (15)
+### Effects (22)
 
 | Effect | What it does |
 |---|---|
@@ -230,8 +230,15 @@ pickers. This is where the Matrix-green and Ice-ink posters come from.
 | Dead pixels | Scatters stuck-on and stuck-off pixels |
 | Vignette | Darkens or blooms the corners |
 | CRT bloom | Channel-scaled bloom with a mask offset |
-| Ripple | Concentric displacement from a seeded centre |
+| Ripple | Concentric displacement from a seeded centre (rings, swirl or turbulence) |
 | Starfield | Seeded stars with optional streaks and glow |
+| Temporal variation | Frame-aware wave, drift or pulse for animations and video |
+| Shape Press *(plugin)* | Re-draws cells as barcode, cross-stitch, halftone, bitmap, diamond or concentric-ring shapes |
+| Crepuscular rays *(plugin)* | Outward volumetric radial light shafts from bright pixels and thin lines (Euphoria, Prismatic, Source light, Solar) with a placeable origin |
+| Epsilon glow *(plugin)* | Thresholded two-octave retro bloom and chromatic halation (Euphoric aura, Classic bloom, Film halation, CRT phosphor) |
+| Riso misprint *(plugin)* | Subtractive rotated halftone overprints with registration slip (Duotone, Black ink, Teal & amber, Crimson & ink) |
+| Phosphor mask *(plugin)* | Scanlines, luminance-compensated RGB phosphor triad and highlight halation (Aperture grille, Shadow mask, Slot mask) |
+| Guilloche plate *(plugin)* | Security engraving rosettes, banknote wave ribbons or orbital rings around a placeable origin |
 
 ### Text ramps (5)
 

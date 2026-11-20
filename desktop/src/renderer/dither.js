@@ -1548,25 +1548,62 @@
     {
       id: 'shapepress', name: 'Shape Press', hint: 'draws the frame as editable shape sets (Shape Press plugin)',
       plugin: 'shape-press',
-      modes: [{ id: 'barcode', name: 'Barcode' }, { id: 'cross', name: 'Cross stitch' }, { id: 'halftone', name: 'Halftone' }, { id: 'bitmap', name: 'Bitmap' }],
+      modes: [
+        { id: 'barcode', name: 'Barcode' },
+        { id: 'cross', name: 'Cross stitch' },
+        { id: 'halftone', name: 'Halftone' },
+        { id: 'bitmap', name: 'Bitmap' },
+        { id: 'diamond', name: 'Diamond' },
+        { id: 'rings', name: 'Rings' },
+      ],
     },
     {
-      id: 'crepuscular', name: 'Crepuscular rays', hint: 'radial light shafts from a point you set (Crepuscular Rays plugin)',
-      plugin: 'crepuscular-rays', origin: { x: 50, y: 38 },
+      id: 'crepuscular', name: 'Crepuscular rays', hint: 'volumetric radial light shafts from bright pixels (Crepuscular Rays plugin)',
+      plugin: 'crepuscular-rays', origin: { x: 50, y: 46 },
+      modes: [
+        { id: 'euphoria', name: 'Euphoria' },
+        { id: 'prism', name: 'Prismatic' },
+        { id: 'source', name: 'Source light' },
+        { id: 'solar', name: 'Solar' },
+      ],
     },
     {
       id: 'riso', name: 'Riso misprint', hint: 'two spot-ink plates slip out of register (Riso Misprint plugin)',
       plugin: 'riso-misprint',
-      modes: [{ id: 'duotone', name: 'Duotone' }, { id: 'ink', name: 'Black ink' }],
+      modes: [
+        { id: 'duotone', name: 'Duotone' },
+        { id: 'ink', name: 'Black ink' },
+        { id: 'sunburst', name: 'Teal & amber' },
+        { id: 'crimson', name: 'Crimson & ink' },
+      ],
     },
     {
-      id: 'phosphor', name: 'Phosphor mask', hint: 'scanlines and an RGB phosphor triad (Phosphor Mask plugin)',
+      id: 'phosphor', name: 'Phosphor mask', hint: 'scanlines, RGB phosphor triad and CRT halation (Phosphor Mask plugin)',
       plugin: 'phosphor-mask',
-      modes: [{ id: 'aperture', name: 'Aperture grille' }, { id: 'shadow', name: 'Shadow mask' }],
+      modes: [
+        { id: 'aperture', name: 'Aperture grille' },
+        { id: 'shadow', name: 'Shadow mask' },
+        { id: 'slot', name: 'Slot mask' },
+      ],
     },
     {
-      id: 'guilloche', name: 'Guilloche plate', hint: 'banknote rosettes engraved around a point you set (Guilloche Plate plugin)',
+      id: 'guilloche', name: 'Guilloche plate', hint: 'banknote rosettes and wave engraving (Guilloche Plate plugin)',
       plugin: 'guilloche-plate', origin: { x: 50, y: 50 },
+      modes: [
+        { id: 'rosette', name: 'Rosette' },
+        { id: 'banknote', name: 'Banknote waves' },
+        { id: 'orbital', name: 'Orbital' },
+      ],
+    },
+    {
+      id: 'epsilonglow', name: 'Epsilon glow', hint: 'thresholded multi-scale retro bloom and chromatic halation (Epsilon Glow plugin)',
+      plugin: 'epsilon-glow',
+      modes: [
+        { id: 'aura', name: 'Euphoric aura' },
+        { id: 'soft', name: 'Classic bloom' },
+        { id: 'halation', name: 'Film halation' },
+        { id: 'neon', name: 'CRT phosphor' },
+      ],
     },
   ];
   const GLITCH_BY_ID = new Map(GLITCHES.map(function (g) { return [g.id, g]; }));
@@ -1969,156 +2006,349 @@
   }
 
   // Shape Press: one 4x4 cell becomes a small shape chosen by the cell's
-  // luminance. It is deliberately a post-dither effect, so every algorithm,
-  // palette, animation and export already routes through it.
-  function glitchShapePress(d, w, h, amount, rng, mode, frame) {
+  // luminance. Inspired by Studio AAA's Shape Shifter — barcode, cross-stitch,
+  // halftone, bitmap, diamond and concentric rings — running post-dither so
+  // every algorithm, palette, animation and export routes through it.
+  function glitchShapePress(d, w, h, amount, rng, mode) {
     const src = d.slice();
-    const cell = 4;
+    const cell = mode === 'rings' ? 6 : 4;
     const k = amount / 100;
+    const half = (cell - 1) / 2;
+    const bayer4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
     for (let by = 0; by < h; by += cell) {
+      const y1 = Math.min(h, by + cell);
       for (let bx = 0; bx < w; bx += cell) {
+        const x1 = Math.min(w, bx + cell);
         let r = 0, g = 0, b = 0, count = 0;
-        for (let y = by; y < Math.min(h, by + cell); y++) {
-          for (let x = bx; x < Math.min(w, bx + cell); x++) {
+        for (let y = by; y < y1; y++) {
+          for (let x = bx; x < x1; x++) {
             const p = (y * w + x) * 4;
             r += src[p]; g += src[p + 1]; b += src[p + 2]; count++;
           }
         }
-        const lumaValue = luma(r / count, g / count, b / count) / 255;
-        const shape = [r / count, g / count, b / count];
-        const dark = [shape[0] * 0.10, shape[1] * 0.10, shape[2] * 0.10];
-        for (let y = by; y < Math.min(h, by + cell); y++) {
-          for (let x = bx; x < Math.min(w, bx + cell); x++) {
-            const dx = x - bx, dy = y - by;
+        const mr = r / count, mg = g / count, mb = b / count;
+        const lumaValue = luma(mr, mg, mb) / 255;
+        const darkR = mr * 0.08, darkG = mg * 0.08, darkB = mb * 0.08;
+        for (let y = by; y < y1; y++) {
+          const dy = y - by;
+          for (let x = bx; x < x1; x++) {
+            const dx = x - bx;
             let on = false;
             if (mode === 'barcode') {
-              const width = 1 + Math.round(lumaValue * (cell - 1));
+              const width = Math.round(lumaValue * cell);
               on = dx < width;
             } else if (mode === 'cross') {
-              on = dx === dy || dx + dy === cell - 1 || dx === 1 || dy === 1;
+              const diag = Math.min(Math.abs(dx - dy), Math.abs(dx + dy - (cell - 1)));
+              const cx = Math.abs(dx - half);
+              const cy = Math.abs(dy - half);
+              const reach = Math.max(cx, cy);
+              if (lumaValue > 0.84) on = true;
+              else if (lumaValue > 0.54) on = diag <= 0.6 || (cx <= 0.6 && cy <= 0.6);
+              else if (lumaValue > 0.28) on = diag <= 0.5 && reach <= 1.25;
+              else if (lumaValue > 0.1) on = cx <= 0.55 && cy <= 0.55;
             } else if (mode === 'halftone') {
-              const cx = (cell - 1) / 2, cy = (cell - 1) / 2;
-              const radius = Math.sqrt(lumaValue) * (cell / 2);
-              on = Math.sqrt((dx - cx) * (dx - cx) + (dy - cy) * (dy - cy)) <= radius;
+              const radius = Math.sqrt(lumaValue) * (cell * 0.56);
+              const dist = Math.sqrt((dx - half) * (dx - half) + (dy - half) * (dy - half));
+              on = dist <= radius;
+            } else if (mode === 'diamond') {
+              const manhattan = Math.abs(dx - half) + Math.abs(dy - half);
+              on = manhattan <= lumaValue * (cell * 0.92);
+            } else if (mode === 'rings') {
+              const dist = Math.sqrt((dx - half) * (dx - half) + (dy - half) * (dy - half));
+              const maxD = half * 1.35;
+              if (lumaValue > 0.78) on = dist <= maxD * 0.92;
+              else if (lumaValue > 0.45) on = Math.abs(dist - maxD * 0.62) <= 0.72 || dist <= 0.75;
+              else if (lumaValue > 0.16) on = Math.abs(dist - maxD * 0.58) <= 0.62;
             } else {
-              const rank = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]][dy][dx];
+              const rank = bayer4[dy & 3][dx & 3];
               on = lumaValue * 16 > rank;
             }
             const p = (y * w + x) * 4;
-            const target = on ? shape : dark;
-            d[p] = clamp255(src[p] * (1 - k) + target[0] * k);
-            d[p + 1] = clamp255(src[p + 1] * (1 - k) + target[1] * k);
-            d[p + 2] = clamp255(src[p + 2] * (1 - k) + target[2] * k);
+            const tr = on ? mr : darkR;
+            const tg = on ? mg : darkG;
+            const tb = on ? mb : darkB;
+            d[p] = clamp255(src[p] * (1 - k) + tr * k);
+            d[p + 1] = clamp255(src[p + 1] * (1 - k) + tg * k);
+            d[p + 2] = clamp255(src[p + 2] * (1 - k) + tb * k);
           }
         }
       }
     }
   }
 
-  // Crepuscular rays: gather a softened luminance mask outward from a light
-  // origin, in the shape of the post-process in GPU Gems 3 ch.13. A seeded
-  // angular field turns the radial gather into shafts instead of a plain halo,
-  // and the point is normalised so it survives any output size.
+  // Crepuscular rays: true outward volumetric radial light scattering
+  // (GPU Gems 3 ch. 13). Each pixel marches back toward the light origin so
+  // bright features — including 1-bit dither dots and thin lines — cast crisp
+  // radial shafts outward while empty pockets stay dark. Modes add spectral
+  // Euphoria dispersion + axial flare, RGB prismatic split, source-coloured
+  // zoom rays, or warm solar shafts.
   function glitchCrepuscular(d, w, h, amount, rng, mode, frame, origin) {
     const k = amount / 100;
     if (k <= 0 || w < 2 || h < 2) return;
-    // The shafts are a soft field, so build them at a third of the output size
-    // and interpolate. That keeps a megapixel frame interactive while the
-    // radial march (the expensive part) runs on roughly a ninth of the pixels.
-    const scale = 3;
+    const style = mode || 'euphoria';
+    // Half-res up to ~960px, scaling cleanly on megapixels so every frame
+    // stays crisp on thin 1-bit lines while staying well within budget.
+    const scale = Math.max(2, Math.round(Math.max(w, h) / 480));
     const lw = Math.max(2, Math.ceil(w / scale));
     const lh = Math.max(2, Math.ceil(h / scale));
     const ox = ((origin ? origin.x : 50) / 100) * (lw - 1);
-    const oy = ((origin ? origin.y : 38) / 100) * (lh - 1);
-    const mask = new Float32Array(lw * lh);
+    const oy = ((origin ? origin.y : 46) / 100) * (lh - 1);
+    const cells = lw * lh;
+    const emitL = new Float32Array(cells);
+    const emitRGB = style === 'source' ? new Float32Array(cells * 3) : null;
+
+    // Dither-aware emitter map: blend block mean and block peak so thin 1-bit
+    // lines and sparse stipple dots still emit directional shafts instead of
+    // vanishing under a high box-average threshold.
     for (let my = 0; my < lh; my++) {
       const y0 = my * scale;
       const y1 = Math.min(h, y0 + scale);
       for (let mx = 0; mx < lw; mx++) {
         const x0 = mx * scale;
         const x1 = Math.min(w, x0 + scale);
-        let sum = 0, count = 0;
+        let sumL = 0, peakL = 0, sumR = 0, sumG = 0, sumB = 0;
+        let peakR = 0, peakG = 0, peakB = 0, count = 0;
         for (let y = y0; y < y1; y++) {
           for (let x = x0; x < x1; x++) {
             const p = (y * w + x) * 4;
-            sum += luma(d[p], d[p + 1], d[p + 2]);
+            const r = d[p], g = d[p + 1], b = d[p + 2];
+            const lv = luma(r, g, b);
+            sumL += lv;
+            if (lv > peakL) { peakL = lv; peakR = r; peakG = g; peakB = b; }
+            if (emitRGB) { sumR += r; sumG += g; sumB += b; }
             count++;
           }
         }
-        // Keep the source, not the paper: only the brightest half can emit.
-        const l = clamp01((sum / count / 255 - 0.48) / 0.52);
-        mask[my * lw + mx] = l * l * (3 - 2 * l);
+        const meanL = sumL / count / 255;
+        const maxL = peakL / 255;
+        // Mean dominates dense cores (the figure), while peak keeps thin 1px
+        // lightning cracks emitting cleanly.
+        const raw = 0.64 * meanL + 0.36 * maxL;
+        const knee = clamp01((raw - 0.04) / 0.96);
+        const e = knee * Math.pow(knee, 0.35);
+        const idx = my * lw + mx;
+        emitL[idx] = e;
+        if (emitRGB) {
+          const mr = 0.64 * (sumR / count) + 0.36 * peakR;
+          const mg = 0.64 * (sumG / count) + 0.36 * peakG;
+          const mb = 0.64 * (sumB / count) + 0.36 * peakB;
+          emitRGB[idx * 3] = SRGB_TO_LINEAR[clampInt(Math.round(mr), 0, 255)] * e;
+          emitRGB[idx * 3 + 1] = SRGB_TO_LINEAR[clampInt(Math.round(mg), 0, 255)] * e;
+          emitRGB[idx * 3 + 2] = SRGB_TO_LINEAR[clampInt(Math.round(mb), 0, 255)] * e;
+        }
       }
     }
-    boxBlurGray(mask, lw, lh, Math.max(1, Math.round(Math.min(lw, lh) * 0.025)));
 
-    const rayCount = 16 + Math.floor(rng() * 14);
-    const phase = rng() * Math.PI * 2;
-    const raySeed = (rng() * 4294967296) >>> 0;
-    const steps = 28;
-    const decay = 0.965;
+    const minDim = Math.min(lw, lh);
+    const tightBloom = emitL.slice();
+    const tightR = Math.max(1, Math.round(minDim * 0.014));
+    boxBlurGray(tightBloom, lw, lh, tightR);
+    boxBlurGray(tightBloom, lw, lh, tightR);
+
+    const wideBloom = emitL.slice();
+    const wideR = Math.max(2, Math.round(minDim * 0.044));
+    boxBlurGray(wideBloom, lw, lh, wideR);
+    boxBlurGray(wideBloom, lw, lh, wideR);
+
+    // Smooth emitL just enough (~2px) so thin 1-bit lightning lines never
+    // alias or step across radial march samples while preserving crisp shadows.
+    const raySmooth = Math.max(1, Math.round(minDim * 0.0055));
+    boxBlurGray(emitL, lw, lh, raySmooth);
+    boxBlurGray(emitL, lw, lh, raySmooth);
+
+    const oxi = clampInt(Math.round(ox), 0, lw - 1);
+    const oyi = clampInt(Math.round(oy), 0, lh - 1);
+    const originEnergy = Math.max(wideBloom[oyi * lw + oxi], tightBloom[oyi * lw + oxi]);
+
+    const steps = 38;
+    // Bounded physical shaft length keeps step spacing tight (no banding in
+    // corners) and lets every bright edge cast crisp outward volumetric streaks
+    // while keeping empty crevices velvety dark.
+    const maxRayLen = minDim * (0.20 + 0.30 * k);
+    const decayNear = 0.865;
+    const decayFar = 0.938;
     const maxX = Math.max(ox, lw - 1 - ox);
     const maxY = Math.max(oy, lh - 1 - oy);
     const maxR = Math.max(1, Math.sqrt(maxX * maxX + maxY * maxY));
-    const tint = [SRGB_TO_LINEAR[160], SRGB_TO_LINEAR[128], 1];
-    const gain = k;
-    const field = new Float32Array(lw * lh * 3);
+    const maxR2 = maxR * maxR;
+    const field = new Float32Array(cells * 3);
+    const invSteps = 1 / steps;
+    const vBeamW = Math.max(1.0, lw * 0.0058);
+    const vBeamH = Math.max(8, lh * 0.44);
+    const hBeamW = Math.max(5, lw * 0.095);
+    const hBeamH = Math.max(1.0, lh * 0.0048);
+
+    let normNear = 0, normFar = 0, wn0 = 1, wf0 = 1;
+    for (let s = 0; s < steps; s++) {
+      normNear += wn0; normFar += wf0;
+      wn0 *= decayNear; wf0 *= decayFar;
+    }
+    const invNormNear = 1 / normNear;
+    const invNormFar = 1 / normFar;
+
     for (let y = 0; y < lh; y++) {
       const dy = y - oy;
       for (let x = 0; x < lw; x++) {
         const dx = x - ox;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx);
-        const u = ((angle + Math.PI) / (Math.PI * 2)) * rayCount;
-        const i = Math.floor(u);
-        const f = u - i;
-        const a = hash01(((i % rayCount) + rayCount) % rayCount, 0, raySeed);
-        const b = hash01((((i + 1) % rayCount) + rayCount) % rayCount, 0, raySeed);
-        const smooth = f * f * (3 - 2 * f);
-        const noise = a + (b - a) * smooth;
-        const angular = 0.03 + 0.97 * Math.pow(noise, 4);
-        const mod = 0.9 + 0.1 * Math.sin(angle * 3 + phase);
+        const dist2 = dx * dx + dy * dy;
+        const dist = Math.sqrt(dist2);
+        const rNorm = Math.min(1, dist / maxR);
+        // Step length along the radial vector from (x, y) back toward (ox, oy).
+        const marchLen = dist > 0.001 ? Math.min(dist, maxRayLen * (0.58 + 0.46 * rNorm)) : 0;
+        const invDist = dist > 0.001 ? marchLen / dist : 0;
+        const stepDx = dx * invDist;
+        const stepDy = dy * invDist;
 
-        let acc = 0, weight = 0;
-        let wgt = 1;
-        for (let s = 0; s < steps; s++) {
-          const t = s / (steps - 1);
-          // March outward from the light. A pixel far down a bright wedge then
-          // gathers the source with real weight instead of a halo of leftovers.
-          const sx = ox + (x - ox) * t;
-          const sy = oy + (y - oy) * t;
-          const mx = clampInt(Math.round(sx), 0, lw - 1);
-          const my = clampInt(Math.round(sy), 0, lh - 1);
-          acc += mask[my * lw + mx] * wgt;
-          weight += wgt;
-          wgt *= decay;
+        // Deterministic Interleaved Gradient Noise jitter eliminates banding.
+        const jFrac = (0.06711056 * x + 0.00583715 * y) % 1;
+        const jitter = (52.9829189 * jFrac) % 1;
+        const idx = y * lw + x;
+        const at = idx * 3;
+        const tight = tightBloom[idx] > 0 ? tightBloom[idx] : 0;
+        const wide = wideBloom[idx] > 0 ? wideBloom[idx] : 0;
+
+        let rOut = 0, gOut = 0, bOut = 0;
+        if (style === 'source') {
+          let accR = 0, accG = 0, accB = 0;
+          let wf = 1;
+          for (let s = 0; s < steps; s++) {
+            const frac = (s + jitter) * invSteps;
+            const sx = clampInt(Math.round(x - stepDx * frac), 0, lw - 1);
+            const sy = clampInt(Math.round(y - stepDy * frac), 0, lh - 1);
+            const sp = (sy * lw + sx) * 3;
+            accR += emitRGB[sp] * wf;
+            accG += emitRGB[sp + 1] * wf;
+            accB += emitRGB[sp + 2] * wf;
+            wf *= decayFar;
+          }
+          const core = Math.exp(-dist2 / (maxR2 * 0.009)) * (0.08 + 0.42 * originEnergy);
+          const scaleGain = (2.35 * k) * (1 - 0.22 * rNorm) * invNormFar;
+          rOut = accR * scaleGain + emitRGB[at] * 0.32 * k + tight * 0.18 * k + core * k;
+          gOut = accG * scaleGain + emitRGB[at + 1] * 0.32 * k + tight * 0.18 * k + core * k;
+          bOut = accB * scaleGain + emitRGB[at + 2] * 0.32 * k + tight * 0.18 * k + core * k;
+        } else if (style === 'prism') {
+          let accR = 0, accG = 0, accB = 0;
+          let wf = 1;
+          for (let s = 0; s < steps; s++) {
+            const baseFrac = (s + jitter) * invSteps;
+            const fR = baseFrac;
+            const fG = baseFrac * 0.78;
+            const fB = baseFrac * 0.56;
+            const sxR = clampInt(Math.round(x - stepDx * fR), 0, lw - 1);
+            const syR = clampInt(Math.round(y - stepDy * fR), 0, lh - 1);
+            const sxG = clampInt(Math.round(x - stepDx * fG), 0, lw - 1);
+            const syG = clampInt(Math.round(y - stepDy * fG), 0, lh - 1);
+            const sxB = clampInt(Math.round(x - stepDx * fB), 0, lw - 1);
+            const syB = clampInt(Math.round(y - stepDy * fB), 0, lh - 1);
+            const vR = emitL[syR * lw + sxR];
+            const vG = emitL[syG * lw + sxG];
+            const vB = emitL[syB * lw + sxB];
+            if (vR > 0) accR += vR * wf;
+            if (vG > 0) accG += vG * wf;
+            if (vB > 0) accB += vB * wf;
+            wf *= decayFar;
+          }
+          const core = Math.exp(-dist2 / (maxR2 * 0.008)) * (0.08 + 0.48 * originEnergy);
+          const atten = (0.36 + 0.64 * Math.exp(-rNorm * rNorm * 1.5)) * k;
+          const rN = accR * invNormFar;
+          const gN = accG * invNormFar;
+          const bN = accB * invNormFar;
+          const rS = rN * Math.sqrt(Math.sqrt(rN)) * 2.75 * atten;
+          const gS = gN * Math.sqrt(Math.sqrt(gN)) * 2.55 * atten;
+          const bS = bN * Math.sqrt(Math.sqrt(bN)) * 2.95 * atten;
+          rOut = rS + tight * 0.25 * k + core * k;
+          gOut = gS + tight * 0.22 * k + core * k;
+          bOut = bS + tight * 0.34 * k + core * k;
+        } else {
+          let nearAcc = 0, farAcc = 0;
+          let wn = 1, wf = 1;
+          for (let s = 0; s < steps; s++) {
+            const frac = (s + jitter) * invSteps;
+            const sx = clampInt(Math.round(x - stepDx * frac), 0, lw - 1);
+            const sy = clampInt(Math.round(y - stepDy * frac), 0, lh - 1);
+            const v = emitL[sy * lw + sx];
+            if (v > 0) {
+              nearAcc += v * wn;
+              farAcc += v * wf;
+            }
+            wn *= decayNear;
+            wf *= decayFar;
+          }
+          // Non-linear contrast curve keeps empty shadow pockets deep obsidian
+          // black while letting real bright rays blaze with rich colour.
+          const nearN = nearAcc * invNormNear;
+          const farN = farAcc * invNormFar;
+          const nearShaft = nearN * Math.sqrt(Math.sqrt(nearN));
+          const farShaft = farN * Math.sqrt(farN);
+          const widePow = wide * Math.sqrt(wide);
+          const centerAtten = 0.28 + 0.72 * Math.exp(-rNorm * rNorm * 2.1);
+
+          if (style === 'solar') {
+            const core = Math.exp(-dist2 / (maxR2 * 0.01)) * (0.1 + 0.62 * originEnergy);
+            const inner = (nearShaft * 1.75 + tight * 0.65 + core) * k;
+            const outer = (farShaft * 2.25 + widePow * 0.58) * centerAtten * k;
+            rOut = inner * 1.0 + outer * 0.98;
+            gOut = inner * 0.84 + outer * 0.44;
+            bOut = inner * 0.40 + outer * 0.08;
+          } else {
+            // Euphoria: icy-white figure core -> orchid-violet tight halo ->
+            // rich rose-magenta central shafts -> cool periwinkle/indigo fringe
+            // on outer lightning cracks + razor-thin vertical flare & 4pt star.
+            const flareBoost = 0.12 + 0.88 * originEnergy;
+            const vBeamCore = Math.exp(-Math.abs(dx) / vBeamW) * Math.exp(-Math.abs(dy) / vBeamH) * flareBoost;
+            const vBeamHalo = Math.exp(-Math.abs(dx) / (vBeamW * 3.8)) * Math.exp(-Math.abs(dy) / (vBeamH * 1.05)) * flareBoost;
+            const hBeam = Math.exp(-Math.abs(dy) / hBeamH) * Math.exp(-Math.abs(dx) / hBeamW) * flareBoost * 0.18;
+
+            const starDy = dy + lh * 0.195;
+            const starAxis = Math.exp(-Math.abs(dx) / (vBeamW * 0.62)) * Math.exp(-Math.abs(starDy) / (lh * 0.032))
+              + Math.exp(-Math.abs(starDy) / (vBeamW * 0.62)) * Math.exp(-Math.abs(dx) / (lw * 0.019));
+            const starGlint = starAxis * originEnergy * 0.92;
+
+            const core = Math.exp(-dist2 / (maxR2 * 0.0068)) * flareBoost;
+            const hot = (nearShaft * 0.72 + tight * 0.58 + core * 0.56 + vBeamCore * 0.88 + hBeam + starGlint) * k;
+            const roseShaft = (farShaft * 2.55 + widePow * 0.72 + vBeamHalo * 0.36) * centerAtten * k;
+            const indigoRim = (tight * 0.58 + nearShaft * 0.52) * (0.45 + 0.55 * rNorm) * k;
+
+            // Core burns cool icy-white -> electric lilac -> rose-magenta rays -> indigo rim
+            rOut = hot * 0.94 + roseShaft * 0.86 + indigoRim * 0.28;
+            gOut = hot * 0.86 + roseShaft * 0.22 + indigoRim * 0.28;
+            bOut = hot * 1.00 + roseShaft * 0.44 + indigoRim * 0.98;
+          }
         }
-        const shaft = Math.max(0, acc / weight - 0.015) * angular * mod;
-        const core = Math.exp(-(dist * dist) / (Math.max(1, maxR * maxR) * 0.006));
-        const glowAmount = (shaft * 2.6 + core * 0.8) * (1 - 0.18 * Math.min(1, dist / maxR)) * gain;
-        const at = (y * lw + x) * 3;
-        const white = core * gain * 0.7;
-        field[at] = tint[0] * glowAmount + white;
-        field[at + 1] = tint[1] * glowAmount + white;
-        field[at + 2] = tint[2] * glowAmount + white;
+
+        // Soft filmic shoulder keeps bright cores incandescent without clipping
+        // the violet/rose hues in the mid-shafts.
+        field[at] = rOut / (1 + 0.16 * rOut);
+        field[at + 1] = gOut / (1 + 0.16 * gOut);
+        field[at + 2] = bOut / (1 + 0.16 * bOut);
       }
     }
-    // Bilinear upsample of the light field. Sampling at pixel corners instead
-    // of texel centres keeps the origin aligned when the frame has odd edges.
+
+    // Bilinear upsample into linear light, with a subtle horizontal chromatic
+    // dispersion on bright edges in Euphoria and Prismatic modes.
+    const chromaShift = (style === 'euphoria' || style === 'prism') ? Math.max(1, Math.round(k * 1.5)) : 0;
+    const srcCopy = chromaShift ? d.slice() : null;
     for (let y = 0; y < h; y++) {
       const sy = (y / Math.max(1, h - 1)) * (lh - 1);
       const y0 = Math.floor(sy), y1 = Math.min(lh - 1, y0 + 1), fy = sy - y0;
+      const rowOff = y * w;
       for (let x = 0; x < w; x++) {
         const sx = (x / Math.max(1, w - 1)) * (lw - 1);
         const x0 = Math.floor(sx), x1 = Math.min(lw - 1, x0 + 1), fx = sx - x0;
         const p00 = (y0 * lw + x0) * 3, p10 = (y0 * lw + x1) * 3;
         const p01 = (y1 * lw + x0) * 3, p11 = (y1 * lw + x1) * 3;
-        const p = (y * w + x) * 4;
+        const p = (rowOff + x) * 4;
         for (let c = 0; c < 3; c++) {
           const a = field[p00 + c] + (field[p10 + c] - field[p00 + c]) * fx;
           const b = field[p01 + c] + (field[p11 + c] - field[p01 + c]) * fx;
           const add = a + (b - a) * fy;
-          const lit = SRGB_TO_LINEAR[d[p + c]] + add;
+          let baseByte = d[p + c];
+          if (srcCopy && c !== 1) {
+            const oxs = c === 0 ? Math.max(0, x - chromaShift) : Math.min(w - 1, x + chromaShift);
+            const shifted = srcCopy[(rowOff + oxs) * 4 + c];
+            baseByte = clampInt(Math.round(baseByte * (1 - 0.34 * k) + shifted * (0.34 * k)), 0, 255);
+          }
+          const lit = SRGB_TO_LINEAR[baseByte] + add;
           d[p + c] = lit <= 0 ? 0 : lit >= 1 ? 255 : LINEAR_TO_SRGB[(lit * 4096) | 0];
         }
       }
@@ -2126,18 +2356,27 @@
   }
 
   // Riso misprint: two rotated halftone plates, each sampled through a small
-  // rigid offset, then overprinted on a warm paper stock. The registration
-  // error that makes a riso print recognisable is the point of the effect.
+  // rigid offset, then overprinted via subtractive ink blending on warm paper
+  // stock so dark artwork stays punchy and registration slip reads cleanly.
   function glitchRiso(d, w, h, amount, rng, mode) {
     const k = amount / 100;
     if (k <= 0 || w < 2 || h < 2) return;
     const src = d.slice();
-    const shift = Math.max(1, Math.round(1 + k * 3));
-    const duotone = mode !== 'ink';
-    const paper = [244, 236, 218];
-    const cool = [24, 74, 132];
-    const warm = [238, 82, 112];
-    const black = [16, 18, 24];
+    const shift = Math.max(1, Math.round(1 + k * 3.5));
+    const paper = [245, 237, 220];
+    let ink1 = [24, 74, 152];
+    let ink2 = [242, 72, 118];
+    let twoPlate = true;
+    if (mode === 'ink') {
+      ink1 = [18, 20, 26];
+      twoPlate = false;
+    } else if (mode === 'sunburst') {
+      ink1 = [0, 126, 138];
+      ink2 = [245, 166, 35];
+    } else if (mode === 'crimson') {
+      ink1 = [20, 22, 30];
+      ink2 = [226, 52, 64];
+    }
     const cosA = Math.cos(0.26), sinA = Math.sin(0.26);
     const cosB = Math.cos(1.31), sinB = Math.sin(1.31);
     const cellA = 4.2, cellB = 5.1;
@@ -2148,6 +2387,7 @@
       const fy = v - Math.floor(v) - 0.5;
       return Math.min(1, Math.sqrt(fx * fx + fy * fy) * 1.414);
     };
+    const mix = k * 0.88;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const p = (y * w + x) * 4;
@@ -2158,68 +2398,85 @@
         const b = (by * w + bx) * 4;
         const covA = 1 - luma(src[a], src[a + 1], src[a + 2]) / 255;
         const covB = 1 - luma(src[b], src[b + 1], src[b + 2]) / 255;
-        const inkA = clamp01((covA - spot(x, y, cosA, sinA, cellA)) * 5);
-        const inkB = clamp01((covB - spot(x, y, cosB, sinB, cellB)) * 5);
-        let r = src[p] * 0.42 + paper[0] * 0.58;
-        let g = src[p + 1] * 0.42 + paper[1] * 0.58;
-        let bl = src[p + 2] * 0.42 + paper[2] * 0.58;
-        const under = duotone ? cool : black;
-        const plateA = inkA * (duotone ? 0.78 : 0.92);
-        r = r * (1 - plateA) + under[0] * plateA;
-        g = g * (1 - plateA) + under[1] * plateA;
-        bl = bl * (1 - plateA) + under[2] * plateA;
-        if (duotone) {
-          const plateB = inkB * 0.58;
-          r = r * (1 - plateB) + warm[0] * plateB;
-          g = g * (1 - plateB) + warm[1] * plateB;
-          bl = bl * (1 - plateB) + warm[2] * plateB;
+        const plateA = clamp01((covA - spot(x, y, cosA, sinA, cellA)) * 5.2) * (twoPlate ? 0.86 : 0.94);
+        const plateB = twoPlate ? clamp01((covB - spot(x, y, cosB, sinB, cellB)) * 5.2) * 0.72 : 0;
+        // Subtractive overprint: start on warm stock tinted lightly by source,
+        // then multiply each ink plate so overlapping plates darken richly.
+        let r = (src[p] * 0.28 + paper[0] * 0.72) / 255;
+        let g = (src[p + 1] * 0.28 + paper[1] * 0.72) / 255;
+        let bl = (src[p + 2] * 0.28 + paper[2] * 0.72) / 255;
+        r *= (1 - plateA) + (ink1[0] / 255) * plateA;
+        g *= (1 - plateA) + (ink1[1] / 255) * plateA;
+        bl *= (1 - plateA) + (ink1[2] / 255) * plateA;
+        if (twoPlate) {
+          r *= (1 - plateB) + (ink2[0] / 255) * plateB;
+          g *= (1 - plateB) + (ink2[1] / 255) * plateB;
+          bl *= (1 - plateB) + (ink2[2] / 255) * plateB;
         }
-        // A one-pixel fringe on the source channels sells the slipped plates.
-        const fr = (src[a] - src[p]) * 0.12;
-        const fb = (src[b + 2] - src[p + 2]) * 0.12;
-        const mix = k * 0.8;
-        d[p] = clamp255(src[p] * (1 - mix) + (r + fr) * mix);
-        d[p + 1] = clamp255(src[p + 1] * (1 - mix) + g * mix);
-        d[p + 2] = clamp255(src[p + 2] * (1 - mix) + (bl + fb) * mix);
+        const fr = (src[a] - src[p]) * 0.14;
+        const fb = (src[b + 2] - src[p + 2]) * 0.14;
+        d[p] = clamp255(src[p] * (1 - mix) + (r * 255 + fr) * mix);
+        d[p + 1] = clamp255(src[p + 1] * (1 - mix) + (g * 255) * mix);
+        d[p + 2] = clamp255(src[p + 2] * (1 - mix) + (bl * 255 + fb) * mix);
       }
     }
   }
 
-  // A CRT phosphor layer: scanline beam, RGB triad, and a little horizontal
-  // chroma bleed. Aperture grille and shadow mask differ only in whether the
-  // triad shifts on alternate rows, as the real masks did.
+  // A CRT phosphor layer: scanline beam, RGB phosphor triad (aperture grille,
+  // shadow mask or arcade slot mask), luminance compensation so the mask stays
+  // vibrant instead of dim, and horizontal phosphor halation on highlights.
   function glitchPhosphor(d, w, h, amount, rng, mode) {
     const k = amount / 100;
     if (k <= 0) return;
     const src = d.slice();
     const bleed = Math.max(1, Math.round(1 + k * 2));
-    const aperture = mode !== 'shadow';
+    const isShadow = mode === 'shadow';
+    const isSlot = mode === 'slot';
+    const boost = 1 + k * 0.34;
     for (let y = 0; y < h; y++) {
-      const scan = 1 - k * 0.34 * (0.5 + 0.5 * Math.cos(y * Math.PI));
+      const scan = 1 - k * 0.36 * (0.5 + 0.5 * Math.cos(y * Math.PI));
+      const rowOff = y * w;
       for (let x = 0; x < w; x++) {
-        const p = (y * w + x) * 4;
+        const p = (rowOff + x) * 4;
         const xr = clampInt(x + bleed, 0, w - 1);
         const xb = clampInt(x - bleed, 0, w - 1);
-        const triad = aperture ? x % 3 : (x + (y & 1)) % 3;
-        let mr = 1, mg = 1, mb = 1;
-        if (triad === 0) { mg = 0.52; mb = 0.52; }
-        else if (triad === 1) { mr = 0.52; mb = 0.52; }
-        else { mr = 0.52; mg = 0.52; }
+        const xl = clampInt(x - 1, 0, w - 1);
+        const xrn = clampInt(x + 1, 0, w - 1);
+        const triad = isShadow ? (x + (y & 1)) % 3 : x % 3;
+        let mr = 1.12, mg = 1.12, mb = 1.12;
+        if (triad === 0) { mg = 0.44; mb = 0.44; }
+        else if (triad === 1) { mr = 0.44; mb = 0.44; }
+        else { mr = 0.44; mg = 0.44; }
+        // Slot mask adds horizontal dark slot dividers every 4th row,
+        // staggered by 2 rows on alternate triad columns.
+        let slotGain = 1;
+        if (isSlot) {
+          const colGroup = Math.floor(x / 3);
+          if (((y + (colGroup & 1) * 2) & 3) === 3) slotGain = 1 - k * 0.58;
+        }
         const dim = 1 - k;
-        d[p] = clamp255(src[(y * w + xr) * 4] * (dim + mr * k) * scan);
-        d[p + 1] = clamp255(src[p + 1] * (dim + mg * k) * scan);
-        d[p + 2] = clamp255(src[(y * w + xb) * 4 + 2] * (dim + mb * k) * scan);
+        const pr = (rowOff + xr) * 4;
+        const pb = (rowOff + xb) * 4;
+        const pl = (rowOff + xl) * 4;
+        const pn = (rowOff + xrn) * 4;
+        // Bright subpixels bloom slightly across adjacent phosphor dots.
+        const haloR = Math.max(0, (src[pl] + src[pn]) * 0.5 - 150) * 0.35 * k;
+        const haloG = Math.max(0, (src[pl + 1] + src[pn + 1]) * 0.5 - 150) * 0.35 * k;
+        const haloB = Math.max(0, (src[pl + 2] + src[pn + 2]) * 0.5 - 150) * 0.35 * k;
+        d[p] = clamp255((src[pr] * (dim + mr * k) * boost + haloR) * scan * slotGain);
+        d[p + 1] = clamp255((src[p + 1] * (dim + mg * k) * boost + haloG) * scan * slotGain);
+        d[p + 2] = clamp255((src[pb + 2] * (dim + mb * k) * boost + haloB) * scan * slotGain);
       }
     }
   }
 
-  // Guilloche: the polar distance field of a rosette, not a texture. Five
-  // hypotrochoid-like rings and four counter-rotating inner rings are drawn as
-  // anti-aliased engraving lines, lightened on dark paper and darkened on light.
+  // Guilloche: polar and wave distance fields drawn as anti-aliased security
+  // engraving lines, lightened on dark paper and darkened on light.
   function glitchGuilloche(d, w, h, amount, rng, mode, frame, origin) {
     const k = amount / 100;
     if (k <= 0 || w < 2 || h < 2) return;
     const src = d.slice();
+    const style = mode || 'rosette';
     const cx = ((origin ? origin.x : 50) / 100) * (w - 1);
     const cy = ((origin ? origin.y : 50) / 100) * (h - 1);
     const min = Math.min(w, h);
@@ -2228,29 +2485,54 @@
     const phase = rng() * Math.PI * 2;
     const lightInk = [236, 242, 255];
     const darkInk = [8, 10, 16];
-    const outer = base * 0.98;
+    const outer = base * 1.06;
     const outer2 = outer * outer;
     const fade = function (dist) {
       const t = clamp01((dist - width * 0.35) / (width * 1.4));
       return 1 - t * t * (3 - 2 * t);
     };
+    const freqX = (Math.PI * 2) / Math.max(24, w * 0.32);
+    const ribbonAmp = Math.max(6, min * 0.06);
+    const bandStep = Math.max(10, min * 0.075);
+
     for (let y = 0; y < h; y++) {
       const dy = y - cy;
       for (let x = 0; x < w; x++) {
         const dx = x - cx;
-        if (dx * dx + dy * dy > outer2) continue;
-        const rho = Math.sqrt(dx * dx + dy * dy);
-        const theta = Math.atan2(dy, dx);
         let line = 0;
-        for (let ring = 0; ring < 5; ring++) {
-          const radius = base * (0.36 + ring * 0.14) +
-            base * 0.075 * Math.sin(7 * theta + phase + ring * 0.8);
-          line = Math.max(line, fade(Math.abs(rho - radius)));
-        }
-        for (let ring = 0; ring < 4; ring++) {
-          const inner = base * (0.1 + ring * 0.08) +
-            base * 0.045 * Math.sin(11 * theta - phase + ring * 0.5);
-          line = Math.max(line, fade(Math.abs(rho - inner)) * 0.8);
+        if (style === 'banknote') {
+          // Interlocking sinusoidal security ribbons anchored vertically to cy.
+          const wave1 = Math.sin(dx * freqX + phase) * ribbonAmp;
+          const wave2 = Math.sin(dx * freqX * 1.5 - phase * 0.7) * (ribbonAmp * 0.72);
+          for (let s = -3; s <= 3; s++) {
+            const centerY = s * bandStep + (s & 1 ? wave2 : wave1);
+            line = Math.max(line, fade(Math.abs(dy - centerY)) * (1 - Math.abs(s) * 0.08));
+            const counterY = s * bandStep - wave1 * 0.65;
+            line = Math.max(line, fade(Math.abs(dy - counterY)) * 0.65);
+          }
+        } else if (style === 'orbital') {
+          if (dx * dx + dy * dy > outer2 * 1.35) continue;
+          const rho = Math.sqrt(dx * dx + dy * dy);
+          const theta = Math.atan2(dy, dx);
+          for (let ring = 0; ring < 7; ring++) {
+            const r0 = base * (0.14 + ring * 0.14);
+            const wobble = base * (0.04 + ring * 0.008) * Math.cos((5 + ring * 2) * theta + phase * (ring & 1 ? -1 : 1));
+            line = Math.max(line, fade(Math.abs(rho - (r0 + wobble))) * (0.95 - ring * 0.05));
+          }
+        } else {
+          if (dx * dx + dy * dy > outer2) continue;
+          const rho = Math.sqrt(dx * dx + dy * dy);
+          const theta = Math.atan2(dy, dx);
+          for (let ring = 0; ring < 5; ring++) {
+            const radius = base * (0.36 + ring * 0.14) +
+              base * 0.075 * Math.sin(7 * theta + phase + ring * 0.8);
+            line = Math.max(line, fade(Math.abs(rho - radius)));
+          }
+          for (let ring = 0; ring < 4; ring++) {
+            const inner = base * (0.1 + ring * 0.08) +
+              base * 0.045 * Math.sin(11 * theta - phase + ring * 0.5);
+            line = Math.max(line, fade(Math.abs(rho - inner)) * 0.8);
+          }
         }
         if (line <= 0) continue;
         const p = (y * w + x) * 4;
@@ -2259,6 +2541,146 @@
         d[p] = clamp255(src[p] * (1 - mix) + ink[0] * mix);
         d[p + 1] = clamp255(src[p + 1] * (1 - mix) + ink[1] * mix);
         d[p + 2] = clamp255(src[p + 2] * (1 - mix) + ink[2] * mix);
+      }
+    }
+  }
+
+  // Epsilon glow: inspired by Studio AAA's Dither Boy signature post-process.
+  // Builds a dither-preserving thresholded two-octave bloom pyramid (tight
+  // inner halo + wide atmospheric glow) in linear light so bright dither dots
+  // radiate dreamy energy while dark grounds stay deep and pixel dots stay
+  // crisp underneath.
+  function glitchEpsilonGlow(d, w, h, amount, rng, mode) {
+    const k = amount / 100;
+    if (k <= 0 || w < 2 || h < 2) return;
+    const style = mode || 'aura';
+    const scale = 2;
+    const lw = Math.max(2, Math.ceil(w / scale));
+    const lh = Math.max(2, Math.ceil(h / scale));
+    const tight = new Float32Array(lw * lh * 3);
+
+    // Thresholded dither-aware emitter map (blends block mean + peak so fine
+    // 1-bit dithers and outlines bloom cleanly without disappearing).
+    for (let my = 0; my < lh; my++) {
+      const y0 = my * scale, y1 = Math.min(h, y0 + scale);
+      for (let mx = 0; mx < lw; mx++) {
+        const x0 = mx * scale, x1 = Math.min(w, x0 + scale);
+        let sr = 0, sg = 0, sb = 0, pr = 0, pg = 0, pb = 0, peakL = 0, count = 0;
+        for (let y = y0; y < y1; y++) {
+          for (let x = x0; x < x1; x++) {
+            const p = (y * w + x) * 4;
+            const r = d[p], g = d[p + 1], b = d[p + 2];
+            sr += r; sg += g; sb += b; count++;
+            const lv = luma(r, g, b);
+            if (lv > peakL) { peakL = lv; pr = r; pg = g; pb = b; }
+          }
+        }
+        const mr = 0.6 * (sr / count) + 0.4 * pr;
+        const mg = 0.6 * (sg / count) + 0.4 * pg;
+        const mb = 0.6 * (sb / count) + 0.4 * pb;
+        const lv = luma(mr, mg, mb) / 255;
+        const thresh = style === 'halation' ? 0.34 : 0.14;
+        const knee = clamp01((lv - thresh) / (1 - thresh));
+        const gate = knee * knee * (3 - 2 * knee);
+        const at = (my * lw + mx) * 3;
+        tight[at] = mr * gate;
+        tight[at + 1] = mg * gate;
+        tight[at + 2] = mb * gate;
+      }
+    }
+
+    // Quarter-res octave for wide atmospheric diffusion.
+    const qw = Math.max(2, Math.ceil(lw / 2));
+    const qh = Math.max(2, Math.ceil(lh / 2));
+    const wide = new Float32Array(qw * qh * 3);
+    for (let qy = 0; qy < qh; qy++) {
+      const y0 = qy * 2, y1 = Math.min(lh, y0 + 2);
+      for (let qx = 0; qx < qw; qx++) {
+        const x0 = qx * 2, x1 = Math.min(lw, x0 + 2);
+        let r = 0, g = 0, b = 0, c = 0;
+        for (let y = y0; y < y1; y++) {
+          for (let x = x0; x < x1; x++) {
+            const at = (y * lw + x) * 3;
+            r += tight[at]; g += tight[at + 1]; b += tight[at + 2]; c++;
+          }
+        }
+        const qat = (qy * qw + qx) * 3;
+        wide[qat] = r / c; wide[qat + 1] = g / c; wide[qat + 2] = b / c;
+      }
+    }
+
+    const rTight = Math.max(1, Math.round(Math.min(lw, lh) * (0.01 + 0.014 * k)));
+    const rWide = Math.max(2, Math.round(Math.min(qw, qh) * (0.032 + 0.048 * k)));
+    boxBlurRGB(tight, lw, lh, rTight);
+    boxBlurRGB(tight, lw, lh, rTight);
+    boxBlurRGB(wide, qw, qh, rWide);
+    boxBlurRGB(wide, qw, qh, rWide);
+
+    const chroma = (style === 'neon' || style === 'aura') ? Math.max(1, Math.round(k * 2.2)) : 0;
+    const gain = 0.35 + k * 1.15;
+
+    for (let y = 0; y < h; y++) {
+      const ty = (y / Math.max(1, h - 1)) * (lh - 1);
+      const ty0 = Math.floor(ty), ty1 = Math.min(lh - 1, ty0 + 1), tfy = ty - ty0;
+      const qy = (y / Math.max(1, h - 1)) * (qh - 1);
+      const qy0 = Math.floor(qy), qy1 = Math.min(qh - 1, qy0 + 1), qfy = qy - qy0;
+      for (let x = 0; x < w; x++) {
+        const tx = (x / Math.max(1, w - 1)) * (lw - 1);
+        const tx0 = Math.floor(tx), tx1 = Math.min(lw - 1, tx0 + 1), tfx = tx - tx0;
+        const qx = (x / Math.max(1, w - 1)) * (qw - 1);
+        const qx0 = Math.floor(qx), qx1 = Math.min(qw - 1, qx0 + 1), qfx = qx - qx0;
+
+        const tp00 = (ty0 * lw + tx0) * 3, tp10 = (ty0 * lw + tx1) * 3;
+        const tp01 = (ty1 * lw + tx0) * 3, tp11 = (ty1 * lw + tx1) * 3;
+        const qp00 = (qy0 * qw + qx0) * 3, qp10 = (qy0 * qw + qx1) * 3;
+        const qp01 = (qy1 * qw + qx0) * 3, qp11 = (qy1 * qw + qx1) * 3;
+
+        let tR = 0, tG = 0, tB = 0, wR = 0, wG = 0, wB = 0;
+        for (let c = 0; c < 3; c++) {
+          const ta = tight[tp00 + c] + (tight[tp10 + c] - tight[tp00 + c]) * tfx;
+          const tb = tight[tp01 + c] + (tight[tp11 + c] - tight[tp01 + c]) * tfx;
+          const tv = SRGB_TO_LINEAR[clampInt(Math.round(ta + (tb - ta) * tfy), 0, 255)];
+          const qa = wide[qp00 + c] + (wide[qp10 + c] - wide[qp00 + c]) * qfx;
+          const qb = wide[qp01 + c] + (wide[qp11 + c] - wide[qp01 + c]) * qfx;
+          const wv = SRGB_TO_LINEAR[clampInt(Math.round(qa + (qb - qa) * qfy), 0, 255)];
+          if (c === 0) { tR = tv; wR = wv; }
+          else if (c === 1) { tG = tv; wG = wv; }
+          else { tB = tv; wB = wv; }
+        }
+
+        let addR, addG, addB;
+        if (style === 'aura') {
+          const tL = 0.2126 * tR + 0.7152 * tG + 0.0722 * tB;
+          const wL = 0.2126 * wR + 0.7152 * wG + 0.0722 * wB;
+          addR = (tR * 0.55 + tL * 0.42 + wL * 0.78) * gain;
+          addG = (tG * 0.50 + tL * 0.18 + wL * 0.24) * gain;
+          addB = (tB * 0.58 + tL * 0.52 + wL * 0.92) * gain;
+        } else if (style === 'halation') {
+          const wL = 0.2126 * wR + 0.7152 * wG + 0.0722 * wB;
+          addR = (tR * 0.52 + wL * 1.15) * gain;
+          addG = (tG * 0.36 + wL * 0.26) * gain;
+          addB = (tB * 0.24 + wL * 0.07) * gain;
+        } else if (style === 'neon') {
+          const txR = clampInt(tx0 - chroma, 0, lw - 1);
+          const txB = clampInt(tx0 + chroma, 0, lw - 1);
+          const sR = SRGB_TO_LINEAR[clampInt(Math.round(tight[(ty0 * lw + txR) * 3]), 0, 255)];
+          const sB = SRGB_TO_LINEAR[clampInt(Math.round(tight[(ty0 * lw + txB) * 3 + 2]), 0, 255)];
+          addR = (sR * 0.85 + wR * 0.72) * gain;
+          addG = (tG * 0.72 + wG * 0.58) * gain;
+          addB = (sB * 0.90 + wB * 0.78) * gain;
+        } else {
+          addR = (tR * 0.72 + wR * 0.62) * gain;
+          addG = (tG * 0.72 + wG * 0.62) * gain;
+          addB = (tB * 0.72 + wB * 0.62) * gain;
+        }
+
+        const p = (y * w + x) * 4;
+        const rL = SRGB_TO_LINEAR[d[p]] + addR;
+        const gL = SRGB_TO_LINEAR[d[p + 1]] + addG;
+        const bL = SRGB_TO_LINEAR[d[p + 2]] + addB;
+        d[p] = rL <= 0 ? 0 : rL >= 1 ? 255 : LINEAR_TO_SRGB[(rL * 4096) | 0];
+        d[p + 1] = gL <= 0 ? 0 : gL >= 1 ? 255 : LINEAR_TO_SRGB[(gL * 4096) | 0];
+        d[p + 2] = bL <= 0 ? 0 : bL >= 1 ? 255 : LINEAR_TO_SRGB[(bL * 4096) | 0];
       }
     }
   }
@@ -2285,6 +2707,7 @@
     riso: glitchRiso,
     phosphor: glitchPhosphor,
     guilloche: glitchGuilloche,
+    epsilonglow: glitchEpsilonGlow,
   };
 
   // ---- glow ----

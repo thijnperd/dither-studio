@@ -879,7 +879,7 @@ test('the new inks carry the levels they promise', function () {
   assert.strictEqual(palette('ice').colors.length, 2);
   assert.ok(palette('matrix').colors[1][1] > palette('matrix').colors[0][1], 'matrix green brightens green');
   assert.strictEqual(D.PALETTES.length, 30);
-  assert.strictEqual(D.GLITCHES.length, 21);
+  assert.strictEqual(D.GLITCHES.length, 22);
   assert.strictEqual(D.ALGORITHMS.length, 46);
 });
 
@@ -995,7 +995,7 @@ function imageOf(w, h, fn) {
 }
 
 test('every glitch names itself and only offers modes it implements', function () {
-  assert.strictEqual(D.GLITCHES.length, 21);
+  assert.strictEqual(D.GLITCHES.length, 22);
   const ids = new Set();
   D.GLITCHES.forEach(function (g) {
     assert.ok(g.id && g.name && g.hint, 'metadata for ' + g.id);
@@ -1288,9 +1288,10 @@ test('the temporal variation effect moves with the frame and repeats exactly', f
   assert.deepStrictEqual(Array.from(a.data), Array.from(again.data), 'the same frame is reproducible');
 });
 
-test('Shape Press draws all four shape sets and is marked as a plugin effect', function () {
+test('Shape Press draws all six shape sets and responds to luminance in cross mode', function () {
   const meta = D.GLITCHES.find(function (g) { return g.id === 'shapepress'; });
   assert.ok(meta && meta.plugin === 'shape-press');
+  assert.strictEqual(meta.modes.length, 6);
   const w = 24, h = 24;
   const src = makeSource(w, h, function (x, y) { return [x * 10, y * 10, 80]; }).data;
   meta.modes.forEach(function (mode) {
@@ -1299,14 +1300,26 @@ test('Shape Press draws all four shape sets and is marked as a plugin effect', f
     assert.ok(!sameBytes(out, src), mode.id + ' changes the frame');
     for (let i = 0; i < out.length; i++) assert.ok(out[i] >= 0 && out[i] <= 255);
   });
+  // Cross mode must vary fill coverage between dark and bright cells.
+  const dark = makeSource(8, 8, function () { return [40, 40, 40]; }).data;
+  const bright = makeSource(8, 8, function () { return [240, 240, 240]; }).data;
+  D.applyGlitchStack(dark, 8, 8, [{ id: 'shapepress', amount: 100, mode: 'cross' }], 5, 0);
+  D.applyGlitchStack(bright, 8, 8, [{ id: 'shapepress', amount: 100, mode: 'cross' }], 5, 0);
+  let darkOn = 0, brightOn = 0;
+  for (let i = 0; i < dark.length; i += 4) {
+    if (dark[i] > 20) darkOn++;
+    if (bright[i] > 100) brightOn++;
+  }
+  assert.ok(brightOn > darkOn, 'cross mode fills more pixels in bright cells than dark cells');
 });
 
-test('the four effect plugins declare their capabilities and change the frame', function () {
+test('the five effect plugins declare their capabilities and change the frame', function () {
   const plugins = {
     crepuscular: 'crepuscular-rays',
     riso: 'riso-misprint',
     phosphor: 'phosphor-mask',
     guilloche: 'guilloche-plate',
+    epsilonglow: 'epsilon-glow',
   };
   const w = 48, h = 48;
   const src = makeSource(w, h, function (x, y) { return [x * 5, y * 5, (x + y) * 2]; }).data;
@@ -1323,6 +1336,23 @@ test('the four effect plugins declare their capabilities and change the frame', 
       assert.deepStrictEqual(Array.from(a), Array.from(b), id + ' ' + (mode || 'default') + ' is deterministic');
     });
   });
+});
+
+test('crepuscular rays cast outward shafts from thin bright lines', function () {
+  const w = 64, h = 64;
+  // Bright dot placed between origin (32, 32) and outer point (50, 32)
+  const src = makeSource(w, h, function (x, y) {
+    return (x >= 38 && x <= 42 && y >= 30 && y <= 34) ? [255, 255, 255] : [0, 0, 0];
+  }).data;
+  const out = src.slice();
+  D.applyGlitchStack(out, w, h, [{ id: 'crepuscular', amount: 85, mode: 'source', origin: { x: 50, y: 50 } }], 9, 0);
+  const lumaAt = function (x, y) {
+    const p = (y * w + x) * 4;
+    return out[p] + out[p + 1] + out[p + 2];
+  };
+  // Outward from the dot (x=52, y=32) must receive scattered light, much more
+  // than an opposite dark pocket (x=12, y=32).
+  assert.ok(lumaAt(52, 32) > lumaAt(12, 32) + 20, 'shaft streams outward behind the bright feature');
 });
 
 test('a movable effect origin is clamped, preserved and actually moves the light', function () {
@@ -1401,7 +1431,7 @@ test('the whole glitch stack on a megapixel', function () {
     algorithm: 'bayer4', palette: 'c64', pixelSize: 1, seed: 1,
     glitches: D.GLITCHES.map(function (g) { return { id: g.id, amount: 50 }; }),
   };
-  budget('all 21 glitches', settings, 6000);
+  budget('all 22 glitches', settings, 6000);
 });
 
 test('a structure screen holds its sample budget on a big frame', function () {

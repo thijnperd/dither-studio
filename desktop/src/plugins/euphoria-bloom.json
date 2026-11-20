@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "id": "euphoria-bloom",
+  "name": "Euphoria & Light",
+  "version": "1.0.0",
+  "kind": "preset-pack",
+  "summary": "Three original light-ray and Epsilon Glow recipes inspired by Studio AAA's Dither Boy glow workflows.",
+  "author": "Dither Studio",
+  "homepage": "https://studioaaa.com/product/dither-boy/",
+  "data": {
+    "presets": [
+      {
+        "id": "euphoria-radiant-aura",
+        "name": "Euphoria · Radiant Aura",
+        "settings": {
+          "algorithm": "atkinson",
+          "palette": "bw",
+          "pixelSize": 1,
+          "adjustments": { "contrast": 1.18, "gamma": 1.04 },
+          "glitches": [
+            { "id": "crepuscular", "amount": 84, "mode": "euphoria", "origin": { "x": 50, "y": 44 } },
+            { "id": "epsilonglow", "amount": 42, "mode": "aura" },
+            { "id": "grain", "amount": 12, "mode": "mono" }
+          ]
+        }
+      },
+      {
+        "id": "euphoria-prismatic-drift",
+        "name": "Euphoria · Prismatic Drift",
+        "settings": {
+          "algorithm": "smooth-diffusion",
+          "palette": "cyberpunk-holo",
+          "pixelSize": 2,
+          "screen": { "smooth": 5, "flow": 74, "streak": 16 },
+          "adjustments": { "contrast": 1.14, "saturation": 1.2 },
+          "glitches": [
+            { "id": "crepuscular", "amount": 72, "mode": "prism", "origin": { "x": 50, "y": 46 } },
+            { "id": "epsilonglow", "amount": 54, "mode": "neon" },
+            { "id": "phosphor", "amount": 32, "mode": "slot" }
+          ]
+        }
+      },
+      {
+        "id": "euphoria-film-halation",
+        "name": "Euphoria · 35mm Halation",
+        "settings": {
+          "algorithm": "bayer8",
+          "palette": "gray-8",
+          "pixelSize": 1,
+          "adjustments": { "contrast": 1.16, "gamma": 1.02 },
+          "glitches": [
+            { "id": "epsilonglow", "amount": 68, "mode": "halation" },
+            { "id": "crepuscular", "amount": 38, "mode": "solar", "origin": { "x": 50, "y": 38 } },
+            { "id": "grain", "amount": 18, "mode": "colour" },
+            { "id": "vignette", "amount": 26 }
+          ]
+        }
+      }
+    ]
+  }
+}

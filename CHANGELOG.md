@@ -10,6 +10,16 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 0.7.1 — Rebuilt Crepuscular Rays, Epsilon Glow & plugin upgrades (2026-11-20)
+
+**Volumetric outward light shafts, Dither Boy–inspired Epsilon Glow, canvas origin picking, and sharper effect plugins.**
+
+- **Crepuscular Rays rebuilt from the ground up.** Fixed the radial march direction so bright pixels and thin 1-bit dither lines now cast true outward volumetric shafts away from the light origin while empty pockets stay velvety black (with Interleaved Gradient Noise jitter to prevent radial banding). Added four lighting modes — **Euphoria** (blazing icy-white core, orchid-violet inner halo, rose-magenta shafts, cool indigo chromatic rim, and a vertical anamorphic flare with a 4-point star glint), **Prismatic** (RGB chromatic radial dispersion), **Source light** (artwork-coloured zoom rays), and **Solar** (warm golden god rays).
+- **New plugin: Epsilon Glow.** Inspired by Studio AAA's Dither Boy glow workflow, `epsilon-glow` adds a thresholded, dither-preserving two-octave bloom and chromatic halation pass in four modes (**Euphoric aura**, **Classic bloom**, **Film halation**, and **CRT phosphor**) so 1-bit and retro dither dots radiate atmospheric light without washing out dark grounds.
+- **New preset pack: Euphoria & Light.** Three original recipes (`Euphoria · Radiant Aura`, `Euphoria · Prismatic Drift`, and `Euphoria · 35mm Halation`) pairing Crepuscular Rays and Epsilon Glow for instant dramatic proofs.
+- **Upgrades and fixes across every effect plugin.** Fixed a bug in **Shape Press** where `Cross stitch` ignored cell luminance, and added **Diamond** and **Rings** shape modes (six modes total). Upgraded **Phosphor Mask** with luminance compensation, bright-pixel phosphor halation, and an arcade **Slot mask** mode. Upgraded **Riso Misprint** to subtractive ink overprint with **Teal & amber** and **Crimson & ink** plates. Expanded **Guilloche Plate** with **Banknote waves** and **Orbital** engraving modes.
+- **Better plugin UX and canvas origin picking.** Added a crosshair **Pick** button beside `Origin X/Y` on Crepuscular Rays and Guilloche Plate so you can click or drag directly on the proof to place the light or rosette centre (plus double-click on origin sliders to reset). Fixed clicking effect plugins in the Studio Menu so they immediately join the stack and open the Effects panel, added a one-click **Use** button on installed packages in the Plugin Manager, and preserved tool `modes` lists during plugin validation.
+
 ## 0.7.0 — Accessible workbench and UI polish (2026-11-20)
 
 **A sharper instrument panel: full keyboard navigation, higher contrast, and faster everyday controls.**

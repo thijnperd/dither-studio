@@ -915,8 +915,14 @@
 .plugin-name { margin: 0; color: var(--text); font: 600 var(--fs-label)/1.25 var(--font-ui); }
 .plugin-summary { margin: 3px 0 0; color: var(--muted); font: var(--fs-small)/1.45 var(--font-ui); }
 .plugin-meta { margin: 4px 0 0; color: var(--muted); font: var(--fs-small)/1.2 var(--font); }
+.plugin-actions { display: inline-flex; align-items: center; gap: 6px; }
 .plugin-row .btn { white-space: nowrap; }
 .plugin-note { margin: 0; color: var(--muted); font: var(--fs-small)/1.45 var(--font-ui); }
+
+.canvas-wrap.is-picking-origin,
+.canvas-wrap.is-picking-origin #canvas {
+  cursor: crosshair !important;
+}
 
 .ink-controls {
   display: grid;

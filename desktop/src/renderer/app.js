@@ -162,6 +162,7 @@
     quality: 'live',    // 'full' | 'live' | 'still' — the viewport update mode
     splitOn: false,     // source on the left of a draggable divider, proof on the right
     splitAt: 0.5,
+    pickingOrigin: null, // effect id when placing an origin point on the proof
   };
 
   // A bounded snapshot history for the recipe itself. Loading a new source
@@ -899,9 +900,8 @@
       row.appendChild(top);
       row.appendChild(line);
 
-      // A point-based effect gets two compact sliders under its amount. The
-      // origin is a percentage of the frame, so presets and exports keep it
-      // independent of the working resolution.
+      // A point-based effect gets two compact sliders under its amount, plus a
+      // canvas Pick button so you can click directly on the proof to place it.
       if (meta.origin) {
         const originLine = document.createElement('div');
         originLine.className = 'stack-origin';
@@ -922,7 +922,9 @@
           input.min = '0';
           input.max = '100';
           input.step = '1';
+          input.dataset.originAxis = axis.key;
           input.value = String(glitches.origin[id][axis.key]);
+          input.title = 'Double-click to reset to ' + meta.origin[axis.key] + '%';
           input.setAttribute('aria-label', meta.name + ' origin ' + axis.name + ' (%)');
           const value = document.createElement('em');
           value.textContent = String(glitches.origin[id][axis.key]);
@@ -937,7 +939,32 @@
             schedulePreview();
           });
           input.addEventListener('change', function () { render(true); endHistoryGroup(); });
+          input.addEventListener('dblclick', function () {
+            endHistoryGroup();
+            const def = meta.origin[axis.key];
+            glitches.origin[id][axis.key] = def;
+            input.value = String(def);
+            value.textContent = String(def);
+            render(true);
+            window.dispatchEvent(new CustomEvent('ds:ui'));
+          });
         });
+        const pick = document.createElement('button');
+        pick.type = 'button';
+        pick.className = 'stack-origin-pick';
+        pick.dataset.originPick = id;
+        pick.setAttribute('aria-pressed', state.pickingOrigin === id ? 'true' : 'false');
+        pick.setAttribute('aria-label', 'Pick ' + meta.name + ' origin on proof');
+        pick.title = 'Click or drag on the proof to place the origin';
+        const pickGlyph = document.createElement('span');
+        pickGlyph.className = 'ui-glyph ui-glyph--xs';
+        pickGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/crosshair.svg")');
+        pickGlyph.setAttribute('aria-hidden', 'true');
+        pick.appendChild(pickGlyph);
+        pick.addEventListener('click', function () {
+          setPickingOrigin(state.pickingOrigin === id ? null : id);
+        });
+        originLine.appendChild(pick);
         row.appendChild(originLine);
       }
       el.effectList.appendChild(row);
@@ -1006,9 +1033,41 @@
     render(true);
   }
 
+  function setPickingOrigin(id) {
+    state.pickingOrigin = id && glitches.on[id] ? id : null;
+    if (el.wrap) el.wrap.classList.toggle('is-picking-origin', !!state.pickingOrigin);
+    document.querySelectorAll('.stack-origin-pick').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', btn.dataset.originPick === state.pickingOrigin ? 'true' : 'false');
+    });
+    if (state.pickingOrigin) {
+      const meta = effectMeta(state.pickingOrigin);
+      el.statStatus.textContent = 'Click or drag on the proof to place ' + (meta ? meta.name : 'effect') + ' origin (Esc to cancel)';
+    }
+  }
+
+  function applyPickedOrigin(id, clientX, clientY) {
+    const rect = el.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = Math.max(0, Math.min(100, Math.round(((clientX - rect.left) / rect.width) * 100)));
+    const y = Math.max(0, Math.min(100, Math.round(((clientY - rect.top) / rect.height) * 100)));
+    if (!glitches.origin[id]) glitches.origin[id] = { x: x, y: y };
+    glitches.origin[id].x = x;
+    glitches.origin[id].y = y;
+    const row = el.effectList.querySelector('.stack-row[data-effect="' + id + '"]');
+    if (row) {
+      const inX = row.querySelector('input[data-origin-axis="x"]');
+      const inY = row.querySelector('input[data-origin-axis="y"]');
+      if (inX) { inX.value = String(x); if (inX.nextElementSibling) inX.nextElementSibling.textContent = String(x); }
+      if (inY) { inY.value = String(y); if (inY.nextElementSibling) inY.nextElementSibling.textContent = String(y); }
+    }
+    schedulePreview();
+    window.dispatchEvent(new CustomEvent('ds:ui'));
+  }
+
   function removeEffect(id) {
     endHistoryGroup();
     if (!glitches.on[id]) return;
+    if (state.pickingOrigin === id) setPickingOrigin(null);
     glitches.on[id] = false;
     buildEffectList();
     syncEffectChoices();
@@ -2492,7 +2551,16 @@
       el.canvas.classList.remove('panning');
     }
 
+    let originPointer = null;
     el.canvas.addEventListener('pointerdown', function (e) {
+      if (state.pickingOrigin) {
+        e.preventDefault();
+        originPointer = e.pointerId;
+        try { el.canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic events */ }
+        beginHistoryGroup('effect:' + state.pickingOrigin + ':origin');
+        applyPickedOrigin(state.pickingOrigin, e.clientX, e.clientY);
+        return;
+      }
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       try { el.canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic events */ }
       if (pointers.size === 2) {
@@ -2508,6 +2576,10 @@
       el.canvas.classList.add('panning');
     });
     el.canvas.addEventListener('pointermove', function (e) {
+      if (originPointer === e.pointerId && state.pickingOrigin) {
+        applyPickedOrigin(state.pickingOrigin, e.clientX, e.clientY);
+        return;
+      }
       if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size > 1) {
         if (!pinchFrom) return;
@@ -2521,10 +2593,29 @@
     });
     ['pointerup', 'pointercancel'].forEach(function (type) {
       el.canvas.addEventListener(type, function (e) {
+        if (originPointer === e.pointerId) {
+          originPointer = null;
+          if (state.pickingOrigin) {
+            render(true);
+            endHistoryGroup();
+            const placed = state.pickingOrigin;
+            setPickingOrigin(null);
+            const pt = glitches.origin[placed];
+            if (pt) el.statStatus.textContent = 'Origin set to ' + pt.x + '%, ' + pt.y + '%';
+          }
+          return;
+        }
         pointers.delete(e.pointerId);
         if (pointers.size < 2) pinchFrom = 0;
         if (!pointers.size) endPan();
       });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && state.pickingOrigin) {
+        originPointer = null;
+        setPickingOrigin(null);
+        el.statStatus.textContent = 'Origin pick cancelled';
+      }
     });
 
     // drop and paste
@@ -3255,7 +3346,7 @@
   }
 
   // A shelf row is a verb, not a shortcut to the manager. Tool packages open
-  // their own dialog; Shape Press joins the stack and shows the effects panel;
+  // their own dialog; effect plugins join the stack and show the effects panel;
   // packs open the shelf they feed. Only an unknown package falls back to the
   // manager, where its install details live.
   function openPlugin(id) {
@@ -3265,9 +3356,10 @@
     if (!pkg) return openPluginManager();
     if (id === 'ink-extractor') return openInkExtractor();
     if (id === 'color-scheme-maker') return openColorSchemeMaker();
-    if (id === 'shape-press') {
+    const effect = pkg.capability && D.GLITCHES.find(function (g) { return g.plugin === pkg.capability; });
+    if (effect) {
       closeFeatureMenu();
-      if (!glitches.on.shapepress) addEffect('shapepress');
+      if (!glitches.on[effect.id]) addEffect(effect.id);
       runCommand('window-panel-open', 'effects');
       return true;
     }
@@ -3281,6 +3373,9 @@
       return openPaletteManager();
     }
     return openPluginManager();
+  }
+  if (window.DitherPlugins && window.DitherPlugins.setOpener) {
+    window.DitherPlugins.setOpener(openPlugin);
   }
 
   function openPluginManager() {

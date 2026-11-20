@@ -1,6 +1,7 @@
-# Effects research — rays, riso, phosphor and guilloche
+# Effects research — rays, Epsilon glow, riso, phosphor, guilloche and Shape Press
 
-Research notes for the four effect plugins added in 0.6.1.
+Research notes for the declarative effect plugins (introduced in 0.6.1 and
+rebuilt/expanded in 0.7.1 with inspiration from Studio AAA's Dither Boy).
 The implementation is original JavaScript. The sources below supplied equations,
 screen geometry and visual vocabulary, not copied code.
 
@@ -11,104 +12,118 @@ Post-Process”](https://developer.nvidia.com/gpugems/gpugems3/part-ii-light-and
 (Mitchell, 2007).
 
 The chapter describes a screen-space radial gather. For a light at `L`, a pixel
-`u`, `N` samples and a density `density`:
+`u`, `N` samples and a step `Δ`:
 
 ```
-Δ = (u - L) * density / N
+Δ = (u - L) * length / N
 A(u) = Σ O(u - iΔ) * weight * decay^i
 S(u) + exposure * tint * A(u)
 ```
 
-`O` is an occlusion/source mask, `decay` shortens the tail, and the final light
-is added to the scene. The origin may sit outside the frame. A blurred mask and
-seeded jitter (or a post-blur) keep the sampling from banding.
+`O` is an emission/occlusion mask, `decay` shortens the tail, and the final
+light is added in linear space. Because each pixel `u` marches **back toward the
+origin `L`**, bright pixels cast volumetric shafts **outward away from `L`**
+while empty dark pockets stay deep black.
 
-**What this implementation does**
+**What this implementation does (rebuilt in 0.7.1)**
 
-- Builds a low-resolution, blurred luminance mask from the proof. Only the
-  brightest half of the range can emit, so black paper stays black.
-- Marches outward from a normalized origin (`Origin X/Y`, 0–100% of the frame)
-  through that mask, using a decay weight and a seeded angular field. The
-  angular field is what turns a plain radial halo into separated shafts.
-- Adds a compact white-violet core and the tinted shaft field in linear light,
-  matching the reference image's white centre and purple-blue wedges.
-- Runs the gather at one third of the output resolution and bilinearly
-  upsamples the soft light field. The visual result is unchanged at proof
-  scale, and a megapixel frame stays interactive.
+- **Dither-aware emitter map:** builds a half-resolution emitter field by
+  blending each block's mean and peak luminance (`0.64 * mean + 0.36 * peak`)
+  with a soft dark knee. Thin 1-bit lightning lines and sparse stipple dots
+  continue to emit directional shafts instead of disappearing below a high
+  box-average threshold.
+- **True outward radial march with IGN jitter:** marches 38 exponentially
+  decayed steps from each pixel back toward the normalised origin (`Origin X/Y`,
+  0–100%, or clicked/dragged directly on the proof via the crosshair Pick
+  button), jittered deterministically with Interleaved Gradient Noise so rays
+  never band or step.
+- **Four lighting modes:**
+  - **Euphoria** (default) — icy-white figure core, orchid-violet inner halo,
+    rose-magenta outward shafts, cool indigo edge shimmer, subtle chromatic
+    fringe and a vertical anamorphic flare beam with a 4-point star glint.
+  - **Prismatic** — staggered radial sampling per RGB channel for iridescent
+    chromatic light shafts.
+  - **Source light** — preserves the proof's own RGB colours along the shafts.
+  - **Solar** — warm golden-amber volumetric god rays.
+- **Filmic highlight shoulder** in linear light preserves colour saturation in
+  the mid-shafts while letting bright cores burn cleanly.
+
+## Epsilon glow
+
+**Source:** Inspired by Studio AAA's **Dither Boy** Epsilon Glow workflow
+(multi-stage retro bloom tailored for dithered art).
+
+Standard single-pass blur glow smears the entire proof evenly and turns 1-bit
+patterns muddy. `epsilonglow` extracts a thresholded, dither-aware emitter map
+(blending block mean and peak), blurs it at two octaves (half-resolution tight
+halo plus quarter-resolution wide atmospheric glow), and adds the result in
+linear light so underlying dither dots stay crisp while bright features radiate
+atmospheric light.
+
+**Modes:** `Euphoric aura` (lavender/rose chromatic bloom), `Classic bloom`
+(colour-true multi-octave glow), `Film halation` (warm scarlet-amber 35mm edge
+halation) and `CRT phosphor` (high-chroma bloom with horizontal RGB fringe).
+
+## Shape Press
+
+**Source:** Inspired by Studio AAA's Dither Boy **Shape Shifter**.
+
+Each cell averages its source tone and draws a luminance-driven shape mask in
+six modes: `Barcode`, `Cross stitch` (luminance-scaled stitch weight),
+`Halftone`, `Bitmap`, `Diamond` and `Rings`.
 
 ## Riso misprint
 
 **Sources:** [Adobe, *PostScript Language Reference*, 3rd
 edition](https://www.adobe.com/products/postscript/pdfs/PLRM.pdf), halftone
 dictionaries (frequency, screen angle and spot function); standard offset/riso
-registration practice (independent plate translation and trapping).
+registration practice (independent plate translation and subtractive overprint).
 
-The halftone screen is a rotated grid with a round spot threshold. A second
-plate is screened at a different angle, sampled through a small rigid offset,
-and overprinted on a warm paper stock. The registration slip, trapping and
-paper choice are deliberate print-shop behaviour, not code from the reference.
+Rotated halftone plates are sampled through a small rigid offset and multiplied
+over warm cream stock so overlapping inks darken naturally instead of washing
+out dark artwork.
 
-**Modes:** `Duotone` (cool blue and warm red plates) and `Black ink`.
+**Modes:** `Duotone` (Federal Blue + Fluo Pink), `Black ink`, `Teal & amber`
+and `Crimson & ink`.
 
 ## Phosphor mask
 
 **Source:** [Timothy Lottes, `crt-lottes-fast.glsl`](https://github.com/libretro/glsl-shaders/blob/master/crt/shaders/crt-lottes-fast.glsl)
 (public domain / Unlicense).
 
-The shader's useful published formulas are the cosine scanline beam and the
-RGB triad mask. This implementation uses those formulas with a new pass:
+Combines a cosine scanline beam, luminance-compensated RGB phosphor subpixels,
+and bright-pixel horizontal phosphor halation so the mask stays bright and
+electric rather than dark.
 
-- a cosine scanline gain;
-- a one-pixel RGB triad, either fixed vertical stripes (aperture grille) or
-  shifted on alternate rows (shadow mask);
-- a small horizontal chroma bleed so the mask reads as a CRT rather than a
-  colour filter.
-
-**Modes:** `Aperture grille` and `Shadow mask`.
+**Modes:** `Aperture grille`, `Shadow mask` and arcade `Slot mask`.
 
 ## Guilloche plate
 
 **Sources:** [Wolfram MathWorld, hypotrochoid](https://mathworld.wolfram.com/Hypotrochoid.html)
-and [epitrochoid](https://mathworld.wolfram.com/Epitrochoid.html); the general
-banknote/security-print vocabulary of overlapping rosette lines.
+and [epitrochoid](https://mathworld.wolfram.com/Epitrochoid.html); security
+banknote engraving geometry.
 
-A guilloche is a family of rolling-curve rosettes. The implementation draws a
-polar distance field rather than sampling a texture. For a ring with base
-radius `r0`, amplitude `A`, lobe count `N`, phase `φ` and line half-width `w`:
+Draws anti-aliased polar or ribbon distance fields in light ink on dark grounds
+and dark ink on light grounds around the movable origin.
 
-```
-distance = abs(ρ - (r0 + A * sin(N * θ + φ)))
-coverage = 1 - smoothstep(w, 2w, distance)
-```
-
-Five outer rings and four counter-rotating inner rings are combined with `max`,
-then mixed toward a light ink on dark paper or a dark ink on light paper. The
-result is anti-aliased at any output size and follows the movable origin.
-
-**Controls:** amount and `Origin X/Y` (the rosette centre).
+**Modes:** `Rosette` (5 outer + 4 counter-rotating inner hypotrochoid rings),
+`Banknote waves` (interlocking sinusoidal ribbons) and `Orbital` (harmonic
+spirograph rings).
 
 ## Integration decisions
 
-- All four are post-dither effects at chunk resolution, so algorithms, palettes,
-  animation, video and exports route through them without a second pipeline.
-- Each is gated by a declarative plugin capability. No downloaded JavaScript is
-  executed; the package only switches on code already in the app.
-- The origin is stored as a percentage pair in presets and JSON exports, not as
-  pixels, so it survives export scales and different working resolutions.
-- The ray effect is deterministic from the recipe seed. Changing the origin is a
-  recipe change and takes part in undo/redo.
+- All six plugin effects run post-dither at chunk resolution, so algorithms,
+  palettes, animation, video and exports route through them without a second
+  pipeline.
+- Each is gated by a declarative plugin capability (`desktop/src/plugins/`). No
+  downloaded JavaScript is executed; the package only switches on built-in code.
+- Movable origins are stored as normalised percentages (`0–100`) and can be
+  adjusted with sliders, double-clicked to reset, or picked directly on the
+  proof canvas with the crosshair Pick button.
+- Every effect is deterministic from the recipe seed and takes part in undo/redo.
 
 ## Performance notes
 
-Measured on the development machine at 1024×1024 with pixel size 1:
-
-| Effect | Time |
-|---|---:|
-| Crepuscular rays | ~0.5 s |
-| Riso misprint | ~0.15 s |
-| Phosphor mask | ~0.06 s |
-| Guilloche plate | ~0.15–0.45 s |
-
-Crepuscular rays uses a one-third-resolution field; guilloche skips pixels
-outside the rosette's bounding circle. The whole 21-effect stack remains under
-the existing megapixel budget.
+Measured on a 1024×1024 frame at pixel size 1: the entire 22-effect stack runs
+in ~2.2 s (well under the 6 s budget in `launcher/test.js`), and individual
+effects stay interactive in Live preview mode.

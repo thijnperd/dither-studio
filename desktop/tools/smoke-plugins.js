@@ -20,7 +20,7 @@
     optionNames('effect-add').indexOf('Crepuscular rays') < 0);
 
   const catalogue = plugins ? await plugins.refresh(true, true) : null;
-  check('the bundled catalogue is readable', !!catalogue && catalogue.plugins.length >= 11,
+  check('the bundled catalogue is readable', !!catalogue && catalogue.plugins.length >= 13,
     catalogue ? catalogue.plugins.length : 0);
 
   const ink = plugins ? await plugins.install('ink-extractor', true) : null;
@@ -35,8 +35,10 @@
   window.__dither.addEffect('shapepress');
   await wait(160);
   check('Shape Press draws a different proof', window.__dither.canvasHash() !== before);
-  check('Shape Press offers its four modes',
-    !!document.querySelector('#effect-list .stack-row[data-effect="shapepress"] .stack-mode'));
+  const shapeModeSelect = document.querySelector('#effect-list .stack-row[data-effect="shapepress"] .stack-mode');
+  check('Shape Press offers all six shape modes',
+    !!shapeModeSelect && shapeModeSelect.options.length === 6,
+    shapeModeSelect ? shapeModeSelect.options.length : null);
   window.__dither.removeEffect('shapepress');
 
   const rayPack = plugins ? await plugins.install('crepuscular-rays', true) : null;
@@ -48,9 +50,14 @@
   window.__dither.addEffect('crepuscular');
   await wait(180);
   const rayRow = document.querySelector('#effect-list .stack-row[data-effect="crepuscular"]');
+  const rayModes = rayRow && rayRow.querySelector('.stack-mode');
   check('Crepuscular rays draws a different proof', window.__dither.canvasHash() !== beforeRay);
-  check('Crepuscular rays offers two origin sliders',
-    !!rayRow && rayRow.querySelectorAll('.stack-origin input').length === 2,
+  check('Crepuscular rays offers its four lighting modes',
+    !!rayModes && rayModes.options.length === 4,
+    rayModes ? rayModes.options.length : null);
+  check('Crepuscular rays offers two origin sliders and a canvas pick button',
+    !!rayRow && rayRow.querySelectorAll('.stack-origin input').length === 2 &&
+      !!rayRow.querySelector('.stack-origin-pick'),
     rayRow ? rayRow.querySelectorAll('.stack-origin input').length : null);
   const rayHash = window.__dither.canvasHash();
   const originX = rayRow && rayRow.querySelector('.stack-origin input');
@@ -62,10 +69,17 @@
   }
   check('moving the origin redraws the shafts',
     !!originX && window.__dither.canvasHash() !== rayHash, window.__dither.canvasHash());
+  const pickBtn = rayRow && rayRow.querySelector('.stack-origin-pick');
+  if (pickBtn) pickBtn.click();
+  check('the origin Pick button arms crosshair placement on the proof',
+    !!pickBtn && pickBtn.getAttribute('aria-pressed') === 'true' &&
+      document.getElementById('canvas-wrap').classList.contains('is-picking-origin'));
+  if (pickBtn) pickBtn.click();
   window.__dither.removeEffect('crepuscular');
   await wait(120);
 
   const extraEffects = [
+    ['epsilon-glow', 'epsilonglow', 'Epsilon Glow', 'Epsilon glow'],
     ['riso-misprint', 'riso', 'Riso Misprint', 'Riso misprint'],
     ['phosphor-mask', 'phosphor', 'Phosphor Mask', 'Phosphor mask'],
     ['guilloche-plate', 'guilloche', 'Guilloche Plate', 'Guilloche plate'],
@@ -83,6 +97,21 @@
     window.__dither.removeEffect(entry[1]);
     await wait(100);
   }
+
+  const euphoriaPack = plugins ? await plugins.install('euphoria-bloom', true) : null;
+  check('the Euphoria & Light preset pack installs', !!euphoriaPack && euphoriaPack.id === 'euphoria-bloom');
+  check('Euphoria recipes join the picker',
+    optionNames('preset').indexOf('Euphoria · Radiant Aura') >= 0);
+  window.__dither.applyPreset('euphoria-radiant-aura');
+  await wait(160);
+  const euphStats = window.__dither.stats();
+  check('Euphoria · Radiant Aura activates Crepuscular rays and Epsilon glow',
+    euphStats.effects.indexOf('crepuscular') >= 0 && euphStats.effects.indexOf('epsilonglow') >= 0,
+    euphStats.effects.join(','));
+  window.__dither.removeEffect('crepuscular');
+  window.__dither.removeEffect('epsilonglow');
+  window.__dither.removeEffect('grain');
+  await wait(100);
 
   const inkPack = plugins ? await plugins.install('dreamy-cyberpunk', true) : null;
   check('the Dreamy Cyberpunk pack installs', !!inkPack && inkPack.id === 'dreamy-cyberpunk');
@@ -258,7 +287,7 @@
     return node.querySelector('.plugin-section-title').textContent;
   });
   check('the Plugin Manager lists the catalogue',
-    plugins.isOpen() && managerRows.length >= 11, managerRows.length);
+    plugins.isOpen() && managerRows.length >= 13, managerRows.length);
   check('the manager is split into functionality and presets',
     sectionNames.join('|') === 'Functionality|Presets & color schemes', sectionNames.join('|'));
   check('every plugin row states a package size',
@@ -269,7 +298,13 @@
     /Stored on this machine/.test(document.getElementById('plugin-storage').textContent) &&
       /\d+(?:\.\d+)? KB/.test(document.getElementById('plugin-storage').textContent),
     document.getElementById('plugin-storage').textContent);
-  plugins.close();
+  const useRayBtn = document.querySelector('#plugin-list .plugin-row[data-plugin="crepuscular-rays"] button[aria-label^="Use "]');
+  if (useRayBtn) useRayBtn.click();
+  await wait(140);
+  check('Use on an installed effect plugin closes the manager and activates the effect',
+    !!useRayBtn && !plugins.isOpen() && window.__dither.stats().effects.indexOf('crepuscular') >= 0,
+    window.__dither.stats().effects.join(','));
+  window.__dither.removeEffect('crepuscular');
 
   const failed = checks.filter(function (c) { return !c.ok; });
   return {
