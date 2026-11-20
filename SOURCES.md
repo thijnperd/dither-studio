@@ -205,7 +205,9 @@ glyph, and the guide page uses the book. The 1.0.0 release added seventeen
 further official Tabler outline icons (`stack-2`, `focus-2`, `wand`, `brush`,
 `eraser`, `eye-off`, `wave-sine`, `terminal-2`, `notes`, `sunset-2`, `ghost-2`,
 `grid-dots`, `leaf`, `swords`, `flame`, `bolt` and `radar-2`) for the Layers &
-Object Detection tools and the new effect, palette and preset packages.
+Object Detection tools and the new effect, palette and preset packages, and
+1.0.1 added `bucket-droplet` and `sparkles` for mask filling and full-image
+post-mask effects.
 
 
 The set follows [Tabler Icons](https://tabler.io/icons), which is MIT-licensed.

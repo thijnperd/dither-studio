@@ -866,6 +866,18 @@
   check('editing an object layer updates only that object with its own algorithm and palette',
     hashObj1 !== hashObj2 && window.__dither.layersState().items[0].algorithm === 'none',
     window.__dither.layersState().items.map(function (l) { return l.name + ':' + l.algorithm; }).join(' | '));
+  window.__dither.fillMaskAll();
+  await wait(120);
+  const hashFilled = window.__dither.canvasHash();
+  check('Fill mask fills the active object mask across the frame', hashFilled !== hashObj2);
+  window.__dither.selectLayer('post');
+  window.__dither.addEffect('scanlines');
+  await wait(140);
+  const hashPostFx = window.__dither.canvasHash();
+  check('Full-image post-mask effects run over the composited image after all masks',
+    hashPostFx !== hashFilled && window.__dither.layersState().post.effects.indexOf('scanlines') >= 0,
+    window.__dither.layersState().post.effects.join(','));
+  window.__dither.removeEffect('scanlines');
   window.__dither.clearObjectLayers();
   window.__dither.enableLayers(false);
   DS.command('press-algorithm', 'floyd-steinberg');

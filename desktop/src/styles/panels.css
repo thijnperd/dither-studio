@@ -853,6 +853,41 @@
   background: var(--sunken);
 }
 
+.layers-detect-btn {
+  width: 100%;
+}
+
+.layer-mask-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.layer-row.is-post {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--edge));
+}
+.layer-row.is-post.is-active {
+  border-style: solid;
+  border-color: var(--accent);
+}
+.layer-thumb--post {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.layer-badge {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--edge));
+  color: var(--accent);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .layer-banner {
   display: flex;
   align-items: center;

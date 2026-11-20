@@ -259,14 +259,18 @@
                 <label class="check"><input type="checkbox" id="layers-enabled" /> Layers mode</label>
                 <label class="check"><input type="checkbox" id="layers-show-mask" checked /> Show mask</label>
               </div>
+              <button id="layers-detect" class="btn btn-primary layers-tool-btn layers-detect-btn" type="button" title="Automatically detect objects in the open image">
+                <span class="ui-glyph ui-glyph--xs" style="--ui-icon: url('../assets/icons/scan.svg')" aria-hidden="true"></span>
+                <span>Detect objects</span>
+              </button>
               <div class="layers-tools">
-                <button id="layers-detect" class="btn btn-primary layers-tool-btn" type="button" title="Automatically detect objects in the open image">
-                  <span class="ui-glyph ui-glyph--xs" style="--ui-icon: url('../assets/icons/scan.svg')" aria-hidden="true"></span>
-                  <span>Detect objects</span>
-                </button>
                 <button id="layers-pick" class="btn layers-tool-btn" type="button" aria-pressed="false" title="Click an object on the proof to select it (Shift adds, Alt subtracts)">
                   <span class="ui-glyph ui-glyph--xs" style="--ui-icon: url('../assets/icons/wand.svg')" aria-hidden="true"></span>
                   <span>Pick object</span>
+                </button>
+                <button id="layers-fill" class="btn layers-tool-btn" type="button" aria-pressed="false" title="Click inside a painted or unmasked region to fill it (Alt erases)">
+                  <span class="ui-glyph ui-glyph--xs" style="--ui-icon: url('../assets/icons/fill.svg')" aria-hidden="true"></span>
+                  <span>Fill mask</span>
                 </button>
                 <button id="layers-brush" class="btn layers-tool-btn" type="button" aria-pressed="false" title="Paint onto the active object mask">
                   <span class="ui-glyph ui-glyph--xs" style="--ui-icon: url('../assets/icons/brush.svg')" aria-hidden="true"></span>
@@ -299,12 +303,21 @@
                   <input type="range" id="layers-opacity" min="0" max="100" step="1" value="100" />
                 </label>
                 <label class="check"><input type="checkbox" id="layers-invert" /> Invert object mask</label>
+                <div class="layer-mask-actions">
+                  <button id="layers-fill-holes" class="btn btn-quiet" type="button" title="Fill enclosed gaps inside the active mask">Fill holes</button>
+                  <button id="layers-fill-all" class="btn btn-quiet" type="button" title="Fill the entire frame mask for this layer">Fill all</button>
+                  <button id="layers-clear-mask" class="btn btn-quiet" type="button" title="Clear this layer's mask back to empty">Clear mask</button>
+                </div>
               </div>
               <div class="buttons">
                 <button id="layers-add" class="btn" type="button">+ Object layer</button>
+                <button id="layers-post-fx" class="btn layers-tool-btn" type="button" title="Edit effects and glow applied over the full image after all masks">
+                  <span class="ui-glyph ui-glyph--xs" style="--ui-icon: url('../assets/icons/sparkles.svg')" aria-hidden="true"></span>
+                  <span>Full-image FX</span>
+                </button>
                 <button id="layers-clear" class="btn" type="button">Clear objects</button>
               </div>
-              <p class="hint">Detect objects or click one on the proof. Pick a layer here, then set its own algorithm, palette, tone and effects in the panels below.</p>
+              <p class="hint">Detect objects, click one, or paint and fill masks. Pick a layer here to style it independently, or choose <b>Full image (after masks)</b> to stack effects and glow over the final composite.</p>
             </div>
           </section>
 
@@ -477,6 +490,10 @@
               <span class="group-note" id="note-effects">none</span>
             </button>
             <div class="group-body">
+              <div class="layer-banner" id="effects-layer-banner" hidden>
+                <span>Effects on: <strong id="effects-layer-name">Background</strong></span>
+                <button id="effects-layer-post" class="btn btn-quiet" type="button" title="Switch to full-image effects applied after all object masks">Full image</button>
+              </div>
               <label class="field">
                 <span>Add to the stack</span>
                 <select id="effect-add"><option value="">Choose an effect…</option></select>

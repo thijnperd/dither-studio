@@ -125,6 +125,7 @@
     notePreset: $('note-preset'),
     layersEnabled: $('layers-enabled'), layersShowMask: $('layers-show-mask'),
     layersDetect: $('layers-detect'), layersPick: $('layers-pick'),
+    layersFill: $('layers-fill'),
     layersBrush: $('layers-brush'), layersErase: $('layers-erase'),
     layersTolerance: $('layers-tolerance'), layersToleranceValue: $('layers-tolerance-value'),
     layersFeather: $('layers-feather'), layersFeatherValue: $('layers-feather-value'),
@@ -133,9 +134,13 @@
     layersList: $('layers-list'), layersActiveBox: $('layers-active-box'),
     layersOpacity: $('layers-opacity'), layersOpacityValue: $('layers-opacity-value'),
     layersInvert: $('layers-invert'),
-    layersAdd: $('layers-add'), layersClear: $('layers-clear'),
+    layersFillHoles: $('layers-fill-holes'), layersFillAll: $('layers-fill-all'),
+    layersClearMask: $('layers-clear-mask'),
+    layersAdd: $('layers-add'), layersPostFx: $('layers-post-fx'), layersClear: $('layers-clear'),
     pressLayerBanner: $('press-layer-banner'), pressLayerName: $('press-layer-name'),
     pressLayerJump: $('press-layer-jump'),
+    effectsLayerBanner: $('effects-layer-banner'), effectsLayerName: $('effects-layer-name'),
+    effectsLayerPost: $('effects-layer-post'),
   };
 
   const ctx = el.canvas.getContext('2d', { willReadFrequently: true });
@@ -188,7 +193,7 @@
   const layerState = {
     enabled: false,
     showMask: true,
-    tool: null,           // null | 'pick' | 'brush' | 'erase'
+    tool: null,           // null | 'pick' | 'fill' | 'brush' | 'erase'
     tolerance: 34,
     feather: 2,
     brushSize: 28,
@@ -196,6 +201,13 @@
     activeId: 'base',
     nextId: 1,
     items: [],
+    post: {
+      id: 'post',
+      name: 'Full image (after masks)',
+      isPost: true,
+      visible: true,
+      settings: D.mergeSettings({ glitches: [], glow: { radius: 0, intensity: 0 } }),
+    },
     cache: new Map(),     // layer.id -> { key, res }
     maskCache: new Map(), // layer.id -> { key, mask }
   };
@@ -1487,12 +1499,21 @@
 
   function activeLayer() {
     ensureLayersInit();
+    if (layerState.activeId === 'post') return layerState.post;
     return byId(layerState.items, layerState.activeId) || layerState.items[0];
   }
 
   function saveActiveLayerSettings() {
     if (!layerState.items.length) return;
     const active = activeLayer();
+    if (active.isPost) {
+      active.settings = D.mergeSettings({
+        glitches: deriveGlitches(),
+        glow: { radius: state.settings.glow.radius, intensity: state.settings.glow.intensity },
+        seed: state.settings.seed,
+      });
+      return;
+    }
     const copy = cloneSettings(state.settings);
     copy.glitches = deriveGlitches();
     active.settings = copy;
@@ -1501,33 +1522,51 @@
   function layersSummary() {
     if (!layerState.enabled) return 'off';
     const active = activeLayer();
-    return active.name + ' · ' + layerState.items.length + 'L';
+    const postFx = layerState.post && layerState.post.visible &&
+      ((layerState.post.settings.glitches && layerState.post.settings.glitches.length) ||
+        (layerState.post.settings.glow && layerState.post.settings.glow.radius > 0 && layerState.post.settings.glow.intensity > 0));
+    const label = active.isPost ? 'Full-image FX' : active.name;
+    return label + ' · ' + layerState.items.length + 'L' + (postFx ? ' +FX' : '');
   }
 
   function syncLayerBanner() {
-    if (!el.pressLayerBanner) return;
-    el.pressLayerBanner.hidden = !layerState.enabled;
-    if (layerState.enabled && el.pressLayerName) {
-      el.pressLayerName.textContent = activeLayer().name;
+    const active = activeLayer();
+    if (el.pressLayerBanner) {
+      el.pressLayerBanner.hidden = !layerState.enabled;
+      if (layerState.enabled && el.pressLayerName) {
+        el.pressLayerName.textContent = active.isPost ? 'Full image (FX & Glow only)' : active.name;
+      }
+    }
+    if (el.effectsLayerBanner) {
+      el.effectsLayerBanner.hidden = !layerState.enabled;
+      if (layerState.enabled && el.effectsLayerName) {
+        el.effectsLayerName.textContent = active.name;
+      }
+      if (el.effectsLayerPost) {
+        el.effectsLayerPost.hidden = !!active.isPost;
+      }
     }
   }
 
   function setLayerTool(tool) {
-    const next = (tool === 'pick' || tool === 'brush' || tool === 'erase')
+    const next = (tool === 'pick' || tool === 'fill' || tool === 'brush' || tool === 'erase')
       ? (layerState.tool === tool ? null : tool)
       : null;
     layerState.tool = next;
     if (next && state.pickingOrigin) setPickingOrigin(null);
     if (next && !layerState.enabled) enableLayers(true, true);
     if (el.layersPick) el.layersPick.setAttribute('aria-pressed', next === 'pick' ? 'true' : 'false');
+    if (el.layersFill) el.layersFill.setAttribute('aria-pressed', next === 'fill' ? 'true' : 'false');
     if (el.layersBrush) el.layersBrush.setAttribute('aria-pressed', next === 'brush' ? 'true' : 'false');
     if (el.layersErase) el.layersErase.setAttribute('aria-pressed', next === 'erase' ? 'true' : 'false');
     if (el.wrap) {
-      el.wrap.classList.toggle('is-layer-pick', next === 'pick');
+      el.wrap.classList.toggle('is-layer-pick', next === 'pick' || next === 'fill');
       el.wrap.classList.toggle('is-layer-brush', next === 'brush' || next === 'erase');
     }
     if (next === 'pick') {
       el.statStatus.textContent = 'Click an object on the proof to select it (Shift adds, Alt subtracts, Esc done)';
+    } else if (next === 'fill') {
+      el.statStatus.textContent = 'Click inside a mask region to fill it (Alt erases, Esc done)';
     } else if (next === 'brush') {
       el.statStatus.textContent = 'Drag on the proof to paint the object mask (Esc done)';
     } else if (next === 'erase') {
@@ -1538,7 +1577,7 @@
   function syncLayerActiveBox() {
     if (!el.layersActiveBox) return;
     const active = activeLayer();
-    const show = layerState.enabled && !active.isBase;
+    const show = layerState.enabled && !active.isBase && !active.isPost;
     el.layersActiveBox.hidden = !show;
     if (show) {
       const pct = Math.round((active.opacity === undefined ? 1 : active.opacity) * 100);
@@ -1588,10 +1627,79 @@
     return c;
   }
 
+  function renderPostLayerRow() {
+    const post = layerState.post;
+    const isActive = layerState.activeId === 'post';
+    const row = document.createElement('div');
+    row.className = 'layer-row is-post' + (isActive ? ' is-active' : '') + (!post.visible ? ' is-hidden' : '');
+    row.setAttribute('role', 'option');
+    row.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    row.dataset.layerId = 'post';
+
+    const vis = document.createElement('button');
+    vis.type = 'button';
+    vis.className = 'icon-btn';
+    vis.title = post.visible ? 'Mute full-image effects' : 'Enable full-image effects';
+    vis.setAttribute('aria-label', (post.visible ? 'Hide ' : 'Show ') + post.name);
+    const visGlyph = document.createElement('span');
+    visGlyph.className = 'ui-glyph ui-glyph--xs';
+    visGlyph.style.setProperty('--ui-icon', 'url("../assets/icons/' + (post.visible ? 'eye.svg' : 'eye-off.svg') + '")');
+    visGlyph.setAttribute('aria-hidden', 'true');
+    vis.appendChild(visGlyph);
+    vis.addEventListener('click', function (e) {
+      e.stopPropagation();
+      post.visible = !post.visible;
+      renderLayerList();
+      render(true);
+    });
+
+    const thumb = document.createElement('div');
+    thumb.className = 'layer-thumb layer-thumb--post';
+    const sp = document.createElement('span');
+    sp.className = 'ui-glyph ui-glyph--xs';
+    sp.style.setProperty('--ui-icon', 'url("../assets/icons/sparkles.svg")');
+    sp.setAttribute('aria-hidden', 'true');
+    thumb.appendChild(sp);
+
+    const meta = document.createElement('div');
+    meta.className = 'layer-meta';
+    const name = document.createElement('div');
+    name.className = 'layer-name';
+    name.textContent = post.name;
+    const sub = document.createElement('div');
+    sub.className = 'layer-sub';
+    const fxCount = (post.settings.glitches || []).length;
+    const hasGlow = post.settings.glow && post.settings.glow.radius > 0 && post.settings.glow.intensity > 0;
+    const parts = [];
+    if (fxCount) parts.push(fxCount + (fxCount === 1 ? ' effect' : ' effects'));
+    if (hasGlow) parts.push('glow r' + post.settings.glow.radius);
+    sub.textContent = parts.length ? parts.join(' · ') : 'No post effects — click to add';
+    meta.appendChild(name);
+    meta.appendChild(sub);
+
+    const actions = document.createElement('div');
+    actions.className = 'layer-actions';
+    const badge = document.createElement('span');
+    badge.className = 'layer-badge';
+    badge.textContent = 'Post';
+    actions.appendChild(badge);
+
+    row.appendChild(vis);
+    row.appendChild(thumb);
+    row.appendChild(meta);
+    row.appendChild(actions);
+    row.addEventListener('click', function () {
+      selectLayer('post');
+    });
+    return row;
+  }
+
   function renderLayerList() {
     if (!el.layersList) return;
     ensureLayersInit();
     el.layersList.textContent = '';
+    // Full-image post-composite effects row sits at the very top of the stack.
+    el.layersList.appendChild(renderPostLayerRow());
     // Display top-most object first, Background last (compositor stack order).
     const display = layerState.items.slice().reverse();
     display.forEach(function (layer) {
@@ -1709,9 +1817,19 @@
     const skipSave = !!(opts && opts.skipSave);
     ensureLayersInit();
     if (!skipSave) saveActiveLayerSettings();
-    const target = byId(layerState.items, id) || layerState.items[0];
+    const target = id === 'post'
+      ? layerState.post
+      : (byId(layerState.items, id) || layerState.items[0]);
     layerState.activeId = target.id;
-    state.settings = cloneSettings(target.settings);
+    if (target.isPost) {
+      state.settings.glitches = JSON.parse(JSON.stringify(target.settings.glitches || []));
+      state.settings.glow = {
+        radius: target.settings.glow ? target.settings.glow.radius : 0,
+        intensity: target.settings.glow ? target.settings.glow.intensity : 0,
+      };
+    } else {
+      state.settings = cloneSettings(target.settings);
+    }
     readGlitchState(state.settings.glitches);
     syncUI();
     renderLayerList();
@@ -1940,7 +2058,16 @@
     }
 
     if (!baseData) baseData = new Uint8ClampedArray(w * h * 4);
-    const comp = Layers ? Layers.compositeLayers(baseData, w, h, overlays) : baseData;
+    const comp = Layers ? Layers.compositeLayers(baseData, w, h, overlays) : new Uint8ClampedArray(baseData);
+    if (layerState.post && layerState.post.visible) {
+      const ps = layerState.post.settings;
+      if (ps.glitches && ps.glitches.length) {
+        D.applyGlitchStack(comp, w, h, ps.glitches, ps.seed, ps.frameIndex || 0);
+      }
+      if (ps.glow && ps.glow.radius > 0 && ps.glow.intensity > 0) {
+        D.applyGlow(comp, w, h, ps.glow.radius, ps.glow.intensity);
+      }
+    }
     const ms = performance.now() - t0;
     return {
       data: comp,
@@ -1961,8 +2088,13 @@
 
   function ensureEditableObjectLayer() {
     ensureLayersInit();
-    let active = activeLayer();
-    if (!active.isBase) return active;
+    const active = activeLayer();
+    if (!active.isBase && !active.isPost) return active;
+    if (active.isPost && layerState.items.length > 1) {
+      const top = layerState.items[layerState.items.length - 1];
+      selectLayer(top.id, { skipRender: true });
+      return top;
+    }
     const firstObject = layerState.items.length === 1;
     const currentRecipe = cloneSettings(state.settings);
     currentRecipe.glitches = deriveGlitches();
@@ -1995,6 +2127,78 @@
     el.statStatus.textContent = target.name + ' · selected ' + sel.coverage + '% of frame';
   }
 
+  function applyCanvasFill(clientX, clientY, value) {
+    if (!Layers || !state.source) return 0;
+    const pt = canvasNormFromEvent(clientX, clientY);
+    if (!pt) return 0;
+    return applyMaskBucketFill(pt.xNorm, pt.yNorm, value);
+  }
+
+  function applyMaskBucketFill(xNorm, yNorm, value) {
+    if (!Layers || !state.source) return 0;
+    if (!layerState.enabled) enableLayers(true, true);
+    const target = ensureEditableObjectLayer();
+    if (!target.mask || target.maskW !== state.source.width || target.maskH !== state.source.height) {
+      target.mask = new Uint8Array(state.source.width * state.source.height);
+      target.maskW = state.source.width;
+      target.maskH = state.source.height;
+    }
+    const val = value === undefined ? 255 : value;
+    const res = Layers.bucketFillMask(target.mask, target.maskW, target.maskH, xNorm, yNorm, val);
+    if (res.count > 0) {
+      target.maskVer = (target.maskVer || 0) + 1;
+      renderLayerList();
+      render(true);
+      el.statStatus.textContent = target.name + (val >= 128 ? ' · filled ' : ' · cleared ') + res.count.toLocaleString('en-US') + ' px';
+    } else {
+      el.statStatus.textContent = target.name + ' · region already ' + (val >= 128 ? 'filled' : 'empty');
+    }
+    return res.count;
+  }
+
+  function fillActiveMaskHoles() {
+    if (!Layers || !state.source) return 0;
+    const active = activeLayer();
+    if (active.isBase || active.isPost || !active.mask) return 0;
+    const res = Layers.fillMaskHoles(active.mask, active.maskW, active.maskH);
+    active.maskVer = (active.maskVer || 0) + 1;
+    renderLayerList();
+    render(true);
+    el.statStatus.textContent = res.filled > 0
+      ? active.name + ' · filled ' + res.filled.toLocaleString('en-US') + ' hole px'
+      : active.name + ' · no enclosed holes to fill';
+    return res.filled;
+  }
+
+  function fillActiveMaskAll() {
+    if (!Layers || !state.source) return false;
+    const active = activeLayer();
+    if (active.isBase || active.isPost) return false;
+    if (!active.mask || active.maskW !== state.source.width || active.maskH !== state.source.height) {
+      active.mask = new Uint8Array(state.source.width * state.source.height);
+      active.maskW = state.source.width;
+      active.maskH = state.source.height;
+    }
+    Layers.fillMask(active.mask, active.maskW, active.maskH, 255);
+    active.maskVer = (active.maskVer || 0) + 1;
+    renderLayerList();
+    render(true);
+    el.statStatus.textContent = active.name + ' · mask filled';
+    return true;
+  }
+
+  function clearActiveMask() {
+    if (!Layers || !state.source) return false;
+    const active = activeLayer();
+    if (active.isBase || active.isPost || !active.mask) return false;
+    Layers.fillMask(active.mask, active.maskW, active.maskH, 0);
+    active.maskVer = (active.maskVer || 0) + 1;
+    renderLayerList();
+    render(true);
+    el.statStatus.textContent = active.name + ' · mask cleared';
+    return true;
+  }
+
   function applyCanvasBrush(clientX, clientY, value) {
     if (!Layers || !state.source) return;
     const pt = canvasNormFromEvent(clientX, clientY);
@@ -2023,7 +2227,7 @@
     let display = res;
     if (layerState.enabled && layerState.showMask && Layers) {
       const active = activeLayer();
-      if (!active.isBase && active.mask) {
+      if (!active.isBase && !active.isPost && active.mask) {
         const m = prepareLayerMask(active, res.width, res.height);
         if (m) {
           const tinted = Layers.drawMaskOverlay(res.data, res.width, res.height, m, res.width, res.height, !!active.inverted);
@@ -3205,6 +3409,11 @@
         applyCanvasPick(e.clientX, e.clientY, mode);
         return;
       }
+      if (layerState.tool === 'fill') {
+        e.preventDefault();
+        applyCanvasFill(e.clientX, e.clientY, e.altKey ? 0 : 255);
+        return;
+      }
       if (layerState.tool === 'brush' || layerState.tool === 'erase') {
         e.preventDefault();
         layerPointer = e.pointerId;
@@ -3411,8 +3620,24 @@
       }
       if (el.layersDetect) el.layersDetect.addEventListener('click', detectObjectLayers);
       if (el.layersPick) el.layersPick.addEventListener('click', function () { setLayerTool('pick'); });
+      if (el.layersFill) el.layersFill.addEventListener('click', function () { setLayerTool('fill'); });
       if (el.layersBrush) el.layersBrush.addEventListener('click', function () { setLayerTool('brush'); });
       if (el.layersErase) el.layersErase.addEventListener('click', function () { setLayerTool('erase'); });
+      if (el.layersFillHoles) el.layersFillHoles.addEventListener('click', fillActiveMaskHoles);
+      if (el.layersFillAll) el.layersFillAll.addEventListener('click', fillActiveMaskAll);
+      if (el.layersClearMask) el.layersClearMask.addEventListener('click', clearActiveMask);
+      if (el.layersPostFx) {
+        el.layersPostFx.addEventListener('click', function () {
+          if (!layerState.enabled) enableLayers(true, true);
+          selectLayer('post');
+          runCommand('window-panel-open', 'effects');
+        });
+      }
+      if (el.effectsLayerPost) {
+        el.effectsLayerPost.addEventListener('click', function () {
+          selectLayer('post');
+        });
+      }
       if (el.layersTolerance) {
         el.layersTolerance.addEventListener('input', function () {
           layerState.tolerance = parseInt(el.layersTolerance.value, 10) || 34;
@@ -3825,6 +4050,11 @@
         tool: layerState.tool,
         activeId: layerState.activeId,
         count: layerState.items.length,
+        post: {
+          visible: !!layerState.post.visible,
+          effects: (layerState.post.settings.glitches || []).map(function (g) { return g.id; }),
+          glow: layerState.post.settings.glow,
+        },
         items: layerState.items.map(function (l) {
           return {
             id: l.id,
@@ -3845,6 +4075,10 @@
     addObjectLayer: addEmptyObjectLayer,
     clearObjectLayers: function () { clearObjectLayers(false); },
     setLayerTool: function (tool) { setLayerTool(tool); return layerState.tool; },
+    fillMaskHoles: fillActiveMaskHoles,
+    fillMaskAll: fillActiveMaskAll,
+    clearMask: clearActiveMask,
+    bucketFillMask: applyMaskBucketFill,
     // Test hook: load a synthetic source (a data URL) without a file dialog.
     loadDataURL: function (url, name) {
       const img = new Image();

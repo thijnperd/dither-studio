@@ -524,6 +524,107 @@
     return mask;
   }
 
+  // Fill every pixel in the mask with a uniform value (255 = solid, 0 = empty).
+  function fillMask(mask, w, h, value) {
+    if (!mask || w < 1 || h < 1) return mask;
+    const v = clamp(Math.round(value === undefined ? 255 : value), 0, 255);
+    mask.fill(v);
+    return mask;
+  }
+
+  // Fill all interior holes enclosed by masked pixels (>= 128) without
+  // leaking outside the mask boundary.
+  function fillMaskHoles(mask, w, h) {
+    if (!mask || w < 2 || h < 2) return { mask: mask, filled: 0 };
+    const n = w * h;
+    const outside = new Uint8Array(n);
+    const queue = new Int32Array(n);
+    let head = 0, tail = 0;
+
+    function pushIfOpen(idx) {
+      if (!outside[idx] && mask[idx] < 128) {
+        outside[idx] = 1;
+        queue[tail++] = idx;
+      }
+    }
+
+    for (let x = 0; x < w; x++) {
+      pushIfOpen(x);
+      pushIfOpen((h - 1) * w + x);
+    }
+    for (let y = 1; y < h - 1; y++) {
+      pushIfOpen(y * w);
+      pushIfOpen(y * w + (w - 1));
+    }
+
+    while (head < tail) {
+      const cur = queue[head++];
+      const cy = (cur / w) | 0;
+      const cx = cur - cy * w;
+      if (cx > 0) pushIfOpen(cur - 1);
+      if (cx + 1 < w) pushIfOpen(cur + 1);
+      if (cy > 0) pushIfOpen(cur - w);
+      if (cy + 1 < h) pushIfOpen(cur + w);
+    }
+
+    let filled = 0;
+    for (let i = 0; i < n; i++) {
+      if (!outside[i] && mask[i] < 255) {
+        mask[i] = 255;
+        filled++;
+      }
+    }
+    return { mask: mask, filled: filled };
+  }
+
+  // Paint-bucket flood fill on the mask itself at normalised (xNorm, yNorm).
+  // Clicking inside an unmasked region fills that enclosed region to `value`
+  // (default 255); clicking an already-masked region with value 0 erases that
+  // contiguous masked island.
+  function bucketFillMask(mask, w, h, xNorm, yNorm, value) {
+    if (!mask || w < 1 || h < 1) return { mask: mask, count: 0 };
+    const sx = clamp(Math.round(clamp(xNorm, 0, 1) * (w - 1)), 0, w - 1);
+    const sy = clamp(Math.round(clamp(yNorm, 0, 1) * (h - 1)), 0, h - 1);
+    const start = sy * w + sx;
+    const targetVal = clamp(Math.round(value === undefined ? 255 : value), 0, 255);
+    const startSolid = mask[start] >= 128;
+    const wantSolid = targetVal >= 128;
+    if (startSolid === wantSolid) return { mask: mask, count: 0 };
+
+    const n = w * h;
+    const visited = new Uint8Array(n);
+    const queue = new Int32Array(n);
+    let head = 0, tail = 0;
+    visited[start] = 1;
+    queue[tail++] = start;
+    let count = 0;
+
+    while (head < tail) {
+      const cur = queue[head++];
+      mask[cur] = targetVal;
+      count++;
+      const cy = (cur / w) | 0;
+      const cx = cur - cy * w;
+      if (cx > 0) {
+        const nb = cur - 1;
+        if (!visited[nb] && (mask[nb] >= 128) === startSolid) { visited[nb] = 1; queue[tail++] = nb; }
+      }
+      if (cx + 1 < w) {
+        const nb = cur + 1;
+        if (!visited[nb] && (mask[nb] >= 128) === startSolid) { visited[nb] = 1; queue[tail++] = nb; }
+      }
+      if (cy > 0) {
+        const nb = cur - w;
+        if (!visited[nb] && (mask[nb] >= 128) === startSolid) { visited[nb] = 1; queue[tail++] = nb; }
+      }
+      if (cy + 1 < h) {
+        const nb = cur + w;
+        if (!visited[nb] && (mask[nb] >= 128) === startSolid) { visited[nb] = 1; queue[tail++] = nb; }
+      }
+    }
+    return { mask: mask, count: count };
+  }
+
   // Composite object layers over a base RGBA buffer. Each overlay entry carries
   // `{ data, mask, maskW, maskH, opacity, invert }`.
   function compositeLayers(baseData, w, h, overlays) {
@@ -613,6 +714,9 @@
     magicSelect: magicSelect,
     combineMasks: combineMasks,
     paintMask: paintMask,
+    fillMask: fillMask,
+    fillMaskHoles: fillMaskHoles,
+    bucketFillMask: bucketFillMask,
     featherMask: featherMask,
     compositeLayers: compositeLayers,
     drawMaskOverlay: drawMaskOverlay,

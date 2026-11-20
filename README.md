@@ -52,11 +52,14 @@ shelf and the download links, is
 - **Layers & Object Detection (desktop).** Open the **Layers** station
   (`Ctrl+L`, or the stack button in the tool rail) to run offline automatic
   object detection, click objects directly on the proof with **Pick object**
-  (Shift adds, Alt subtracts), or refine masks with **Paint mask** and
-  **Erase mask**. Each detected object layer and the background layer keep
-  their own independent algorithm (including **No dither** to leave the
-  background untouched), palette, tone, detail, effects stack, glow, opacity,
-  feathering and mask inversion — composited live with clean mask-free PNG
+  (Shift adds, Alt subtracts), flood-fill regions with **Fill mask** (plus
+  one-click **Fill holes**, **Fill all**, and **Clear mask**), or refine masks
+  with **Paint mask** and **Erase mask**. Each detected object layer and the
+  background layer keep their own independent algorithm (including **No dither**
+  to leave the background untouched), palette, tone, detail, effects stack,
+  glow, opacity, feathering and mask inversion — plus a **Full image (after
+  masks)** post layer so you can stack effects and glow over the entire
+  composited image after all masks are blended, with clean mask-free PNG
   exports.
 - **30 built-in ink sets + 25 inspired palettes.** 1-bit black and white, Game Boy, Game Boy Pocket, C64, NES,
   ZX Spectrum, CGA, EGA, Apple II, MSX, Macintosh II, Teletext, Virtual Boy,

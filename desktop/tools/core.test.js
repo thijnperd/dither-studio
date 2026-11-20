@@ -517,6 +517,34 @@ test('layers engine detects distinct objects and composites per-layer buffers', 
   assert.strictEqual(comp[outside], 10);
 });
 
+test('mask fill helpers fill enclosed holes, bucket-fill regions and fill/clear full masks', function () {
+  const Layers = require('../src/renderer/layers.js');
+  const w = 40, h = 40;
+  const mask = new Uint8Array(w * h);
+  // Draw a hollow 16x16 square ring from (12,12) to (27,27).
+  for (let y = 12; y <= 27; y++) {
+    for (let x = 12; x <= 27; x++) {
+      if (x === 12 || x === 27 || y === 12 || y === 27) mask[y * w + x] = 255;
+    }
+  }
+  assert.strictEqual(mask[20 * w + 20], 0);
+  const holes = Layers.fillMaskHoles(mask, w, h);
+  assert.strictEqual(holes.filled, 14 * 14);
+  assert.strictEqual(mask[20 * w + 20], 255);
+  assert.strictEqual(mask[2 * w + 2], 0);
+
+  // Bucket-fill erase the filled square island, then bucket-fill it back.
+  const erased = Layers.bucketFillMask(mask, w, h, 20 / w, 20 / h, 0);
+  assert.strictEqual(erased.count, 16 * 16);
+  assert.strictEqual(mask[20 * w + 20], 0);
+
+  Layers.fillMask(mask, w, h, 255);
+  assert.strictEqual(mask[0], 255);
+  assert.strictEqual(mask[w * h - 1], 255);
+  Layers.fillMask(mask, w, h, 0);
+  assert.strictEqual(mask[0], 0);
+});
+
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 if (failed) process.exitCode = 1;

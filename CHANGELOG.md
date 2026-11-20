@@ -10,6 +10,13 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 1.0.1 — Mask fill tools & full-image post-mask effects (2026-11-20)
+
+**Faster mask refinement and full-image effects stacked after all object masks.**
+
+- **Fill masks.** Added an interactive **Fill mask** bucket tool (`bucket-droplet` icon) to the Layers tool grid — click inside any painted outline or unmasked region to flood-fill it solid (`Alt+Click` erases a contiguous region) — plus one-click **Fill holes**, **Fill all**, and **Clear mask** actions on the active object layer.
+- **Full-image effects after all masks.** Added a dedicated **Full image (after masks)** (`Post`) layer at the top of the Layers stack (plus a **Full-image FX** shortcut in Layers and a **Full image** switcher banner in the Effects panel). Any effects or glow added there run across the entire composited proof *after* all object masks have been blended, while individual object layers remain cached and independently editable.
+
 ## 1.0.0 — Layers, object detection, no-dither passthrough & Studio AAA inspired collection (2026-11-20)
 
 **The 1.0.0 public release: per-object multi-algorithm Layers & Object Detection, a No dither original-image passthrough, three new effect plugins, five inspired palette packs, and three new artist-inspired preset packs.**
