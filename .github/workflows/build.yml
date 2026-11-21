@@ -217,17 +217,30 @@ jobs:
       - name: Build the disk images and zips
         working-directory: desktop
         shell: bash
+        # The secrets are read under neutral names and only passed on as
+        # CSC_LINK once they are known to be non-empty: electron-builder only
+        # skips signing when CSC_LINK is null, so an empty one makes it try to
+        # build a keychain from an empty path and fails the build.
         env:
-          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          MAC_CERT_P12: ${{ secrets.MAC_CERT_P12 }}
+          MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-          extra=""
-          if [ -n "${APPLE_ID}" ]; then extra="-c.mac.notarize=true"; fi
-          npm run dist:mac -- --publish never $extra
+          if [ -n "${MAC_CERT_P12:-}" ]; then
+            export CSC_LINK="$MAC_CERT_P12"
+            export CSC_KEY_PASSWORD="${MAC_CERT_PASSWORD:-}"
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+            echo "::notice title=Unsigned build::No signing certificate secret, so the app is built unsigned."
+          fi
+          args=(--publish never)
+          if [ -n "${APPLE_ID:-}" ]; then
+            args+=(-c.mac.notarize=true)
+          fi
+          npm run dist:mac -- "${args[@]}"
 
       - name: Keep the build output
         uses: actions/upload-artifact@v4
