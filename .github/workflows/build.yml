@@ -240,7 +240,11 @@ jobs:
           if [ -n "${APPLE_ID:-}" ]; then
             args+=(-c.mac.notarize=true)
           fi
-          npm run dist:mac -- "${args[@]}"
+          if ! npm run dist:mac -- "${args[@]}" 2>&1 | tee /tmp/mac-build.log; then
+            reason=$(grep -iE 'error|failed' /tmp/mac-build.log | tail -3 | tr '\n' ' ' | cut -c1-900)
+            echo "::error title=macOS packaging failed::${reason:-no error line in the build log}"
+            exit 1
+          fi
 
       - name: Keep the build output
         uses: actions/upload-artifact@v4
