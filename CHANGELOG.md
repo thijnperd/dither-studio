@@ -10,6 +10,51 @@ extracts it with `awk` — so the release page and this file cannot drift apart.
 A tag with no section here fails the build instead of publishing an empty
 release page; that is deliberate.
 
+## 1.0.2 — Verified updates, a link allowlist and one engine source (2026-11-21)
+
+**The updater installs only a download that matches the release's published
+SHA-256, external links pass an allowlist, and the three copies of the engine
+are generated from one place.**
+
+- **Updates are verified before anything runs.** The updater now fetches
+  `SHA256SUMS.txt` from the same release as the asset, computes the SHA-256 of
+  the downloaded file while it writes it, and compares. A mismatch, a release
+  with no sums file, or a sums file with no entry for the chosen asset refuses
+  the install with a message that names which of the three it was - before the
+  Windows helper is spawned, before `ditto` unpacks a zip and before a disk
+  image is opened. Nothing that fails the check is executed or unpacked.
+- **A signing path that works when the secrets exist.** `mac.identity` is no
+  longer pinned to `null`, so electron-builder signs the macOS bundle when a
+  Developer ID is present, with the hardened runtime and the JIT entitlements
+  Electron needs (`desktop/build/entitlements.mac.plist`); the build job turns
+  on `mac.notarize` when Apple credentials are in the repository secrets. The
+  Windows job signs both exes when a certificate secret is present. With no
+  secrets the builds are unsigned exactly as before, and the release notes say
+  which case a downloader is in.
+- **External links go through an allowlist.** `window.open` no longer forwards
+  any `http(s)` URL the renderer asks for. The project's own GitHub pages, its
+  web build, its publicity site and Lospec open directly; anything else asks
+  first; and a link that is not `http(s)` - `file:`, `javascript:`, `data:`,
+  credentials in the authority - is refused outright. The same gate covers the
+  renderer's `openExternal` IPC.
+- **One engine source.** `launcher/dither.js` (with `video.js` and
+  `samples.js`) is the only place the engine exists.
+  `desktop/tools/sync-renderer.js` writes the desktop and demo copies from it,
+  `npm run sync` does it on demand, `npm run build` does it before packaging,
+  and `--check` verifies both targets in CI. All 47 algorithms are unchanged
+  and the three copies are byte-identical.
+- **A first impression with a picture.** The README now opens “What it does”
+  with a proof the app made (`examples/council-yliluoma-ega.png`) and one
+  sentence saying what the program is, above the algorithm list.
+- **The publicity page pays 448 KB for its first scroll, not 8.4 MB.** The
+  opening eight seconds of the film now have their own encodes
+  (`film-intro-scrub.mp4` at 448 KB, `film-phone-intro-scrub.mp4` at 321 KB,
+  both keyed every 12 frames). The full forty-second encode is requested only
+  when the playhead reaches seven seconds and takes over once it can draw, on
+  the same clock, so the handover is invisible. Poster-first paint, the skip
+  link and the reduce-motion path are unchanged, and a skip now guarantees the
+  full film is never requested.
+
 ## 1.0.1 — Mask fill tools & full-image post-mask effects (2026-11-20)
 
 **Faster mask refinement and full-image effects stacked after all object masks.**

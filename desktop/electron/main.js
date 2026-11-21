@@ -33,6 +33,7 @@ const path = require('path');
 const updates = require('./update');
 const plugins = require('./plugins');
 const lospec = require('./lospec');
+const externalLinks = require('./external-links');
 
 const APP_ROOT = path.join(__dirname, '..');
 // The splash plays a fixed animation and this is what the window waits for
@@ -204,8 +205,13 @@ function createWindow() {
   mainWindow.on('closed', function () { mainWindow = null; });
 
   // The app is a single page: nothing may navigate it away or spawn windows.
+  // A link still opens in the user's browser, but only through the allowlist in
+  // external-links.js: the project's own pages and Lospec open, anything else
+  // asks first, and a non-web URL never opens at all.
   mainWindow.webContents.setWindowOpenHandler(function (details) {
-    if (/^https?:/.test(details.url)) shell.openExternal(details.url);
+    const policy = externalLinks.classify(details.url);
+    if (policy === 'allow') shell.openExternal(details.url);
+    else if (policy === 'confirm') askBeforeOpening(details.url, mainWindow);
     return { action: 'deny' };
   });
   mainWindow.webContents.on('will-navigate', function (event) { event.preventDefault(); });
@@ -368,10 +374,33 @@ ipcMain.handle('ds:reveal', async function (_event, target) {
   return { ok: true };
 });
 
-ipcMain.handle('ds:open-external', async function (_event, url) {
-  if (typeof url !== 'string' || !/^https?:/.test(url)) return null;
+// One gate for every external link, whether it came from window.open or from
+// the renderer's own menu entries. The allowlist decides; the user confirms
+// anything outside it, and never sees a silent open.
+async function askBeforeOpening(url, win) {
+  const answer = await dialog.showMessageBox(win && !win.isDestroyed() ? win : null, {
+    type: 'question',
+    title: 'Open an external link?',
+    message: 'Dither Studio was asked to open a page outside its own sites.',
+    detail: url + '\n\nOnly continue if you meant to follow this link.',
+    buttons: ['Open in browser', 'Cancel'],
+    defaultId: 1,
+    cancelId: 1,
+    noLink: true,
+  });
+  if (answer.response !== 0) return { blocked: true, url: url };
   await shell.openExternal(url);
-  return { ok: true };
+  return { ok: true, url: url };
+}
+
+ipcMain.handle('ds:open-external', async function (event, url) {
+  const policy = externalLinks.classify(url);
+  if (policy === 'deny') return { blocked: true, reason: 'Dither Studio does not open that kind of link.' };
+  if (policy === 'allow') {
+    await shell.openExternal(url);
+    return { ok: true };
+  }
+  return askBeforeOpening(url, BrowserWindow.fromWebContents(event.sender));
 });
 
 // ---- ipc: window, menus, dialogs ----

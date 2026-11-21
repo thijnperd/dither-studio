@@ -38,6 +38,14 @@ jobs:
       - name: Updater release rules
         run: node desktop/tools/update.test.js
 
+      # The checksum gate in front of the installer, and the shell's external
+      # link allowlist. Both are pure Node.
+      - name: Updater integrity
+        run: node desktop/tools/update-integrity.test.js
+
+      - name: External link policy
+        run: node desktop/tools/external-links.test.js
+
       # examples/ is generated: the pictures, the contact sheet, the manifest and
       # the README's table are all written by tools/make-examples.js. This is what
       # keeps the four describing the same set, on any machine, without a browser.

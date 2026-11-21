@@ -11,6 +11,13 @@
  *   - on macOS, unpack the zip, replace the .app after exit, and reopen it.
  * The disk image remains a fallback when an older release has no zip.
  *
+ * **Nothing is executed or unpacked until it matches the release's own
+ * `SHA256SUMS.txt`.** The sums file is fetched beside the asset, the digest of
+ * the downloaded bytes is computed here, and a mismatch, a missing sums file
+ * or a missing entry for this asset refuses the install with a message that
+ * says which of those it was. Without that step a truncated download or a byte
+ * rewritten in transit was installed silently.
+ *
  * The app stays useful offline: a failed check is silent on launch and becomes
  * a readable message only when the user asks for it.
  */
@@ -24,6 +31,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { isNewer, assetFor } = require('./update-version');
 const { windowsScript } = require('./update-script');
+const { SUMS_NAME, parseChecksums, digestFor, checksumAsset, verifyFile } = require('./update-integrity');
 
 const packageJson = require('../package.json');
 const API = process.env.DITHER_UPDATE_API
@@ -91,12 +99,14 @@ async function check() {
   if (!selection) {
     return { status: 'current', current: app.getVersion(), latest: version, why: 'That release has no build for this platform.' };
   }
+  const sums = checksumAsset(release.assets);
   found = {
     version: version,
     notes: release.body || '',
     releaseUrl: release.html_url || '',
     asset: selection.asset,
     kind: selection.kind,
+    checksum: sums,
   };
   return {
     status: 'available',
@@ -106,6 +116,9 @@ async function check() {
     releaseUrl: found.releaseUrl,
     asset: { name: selection.asset.name, size: selection.asset.size || 0 },
     kind: selection.kind,
+    // The Help window can say, before the download starts, whether this release
+    // published the sums that make an install verifiable at all.
+    checksum: sums ? sums.name : null,
   };
 }
 
@@ -136,6 +149,40 @@ function fileSize(file) {
   try { return fs.statSync(file).size; } catch (err) { return 0; }
 }
 
+// The sums file travels over the same HTTPS connection, from the same release,
+// as the asset it describes. A 404 or a network error is not "assume fine":
+// it is the same refusal as a missing entry.
+async function fetchChecksums(release) {
+  const asset = release && release.checksum;
+  if (!asset || !asset.browser_download_url) return null;
+  const response = await net.fetch(asset.browser_download_url);
+  if (!response.ok) return null;
+  return await response.text();
+}
+
+// Refuse, do not repair: a file that does not match its published digest is
+// deleted with the rest of the temporary directory and nothing is installed.
+async function verifyDownload(file, release) {
+  const name = path.basename(release && release.asset && release.asset.name || '');
+  const text = await fetchChecksums(release);
+  if (!text) {
+    throw new Error('This release has no ' + SUMS_NAME + ', so the download cannot be verified. Nothing was installed.');
+  }
+  const expected = digestFor(parseChecksums(text), name);
+  if (!expected) {
+    throw new Error(SUMS_NAME + ' has no entry for ' + name + ', so the download cannot be verified. Nothing was installed.');
+  }
+  const result = await verifyFile(file, expected);
+  if (!result.ok) {
+    if (result.reason === 'unreadable') {
+      throw new Error('The download could not be read back (' + (result.error || 'unknown error') + '). Nothing was installed.');
+    }
+    throw new Error('The download did not match its published SHA-256 (expected ' + result.expected
+      + ', got ' + (result.actual || 'nothing') + '). Nothing was installed.');
+  }
+  return result;
+}
+
 async function waitForLog(file, before, timeout) {
   const end = Date.now() + timeout;
   for (;;) {
@@ -164,6 +211,9 @@ async function install(info) {
     dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'dither-studio-update-'));
     const target = path.join(dir, path.basename(info.asset.name || 'update.bin'));
     await download(target, found, progress);
+    // Before anything below runs an installer, unpacks a zip or opens a disk
+    // image: the bytes have to be the bytes the release published.
+    await verifyDownload(target, found);
 
     if (process.platform === 'win32') {
       const log = path.join(app.getPath('userData'), 'update.log');

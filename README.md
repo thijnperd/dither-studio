@@ -43,6 +43,16 @@ shelf and the download links, is
 
 ## What it does
 
+**Dither Studio is an offline press that rebuilds a picture or a clip out of one
+palette's marks — 47 algorithms, 30 ink sets, per-object layers, a 25-effect
+stack and video, with no account and no server.**
+
+![The Council of the Gods, rebuilt in the EGA sixteen inks by Yliluoma polished ordering at a pixel size of 2](examples/council-yliluoma-ega.png)
+
+*A proof the app made, not a mock-up: `Yliluoma polished` into the `EGA`
+sixteen inks at a pixel size of 2. Every file in [`examples/`](examples/) is
+saved from the engine this way and carries its own recipe.*
+
 - **47 algorithms (including No dither).** A **No dither (original image)**
   passthrough alongside classic ordered screens (Bayer 2–16, clustered-dot,
   halftone, line and diagonal screens, checks), void-and-cluster, blue noise,
@@ -247,10 +257,14 @@ honest about it: a frame that overruns its slot is counted as dropped.
 | [**Launcher**](launcher/) | frozen | The same console in a Chromium app window with a profile of its own, started by a script in the folder — no install, no registry entry. |
 | [**Desktop app**](desktop/) | **active** | The real application: native menus and dialogs, a built-in tutorial, video and webcam, and proofs saved as files. Windows and macOS. |
 
-All three share one engine, [`dither.js`](launcher/dither.js): DOM-free, copied
-into the desktop build byte for byte, with a CI check that fails if the copy
-drifts. The built-in sources, [`samples.js`](launcher/samples.js), travel the
-same way, so every build opens on the same three paintings.
+All three share one engine, [`dither.js`](launcher/dither.js): DOM-free, with
+one canonical source and generated copies. `desktop/tools/sync-renderer.js`
+writes `desktop/src/renderer/` and `demo/` from `launcher/` byte for byte, and
+`--check` fails if either copy has drifted. The built-in sources,
+[`samples.js`](launcher/samples.js), and the video clock,
+[`video.js`](launcher/video.js), travel the same way, so every build opens on
+the same three paintings. Change the engine once, run
+`node desktop/tools/sync-renderer.js`, and never edit a copy.
 
 ![Build map: one shared engine and sample table feeding the web demo, launcher and desktop app](docs/build-map.png)
 
@@ -352,10 +366,11 @@ palette's JSON: no account, no telemetry, no analytics. You can update from
 ## Checks
 
 ```bash
-node launcher/test.js                                        # 98 engine tests
+node launcher/test.js                                        # 100 engine tests
 bash tools/check.sh launcher/index.html --expect canvas       # a page in a real browser
 node tools/check-examples.js                                 # examples/ against its own manifest
-cd desktop && npm test && npm run smoke:all                   # core, tour and updater checks, then the full window run
+node desktop/tools/sync-renderer.js --check                   # every engine copy matches launcher/
+cd desktop && npm test && npm run smoke:all                   # core, tour, updater, integrity and link checks, then the full window run
 ```
 
 The smoke run boots the real desktop app on a profile of its own, runs the

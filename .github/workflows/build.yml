@@ -58,6 +58,16 @@ jobs:
       - name: Updater release rules
         run: node desktop/tools/update.test.js
 
+      # The checksum check that stands between a download and an installer:
+      # valid, mismatched, missing, and a release with no sums file at all.
+      - name: Updater integrity
+        run: node desktop/tools/update-integrity.test.js
+
+      # The shell's external-link allowlist: its own pages and Lospec open,
+      # everything else asks, and nothing that is not http(s) opens.
+      - name: External link policy
+        run: node desktop/tools/external-links.test.js
+
       - name: Install
         working-directory: desktop
         run: npm ci
@@ -111,8 +121,14 @@ jobs:
             exit 1
           }
 
+      # Signing is opt-in through secrets: a certificate signs both exes, and
+      # with no secret the build is unsigned and says so on the release page.
+      # The updater's checksum gate holds either way.
       - name: Build the installer and the portable exe
         working-directory: desktop
+        env:
+          WIN_CSC_LINK: ${{ secrets.WINDOWS_CERT_P12 }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         run: npm run dist -- --publish never
 
       - name: Keep the build output
@@ -159,6 +175,12 @@ jobs:
       - name: Updater release rules
         run: node desktop/tools/update.test.js
 
+      - name: Updater integrity
+        run: node desktop/tools/update-integrity.test.js
+
+      - name: External link policy
+        run: node desktop/tools/external-links.test.js
+
       - name: Install
         working-directory: desktop
         run: npm ci
@@ -186,14 +208,26 @@ jobs:
             exit 1
           }
 
-      # x64 and arm64, unsigned: CI holds no certificate, and `mac.identity` in
-      # package.json is null, so electron-builder does not go looking for one.
-      # The zip beside each disk image is what the in-app updater replaces.
+      # x64 and arm64. `mac.identity` is no longer pinned to null, so
+      # electron-builder signs and hardens the bundle when a Developer ID is
+      # present (CSC_LINK from the repository secrets) and notarizes it when
+      # the Apple credentials are too; with no secrets it still builds, just
+      # unsigned, which is what every release up to 1.0.1 was. The zip beside
+      # each disk image is what the in-app updater replaces.
       - name: Build the disk images and zips
         working-directory: desktop
+        shell: bash
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npm run dist:mac -- --publish never
+          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          extra=""
+          if [ -n "${APPLE_ID}" ]; then extra="-c.mac.notarize=true"; fi
+          npm run dist:mac -- --publish never $extra
 
       - name: Keep the build output
         uses: actions/upload-artifact@v4
@@ -223,6 +257,19 @@ jobs:
           path: dist
           merge-multiple: true
 
+      # The updater will not install a byte it cannot check, so a release with
+      # no sums file is a release nobody can update from. sha256sum's own
+      # output format is what desktop/electron/update-integrity.js parses.
+      - name: Write SHA256SUMS.txt beside the builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          ls -l
+          sha256sum *.exe *.dmg *.zip > SHA256SUMS.txt
+          test -s SHA256SUMS.txt || { echo "no checksums were written"; exit 1; }
+          cat SHA256SUMS.txt
+
       # One job owns the release: the two platforms cannot race to create it,
       # and nothing is published until both of them are green.
       - name: Attach every build to the release
@@ -249,7 +296,9 @@ jobs:
               "" \
               "**macOS** — Dither-Studio-*-arm64.dmg is for Apple silicon, Dither-Studio-*-x64.dmg for Intel. Open the disk image and drag Dither Studio to Applications. The matching .zip is what the app's built-in updater replaces itself with; you do not need to open it by hand." \
               "" \
-              "Neither build is signed, so Windows SmartScreen may warn on the first run (choose More info, then Run anyway), and macOS Gatekeeper will refuse a plain double-click of a downloaded app (right-click it and choose Open, or allow it under System Settings then Privacy & Security)."
+              "**Checksums.** Every asset is listed in SHA256SUMS.txt, and the built-in updater refuses a download that does not match its published SHA-256." \
+              "" \
+              "Builds are signed and notarized when this repository holds the signing secrets (a macOS Developer ID certificate and Apple notarization credentials, a Windows code-signing certificate). Without them the builds are unsigned: Windows SmartScreen may warn on the first run (choose More info, then Run anyway), and macOS Gatekeeper will refuse a plain double-click (right-click the app and choose Open, or allow it under System Settings then Privacy & Security)."
           } > "$RUNNER_TEMP/notes.md"
           test -s "$RUNNER_TEMP/notes.md" || { echo "the notes came out empty"; exit 1; }
           if gh release view "$TAG" >/dev/null 2>&1; then

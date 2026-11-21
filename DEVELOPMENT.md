@@ -40,8 +40,11 @@ performance budget, and every check that ships with the app.
 The launcher is frozen on purpose: it is what people install from. The demo is
 maintained beside it, and it stays self-contained so the public Pages site can
 never pick up desktop files. `dither.js`, `video.js` and `samples.js` are the
-shared files; everything else — the demo shell included — belongs to a single
-build.
+shared files, and they exist in one place: `launcher/`.
+`desktop/tools/sync-renderer.js` writes the copies in `desktop/src/renderer/`
+and `demo/` from it, and `--check` fails on a drift, so a change to the engine
+is made once and generated everywhere. Everything else — the demo shell
+included — belongs to a single build.
 
 ### The web demo
 
@@ -73,9 +76,9 @@ The demo still opens from `file://`, still has no build step, and still shares
 ### Replacing a built-in sample
 
 `launcher/samples.js` is generated and committed, and never hand-edited: the
-desktop's copy is written by `desktop/tools/sync-renderer.js --check`-ed against
-it, and `demo/samples.js` and the portfolio's `dither studio web/` follow the
-demo. The paintings are read out of the git-ignored `inbox/` drop box, cropped
+desktop's and the demo's copies are written by `desktop/tools/sync-renderer.js`
+and `--check`-ed against it, and the portfolio's `dither studio web/` follows
+the demo. The paintings are read out of the git-ignored `inbox/` drop box, cropped
 to the picture itself, encoded at WebP quality 80 and base64'd into the table;
 `SOURCES.md` holds the works, the collections and the rights. Keep a new sample
 under about 150 KB of pixels: the table loads with the page, in all three
